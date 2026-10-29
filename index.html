@@ -46,7 +46,7 @@
 <!-- Lucide Icons -->
 <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
 
-<link rel="stylesheet" href="css/style.css?v=13" />
+<link rel="stylesheet" href="css/style.css?v=14" />
 </head>
 <body class="bg-zinc-200 text-slate-900 antialiased h-screen w-screen flex justify-center items-center">
 
@@ -67,11 +67,11 @@
     <!-- 1-1. 상단 교통수단 선택 바 (자차 / 대중교통 / 도보 / 자전거) + 헤더 액션 -->
     <div class="flex items-center justify-between">
       <!-- 교통수단 아이콘 탭 -->
-      <div class="inline-flex items-center gap-1" id="headerTransportGroup">
+      <div class="inline-flex items-center gap-1.5" id="headerTransportGroup">
         <button type="button" onclick="window.setHeaderTransport('car')" id="headerTabCar" class="press w-8 h-7 rounded-full flex items-center justify-center transition-all text-white/80 hover:text-white hover:bg-white/10" title="자차">
           <i data-lucide="car" class="w-4 h-4"></i>
         </button>
-        <button type="button" onclick="window.setHeaderTransport('transit')" id="headerTabTransit" class="press px-3 h-7 rounded-full bg-white text-[#0284c7] font-bold shadow-xs flex items-center justify-center gap-1 transition-all" title="대중교통">
+        <button type="button" onclick="window.setHeaderTransport('transit')" id="headerTabTransit" class="press px-3.5 h-7 rounded-full bg-white text-[#4a80f0] font-bold shadow-xs flex items-center justify-center gap-1 transition-all" title="대중교통">
           <i data-lucide="bus" class="w-4 h-4"></i>
         </button>
         <button type="button" onclick="window.setHeaderTransport('walk')" id="headerTabWalk" class="press w-8 h-7 rounded-full flex items-center justify-center transition-all text-white/80 hover:text-white hover:bg-white/10" title="도보">
@@ -86,7 +86,7 @@
       <div class="flex items-center gap-1.5">
         <span id="statusBadge" class="hidden">단독 모드</span>
         <span id="participantCount" class="hidden">출발지: 1곳</span>
-        <span class="text-[10.5px] font-black tracking-tight text-white/90 bg-white/20 px-2 py-0.5 rounded-full">MidPoint</span>
+        <span class="text-[10.5px] font-bold tracking-tight text-white/90 bg-white/20 px-2 py-0.5 rounded-full">MidPoint</span>
         <button type="button" onclick="window.toggleTopHeaderCompact()" id="headerCollapseBtn" class="press p-1 rounded-full text-white/80 hover:text-white hover:bg-white/20 transition-all" title="플래너 접기/펼치기">
           <i id="headerCollapseIcon" data-lucide="chevron-up" class="w-4 h-4"></i>
         </button>
@@ -94,86 +94,64 @@
     </div>
 
     <!-- 1-2. 출발지 & 도착지 주소 한눈에 보기 카드 -->
-    <div id="headerRouteCard" class="bg-white/15 backdrop-blur-md rounded-xl p-2.5 flex items-stretch gap-2 border border-white/20 transition-all">
-      <!-- 좌측 주소 목록 (출발지 1, 2... & 도착지) -->
+    <div id="headerRouteCard" class="route-planner-card p-2.5 flex items-stretch gap-2 transition-all">
+      <!-- 좌측 주소 목록 (출발지 & 도착지) -->
       <div class="flex-1 min-w-0 flex flex-col justify-between gap-1.5">
         
-        <!-- 내 출발지 (Row 1): 실시간 현위치 vs 다른 주소 표시 -->
-        <div class="flex items-center gap-2 group cursor-pointer" onclick="window.openOriginAddressPicker()" title="클릭하여 출발지 주소 변경">
-          <span class="w-2 h-2 rounded-full bg-sky-300 shrink-0"></span>
-          <div class="min-w-0 flex-1">
-            <div class="flex items-center gap-1 text-[11px] font-bold text-white/90">
-              <span id="headerMyOriginTypeBadge" class="text-[9.5px] font-extrabold px-1.5 py-0.2 rounded bg-emerald-400 text-slate-900 shrink-0">현위치 GPS</span>
-              <span id="headerMyOriginAddr" class="truncate text-white font-semibold">현위치: 서울 영등포구 문래동3가 58-33</span>
-            </div>
+        <!-- 내 출발지 (Row 1): 실시간 현위치 vs 지정 주소 표시 -->
+        <div class="flex items-center gap-2 group cursor-pointer py-0.5" onclick="window.openOriginAddressPicker()" title="클릭하여 출발지 주소 변경">
+          <span id="headerMyOriginDot" class="w-2 h-2 rounded-full bg-white shrink-0"></span>
+          <div class="min-w-0 flex-1 flex items-center gap-1.5">
+            <span id="headerMyOriginAddr" class="truncate text-[13px] font-semibold text-white tracking-tight">현위치: 위치 확인 중...</span>
+            <span id="headerMyOriginTypeBadge" class="hidden text-[10px] font-medium px-1.5 py-0.5 rounded-md bg-white/20 text-white shrink-0">지정 주소</span>
           </div>
-          <!-- 실시간 GPS 복귀 버튼 (다른 주소 사용 중일 때 노출) -->
-          <button type="button" id="headerGpsRestoreBtn" onclick="event.stopPropagation(); window.restoreMyLiveGps();" class="hidden text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-400 text-slate-900 shrink-0 hover:bg-emerald-300 transition-all flex items-center gap-0.5" title="실시간 내 위치 GPS로 즉시 복귀">
-            <i data-lucide="crosshair" class="w-3 h-3"></i>
+          <!-- 실시간 GPS 복귀 버튼 -->
+          <button type="button" id="headerGpsRestoreBtn" onclick="event.stopPropagation(); window.restoreMyLiveGps();" class="hidden text-[10.5px] font-semibold px-2 py-0.5 rounded-full bg-white/20 hover:bg-white/30 text-white shrink-0 transition-all flex items-center gap-1" title="실시간 내 위치 GPS로 즉시 복귀">
+            <i data-lucide="crosshair" class="w-3 h-3 text-white"></i>
             <span>현위치 복귀</span>
           </button>
         </div>
 
-        <div class="w-full h-[1px] bg-white/15"></div>
+        <div class="w-full h-[1px] bg-white/20"></div>
 
         <!-- 추가 참가자 출발지 목록 (2명 이상일 때) -->
         <div id="headerOtherParticipantsArea" class="hidden flex flex-col gap-1">
           <!-- 동적 렌더링 -->
         </div>
 
-        <!-- 도착지 / 중간 약속 장소 (Row 2) -->
-        <div class="flex items-center gap-2 group cursor-pointer" onclick="window.focusOrSearchDestination()" title="클릭하여 약속 장소/중간점 확인">
-          <span class="w-2 h-2 rounded-full bg-amber-300 shrink-0"></span>
+        <!-- 도착지 입력 (Row 2): 레퍼런스와 동일하게 깔끔한 '도착지 입력' UI (추천 중간점 라벨/노란 뱃지 제거) -->
+        <div class="flex items-center gap-2 group cursor-pointer py-0.5" onclick="window.focusOrSearchDestination()" title="클릭하여 약속 장소 또는 도착지 입력">
+          <span id="headerDestDot" class="w-2 h-2 rounded-full bg-white/40 shrink-0"></span>
           <div class="min-w-0 flex-1">
-            <div class="flex items-center gap-1 text-[11px] font-bold text-white/90">
-              <span id="headerDestTypeBadge" class="text-[9.5px] font-extrabold px-1.5 py-0.2 rounded bg-amber-400 text-slate-900 shrink-0">중간점</span>
-              <span id="headerDestAddr" class="truncate text-white font-semibold">강남역 (2호선·신분당선)</span>
-            </div>
+            <span id="headerDestAddr" class="truncate block text-[13px] text-white/70 group-hover:text-white transition-colors">도착지 입력</span>
           </div>
         </div>
 
       </div>
 
-      <!-- 우측 액션 버튼들 (⇅ 전환 / + 출발지 추가 / ⋮ 모임 옵션) -->
-      <div class="flex flex-col justify-between items-center pl-1.5 border-l border-white/20 shrink-0 gap-1">
-        <!-- ⇅ 버튼: 내 위치 ⟷ 다른 주소 모임 잡기 토글 -->
-        <button type="button" onclick="window.toggleOriginAddressMode()" class="press p-1 rounded-lg hover:bg-white/20 text-white/90 hover:text-white transition-all" title="실시간 현위치 ⟷ 다른 주소(회사/집 등) 전환">
+      <!-- 우측 액션 버튼들 (⇅ 전환 / + 출발지 추가 / ⋮ 즐겨찾기 및 설정) -->
+      <div class="flex flex-col justify-between items-center pl-2 border-l border-white/20 shrink-0 gap-1.5">
+        <!-- ⇅ 버튼: 내 위치 ⟷ 지정 주소 전환 -->
+        <button type="button" onclick="window.toggleOriginAddressMode()" class="press p-1 rounded-lg hover:bg-white/20 text-white/90 hover:text-white transition-all" title="실시간 현위치 ⟷ 지정 주소(집/회사 등) 전환">
           <i data-lucide="arrow-up-down" class="w-4 h-4"></i>
         </button>
 
         <!-- + 버튼: 다른 출발지 / 친구 추가 -->
-        <button type="button" id="openAddLocationBtn" onclick="window.openAddModal()" class="press w-6 h-6 rounded-full bg-white/25 hover:bg-white text-white hover:text-[#0284c7] flex items-center justify-center transition-all shadow-xs" title="다른 출발지 / 친구 주소 추가">
-          <i data-lucide="plus" class="w-3.5 h-3.5 font-bold"></i>
+        <button type="button" id="openAddLocationBtn" onclick="window.openAddModal()" class="press w-6 h-6 rounded-full bg-white/20 hover:bg-white/35 text-white flex items-center justify-center transition-all shadow-xs" title="다른 출발지 / 친구 주소 추가">
+          <i data-lucide="plus" class="w-3.5 h-3.5"></i>
         </button>
 
-        <!-- ⋮ 메뉴 버튼: 주소 변경 / 옵션 -->
-        <button type="button" onclick="window.openAddressOptionsDrawer()" class="press p-1 rounded-lg hover:bg-white/20 text-white/90 hover:text-white transition-all" title="출발지 및 모임 설정">
+        <!-- ⋮ 메뉴 버튼: 즐겨찾기(집/회사) 및 모임 설정 -->
+        <button type="button" onclick="window.openSavedPlacesModal()" class="press p-1 rounded-lg hover:bg-white/20 text-white/90 hover:text-white transition-all" title="즐겨찾기(집/회사) 설정 및 관리">
           <i data-lucide="more-vertical" class="w-4 h-4"></i>
         </button>
       </div>
 
     </div>
 
-    <!-- 1-3. 간편 출발지 빠른 선택 바 (실시간 위치 / 강남역 / 판교역 / 홍대입구역 / 직접 검색) -->
-    <div id="headerQuickLocBar" class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pt-0.5 text-[10.5px]">
-      <span class="text-white/70 font-semibold shrink-0">빠른 선택:</span>
-      <button type="button" onclick="window.restoreMyLiveGps()" class="press px-2 py-0.5 rounded-full bg-white/20 hover:bg-white/30 text-white font-bold shrink-0 flex items-center gap-1 transition-all">
-        <i data-lucide="crosshair" class="w-3 h-3 text-emerald-300"></i>
-        <span>실시간 현위치</span>
-      </button>
-      <button type="button" onclick="window.setMyCustomOrigin('강남역', '서울 강남구 역삼동 858', 37.4979, 127.0276)" class="press px-2 py-0.5 rounded-full bg-white/15 hover:bg-white/25 text-white/90 font-medium shrink-0">
-        강남역
-      </button>
-      <button type="button" onclick="window.setMyCustomOrigin('판교역', '경기 성남시 분당구 판교역로 160', 37.3948, 127.1111)" class="press px-2 py-0.5 rounded-full bg-white/15 hover:bg-white/25 text-white/90 font-medium shrink-0">
-        판교역
-      </button>
-      <button type="button" onclick="window.setMyCustomOrigin('홍대입구역', '서울 마포구 양화로 160', 37.5575, 126.9245)" class="press px-2 py-0.5 rounded-full bg-white/15 hover:bg-white/25 text-white/90 font-medium shrink-0">
-        홍대입구역
-      </button>
-      <button type="button" onclick="window.openEditMyLocationModal()" class="press px-2 py-0.5 rounded-full bg-white/15 hover:bg-white/25 text-white/90 font-bold shrink-0 flex items-center gap-0.5">
-        <i data-lucide="search" class="w-3 h-3"></i>
-        <span>주소 직접 검색...</span>
-      </button>
+    <!-- 1-3. 간편 출발지 빠른 선택 바 (실시간 현위치 / 집 / 회사 / 즐겨찾기 설정 / 직접 검색) -->
+    <div id="headerQuickLocBar" class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pt-0.5 text-[11px]">
+      <!-- JS renderQuickPlacesBar() 동적 렌더링 -->
     </div>
 
   </header>
@@ -538,6 +516,69 @@
           <button type="button" onclick="window.addPredefinedLocation('여의도역', 37.5216, 126.9242)" class="press px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-bold border border-slate-200/60">+ 여의도역</button>
           <button type="button" onclick="window.addPredefinedLocation('종로3가역', 37.5716, 126.9918)" class="press px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-bold border border-slate-200/60">+ 종로3가역</button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4-1. [즐겨찾기 장소 (집 / 회사) 설정 및 관리] 모달 -->
+  <div id="savedPlacesModal" class="hidden absolute inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 transition-opacity">
+    <div class="bg-white w-full max-w-[420px] rounded-t-3xl sm:rounded-3xl p-5 shadow-2xl flex flex-col gap-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-full bg-blue-50 text-[#4a80f0] flex items-center justify-center">
+            <i data-lucide="bookmark" class="w-4 h-4"></i>
+          </div>
+          <div>
+            <h3 class="text-[16px] font-black text-slate-900 tracking-tight">즐겨찾기 장소 관리</h3>
+            <p class="text-[11.5px] text-slate-500">집과 회사를 등록해 두면 빠른 선택으로 즉시 출발지를 바꿀 수 있습니다.</p>
+          </div>
+        </div>
+        <button type="button" onclick="window.closeSavedPlacesModal()" class="p-1 rounded-full text-slate-400 hover:text-slate-700">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- 집 등록 카드 -->
+      <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 flex flex-col gap-2">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <div class="w-7 h-7 rounded-xl bg-sky-100 text-[#4a80f0] flex items-center justify-center">
+              <i data-lucide="home" class="w-3.5 h-3.5"></i>
+            </div>
+            <span class="text-[13px] font-bold text-slate-900">우리집 (Home)</span>
+          </div>
+          <div id="savedHomeActions" class="flex items-center gap-1">
+            <!-- 동적 버튼 렌더링 -->
+          </div>
+        </div>
+        <p id="savedHomeAddrText" class="text-[12px] text-slate-500 pl-9 font-medium">등록된 주소가 없습니다.</p>
+      </div>
+
+      <!-- 회사 등록 카드 -->
+      <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 flex flex-col gap-2">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <div class="w-7 h-7 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center">
+              <i data-lucide="briefcase" class="w-3.5 h-3.5"></i>
+            </div>
+            <span class="text-[13px] font-bold text-slate-900">회사 / 자주 가는 곳 (Work)</span>
+          </div>
+          <div id="savedWorkActions" class="flex items-center gap-1">
+            <!-- 동적 버튼 렌더링 -->
+          </div>
+        </div>
+        <p id="savedWorkAddrText" class="text-[12px] text-slate-500 pl-9 font-medium">등록된 주소가 없습니다.</p>
+      </div>
+
+      <!-- 하단 안내 및 닫기 버튼 -->
+      <div class="flex items-center justify-between pt-1 border-t border-slate-100">
+        <span class="text-[11px] text-slate-400 flex items-center gap-1">
+          <i data-lucide="info" class="w-3 h-3 text-[#4a80f0]"></i>
+          <span>등록된 장소는 브라우저에 안전하게 보관됩니다</span>
+        </span>
+        <button type="button" onclick="window.closeSavedPlacesModal()" class="press px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-[12px] font-bold transition-colors">
+          닫기
+        </button>
       </div>
     </div>
   </div>
@@ -1166,15 +1207,15 @@
 </div>
 
 <!-- 기능별 모듈 스크립트 분리 (Clean Modular Architecture) -->
-<script src="js/config.js?v=19"></script>
-<script src="js/state.js?v=19"></script>
-<script src="js/map.js?v=19"></script>
-<script src="js/mobility.js?v=19"></script>
-<script src="js/places.js?v=19"></script>
-<script src="js/weather.js?v=19"></script>
-<script src="js/care.js?v=19"></script>
-<script src="js/game.js?v=19"></script>
-<script src="js/chat.js?v=19"></script>
-<script src="js/ui.js?v=19"></script>
+<script src="js/config.js?v=20"></script>
+<script src="js/state.js?v=20"></script>
+<script src="js/map.js?v=20"></script>
+<script src="js/mobility.js?v=20"></script>
+<script src="js/places.js?v=20"></script>
+<script src="js/weather.js?v=20"></script>
+<script src="js/care.js?v=20"></script>
+<script src="js/game.js?v=20"></script>
+<script src="js/chat.js?v=20"></script>
+<script src="js/ui.js?v=20"></script>
 </body>
 </html>

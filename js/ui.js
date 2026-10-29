@@ -342,13 +342,29 @@ function searchAddressList(query) {
 }
 
 window.addPredefinedLocation = function(name, lat, lng) {
+  if (state.savedPlaceTarget) {
+    var target = state.savedPlaceTarget;
+    var savedPlaces = getSavedPlaces();
+    savedPlaces[target] = {
+      name: (target === 'home' ? '우리집' : '회사'),
+      shortName: name,
+      addr: name,
+      lat: lat,
+      lng: lng
+    };
+    saveSavedPlaces(savedPlaces);
+    state.savedPlaceTarget = null;
+    closeModal();
+    if (window.renderSavedPlacesModalUI) window.renderSavedPlacesModalUI();
+    var targetName = (target === 'home' ? '우리집' : '회사');
+    showToast(targetName + ' 주소가 "' + name + '"(으)로 등록되었습니다', 'bookmark-check');
+    return;
+  }
+
   if (state.isEditingMyLocation) {
     state.myLocation = [lat, lng];
     state.myAddress = name;
     state.locations[0].name = '내 위치';
-    state.locations[0].shortName = name;
-    state.locations[0].loc = [lat, lng];
-    state.locations[0].name = name;
     state.locations[0].shortName = name;
     state.locations[0].loc = [lat, lng];
     state.locations[0].addr = name;
@@ -391,6 +407,25 @@ window.addPredefinedLocation = function(name, lat, lng) {
 window.selectSearchResult = function(resultId) {
   var item = searchResultsCache[resultId];
   if (!item) return;
+
+  if (state.savedPlaceTarget) {
+    var sTarget = state.savedPlaceTarget;
+    var sPlaces = getSavedPlaces();
+    sPlaces[sTarget] = {
+      name: (sTarget === 'home' ? '우리집' : '회사'),
+      shortName: item.shortName,
+      addr: item.fullAddress,
+      lat: item.lat,
+      lng: item.lon
+    };
+    saveSavedPlaces(sPlaces);
+    state.savedPlaceTarget = null;
+    closeModal();
+    if (window.renderSavedPlacesModalUI) window.renderSavedPlacesModalUI();
+    var sTargetName = (sTarget === 'home' ? '우리집' : '회사');
+    showToast(sTargetName + ' 주소가 "' + item.shortName + '"(으)로 등록되었습니다', 'bookmark-check');
+    return;
+  }
 
   if (state.isEditingMyLocation) {
     state.myLocation = [item.lat, item.lon];
@@ -476,7 +511,203 @@ window.openAddModal = function() {
 };
 
 // --------------------------------------------------------------------
-// 상단 모임 경로 & 주소 플래너 바 인터랙션 구현
+// 즐겨찾기 (집 / 회사) 장소 로컬 스토리지 관리 시스템
+// --------------------------------------------------------------------
+function getSavedPlaces() {
+  try {
+    var raw = localStorage.getItem('midpoint_saved_places');
+    if (raw) return JSON.parse(raw);
+  } catch(e) {}
+  return {
+    home: null,
+    work: null
+  };
+}
+
+function saveSavedPlaces(data) {
+  try {
+    localStorage.setItem('midpoint_saved_places', JSON.stringify(data));
+  } catch(e) {}
+  window.renderQuickPlacesBar();
+  window.renderSavedPlacesModalUI();
+}
+
+window.renderQuickPlacesBar = function() {
+  var bar = document.getElementById('headerQuickLocBar');
+  if (!bar) return;
+
+  var saved = getSavedPlaces();
+  var myLoc = state.locations[0];
+  var isGps = myLoc && !myLoc.isCustom;
+
+  var gpsClass = isGps ? 'bg-white text-[#4a80f0] font-bold shadow-xs' : 'route-planner-chip font-medium';
+
+  // 1. 실시간 현위치
+  var html = '<button type="button" onclick="window.restoreMyLiveGps()" class="press px-2.5 py-1 rounded-full ' + gpsClass + ' shrink-0 flex items-center gap-1 transition-all">' +
+    '<i data-lucide="crosshair" class="w-3 h-3"></i>' +
+    '<span>실시간 현위치</span>' +
+  '</button>';
+
+  // 2. 집 (Home)
+  if (saved.home) {
+    var isHomeActive = myLoc && myLoc.isCustom && (myLoc.name === '우리집' || myLoc.addr === saved.home.addr);
+    var homeClass = isHomeActive ? 'bg-white text-[#4a80f0] font-bold shadow-xs' : 'route-planner-chip font-medium';
+    var shortHome = saved.home.shortName || '우리집';
+    html += '<button type="button" onclick="window.setOriginToSavedPlace(\'home\')" class="press px-2.5 py-1 rounded-full ' + homeClass + ' shrink-0 flex items-center gap-1 transition-all" title="집: ' + saved.home.addr + '">' +
+      '<i data-lucide="home" class="w-3 h-3"></i>' +
+      '<span>집 (' + shortHome + ')</span>' +
+    '</button>';
+  } else {
+    html += '<button type="button" onclick="window.openSavedPlaceEditor(\'home\')" class="press px-2.5 py-1 rounded-full border border-dashed border-white/40 bg-white/10 hover:bg-white/20 text-white/90 shrink-0 flex items-center gap-1 transition-all" title="집 주소 등록">' +
+      '<i data-lucide="plus" class="w-3 h-3"></i>' +
+      '<span>집 등록</span>' +
+    '</button>';
+  }
+
+  // 3. 회사 (Work)
+  if (saved.work) {
+    var isWorkActive = myLoc && myLoc.isCustom && (myLoc.name === '회사' || myLoc.addr === saved.work.addr);
+    var workClass = isWorkActive ? 'bg-white text-[#4a80f0] font-bold shadow-xs' : 'route-planner-chip font-medium';
+    var shortWork = saved.work.shortName || '회사';
+    html += '<button type="button" onclick="window.setOriginToSavedPlace(\'work\')" class="press px-2.5 py-1 rounded-full ' + workClass + ' shrink-0 flex items-center gap-1 transition-all" title="회사: ' + saved.work.addr + '">' +
+      '<i data-lucide="briefcase" class="w-3 h-3"></i>' +
+      '<span>회사 (' + shortWork + ')</span>' +
+    '</button>';
+  } else {
+    html += '<button type="button" onclick="window.openSavedPlaceEditor(\'work\')" class="press px-2.5 py-1 rounded-full border border-dashed border-white/40 bg-white/10 hover:bg-white/20 text-white/90 shrink-0 flex items-center gap-1 transition-all" title="회사 주소 등록">' +
+      '<i data-lucide="plus" class="w-3 h-3"></i>' +
+      '<span>회사 등록</span>' +
+    '</button>';
+  }
+
+  // 4. 즐겨찾기 설정 (아이콘 버튼)
+  html += '<button type="button" onclick="window.openSavedPlacesModal()" class="press px-2 py-1 rounded-full route-planner-chip text-white/90 shrink-0 flex items-center gap-1 transition-all" title="즐겨찾기 장소 관리 및 설정">' +
+    '<i data-lucide="bookmark" class="w-3 h-3"></i>' +
+    '<span>즐겨찾기 설정</span>' +
+  '</button>';
+
+  // 5. 주소 직접 검색
+  html += '<button type="button" onclick="window.openEditMyLocationModal()" class="press px-2.5 py-1 rounded-full route-planner-chip text-white/90 shrink-0 flex items-center gap-1 transition-all">' +
+    '<i data-lucide="search" class="w-3 h-3"></i>' +
+    '<span>직접 검색...</span>' +
+  '</button>';
+
+  bar.innerHTML = html;
+  if (window.lucide) lucide.createIcons();
+};
+
+window.setOriginToSavedPlace = function(type) {
+  var saved = getSavedPlaces();
+  var place = saved[type];
+  if (!place) {
+    window.openSavedPlaceEditor(type);
+    return;
+  }
+  var placeTitle = (type === 'home' ? '우리집' : '회사');
+  window.setMyCustomOrigin(placeTitle, place.addr, place.lat, place.lng);
+};
+
+window.openSavedPlaceEditor = function(type) {
+  state.savedPlaceTarget = type;
+  state.isEditingMyLocation = false;
+  var modal = document.getElementById('addLocationModal');
+  var titleEl = document.getElementById('modalTitle');
+  var subTitleEl = document.getElementById('modalSubTitle');
+  var gpsRetryBtn = document.getElementById('modalGpsRetryBtn');
+  var label = (type === 'home' ? '우리집' : '회사');
+  if (titleEl) titleEl.textContent = label + ' 주소 등록';
+  if (subTitleEl) subTitleEl.textContent = label + '로 설정할 주소나 건물을 검색해 주세요';
+  if (gpsRetryBtn) gpsRetryBtn.classList.remove('hidden');
+  if (modal) modal.classList.remove('hidden');
+  var input = document.getElementById('addressSearchInput');
+  if (input) {
+    input.value = '';
+    input.placeholder = label + ' 주소 검색 (예: 도로명, 역이름, 건물명)';
+    setTimeout(function() { input.focus(); }, 150);
+  }
+  if (window.lucide) lucide.createIcons();
+};
+
+window.openSavedPlacesModal = function() {
+  var modal = document.getElementById('savedPlacesModal');
+  if (!modal) return;
+  modal.classList.remove('hidden');
+  window.renderSavedPlacesModalUI();
+};
+
+window.closeSavedPlacesModal = function() {
+  var modal = document.getElementById('savedPlacesModal');
+  if (modal) modal.classList.add('hidden');
+};
+
+window.renderSavedPlacesModalUI = function() {
+  var saved = getSavedPlaces();
+  var homeText = document.getElementById('savedHomeAddrText');
+  var homeActions = document.getElementById('savedHomeActions');
+  var workText = document.getElementById('savedWorkAddrText');
+  var workActions = document.getElementById('savedWorkActions');
+
+  if (homeText) {
+    homeText.textContent = saved.home ? saved.home.addr : '등록된 주소가 없습니다.';
+    homeText.className = saved.home ? 'text-[12px] text-slate-800 pl-9 font-semibold' : 'text-[12px] text-slate-400 pl-9 font-medium';
+  }
+  if (homeActions) {
+    if (saved.home) {
+      homeActions.innerHTML = '<button type="button" onclick="window.openSavedPlaceEditor(\'home\')" class="press px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-slate-700 text-[11px] font-bold hover:bg-slate-50 transition-colors">변경</button>' +
+        '<button type="button" onclick="window.deleteSavedPlace(\'home\')" class="press p-1 text-slate-400 hover:text-rose-500 transition-colors" title="삭제"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>';
+    } else {
+      homeActions.innerHTML = '<button type="button" onclick="window.saveCurrentGpsAsSavedPlace(\'home\')" class="press px-2.5 py-1 rounded-lg bg-sky-50 text-[#4a80f0] border border-sky-200 text-[11px] font-bold hover:bg-sky-100 transition-colors">현위치로 등록</button>' +
+        '<button type="button" onclick="window.openSavedPlaceEditor(\'home\')" class="press px-2.5 py-1 rounded-lg bg-[#4a80f0] text-white text-[11px] font-bold hover:bg-blue-600 transition-colors shadow-2xs">주소 검색</button>';
+    }
+  }
+
+  if (workText) {
+    workText.textContent = saved.work ? saved.work.addr : '등록된 주소가 없습니다.';
+    workText.className = saved.work ? 'text-[12px] text-slate-800 pl-9 font-semibold' : 'text-[12px] text-slate-400 pl-9 font-medium';
+  }
+  if (workActions) {
+    if (saved.work) {
+      workActions.innerHTML = '<button type="button" onclick="window.openSavedPlaceEditor(\'work\')" class="press px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-slate-700 text-[11px] font-bold hover:bg-slate-50 transition-colors">변경</button>' +
+        '<button type="button" onclick="window.deleteSavedPlace(\'work\')" class="press p-1 text-slate-400 hover:text-rose-500 transition-colors" title="삭제"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>';
+    } else {
+      workActions.innerHTML = '<button type="button" onclick="window.saveCurrentGpsAsSavedPlace(\'work\')" class="press px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-600 border border-indigo-200 text-[11px] font-bold hover:bg-indigo-100 transition-colors">현위치로 등록</button>' +
+        '<button type="button" onclick="window.openSavedPlaceEditor(\'work\')" class="press px-2.5 py-1 rounded-lg bg-[#4a80f0] text-white text-[11px] font-bold hover:bg-blue-600 transition-colors shadow-2xs">주소 검색</button>';
+    }
+  }
+
+  if (window.lucide) lucide.createIcons();
+};
+
+window.saveCurrentGpsAsSavedPlace = function(type) {
+  var coords = state.realGpsLocation || state.myLocation;
+  var addr = state.realGpsAddress || state.myAddress;
+  if (!coords || !addr) {
+    showToast('실시간 GPS 주소를 확인하는 중입니다', 'crosshair');
+    return;
+  }
+  var tokens = addr.split(' ').filter(Boolean);
+  var shortName = tokens.length >= 2 ? tokens[tokens.length - 1] : (type === 'home' ? '우리집' : '회사');
+  var saved = getSavedPlaces();
+  saved[type] = {
+    name: (type === 'home' ? '우리집' : '회사'),
+    shortName: shortName,
+    addr: addr,
+    lat: coords[0],
+    lng: coords[1]
+  };
+  saveSavedPlaces(saved);
+  showToast((type === 'home' ? '우리집' : '회사') + '이 현재 위치로 등록되었습니다', 'bookmark-check');
+};
+
+window.deleteSavedPlace = function(type) {
+  var saved = getSavedPlaces();
+  saved[type] = null;
+  saveSavedPlaces(saved);
+  showToast((type === 'home' ? '우리집' : '회사') + ' 즐겨찾기를 삭제했습니다', 'trash-2');
+};
+
+// --------------------------------------------------------------------
+// 상단 모임 경로 & 주소 플래너 바 인터랙션 구현 (눈이 편안한 iOS 내비 스타일)
 // --------------------------------------------------------------------
 window.updateHeaderRouteCardUI = function() {
   var header = document.getElementById('topHeader');
@@ -496,11 +727,11 @@ window.updateHeaderRouteCardUI = function() {
     }
     if (myOriginBadgeEl) {
       if (isCustom) {
+        myOriginBadgeEl.classList.remove('hidden');
         myOriginBadgeEl.textContent = '지정 주소';
-        myOriginBadgeEl.className = 'text-[9.5px] font-extrabold px-1.5 py-0.2 rounded bg-amber-400 text-slate-900 shrink-0';
+        myOriginBadgeEl.className = 'text-[10px] font-medium px-1.5 py-0.5 rounded-md bg-white/20 text-white shrink-0';
       } else {
-        myOriginBadgeEl.textContent = '현위치 GPS';
-        myOriginBadgeEl.className = 'text-[9.5px] font-extrabold px-1.5 py-0.2 rounded bg-emerald-400 text-slate-900 shrink-0';
+        myOriginBadgeEl.classList.add('hidden');
       }
     }
     if (gpsRestoreBtn) {
@@ -518,14 +749,14 @@ window.updateHeaderRouteCardUI = function() {
     if (state.locations.length > 1) {
       othersContainer.classList.remove('hidden');
       othersContainer.innerHTML = state.locations.slice(1).map(function(item) {
-        return '<div class="flex items-center justify-between gap-1 text-[10.5px] text-white/90 bg-white/10 px-2 py-0.5 rounded-lg">' +
+        return '<div class="flex items-center justify-between gap-1 text-[11px] text-white/95 bg-white/15 px-2.5 py-1 rounded-xl">' +
           '<div class="flex items-center gap-1.5 min-w-0 flex-1">' +
-            '<span class="w-1.5 h-1.5 rounded-full bg-sky-200 shrink-0"></span>' +
-            '<span class="font-extrabold text-white shrink-0">' + item.name + ':</span>' +
-            '<span class="truncate text-white/80">' + (item.addr || item.name) + '</span>' +
+            '<span class="w-1.5 h-1.5 rounded-full bg-white shrink-0"></span>' +
+            '<span class="font-bold text-white shrink-0">' + item.name + ':</span>' +
+            '<span class="truncate text-white/85">' + (item.addr || item.name) + '</span>' +
           '</div>' +
-          '<button type="button" onclick="window.removeLocation(\'' + item.id + '\')" class="press p-0.5 text-white/60 hover:text-rose-200 transition-colors shrink-0" title="출발지 삭제">' +
-            '<i data-lucide="x" class="w-3 h-3"></i>' +
+          '<button type="button" onclick="window.removeLocation(\'' + item.id + '\')" class="press p-0.5 text-white/70 hover:text-white transition-colors shrink-0" title="출발지 삭제">' +
+            '<i data-lucide="x" class="w-3.5 h-3.5"></i>' +
           '</button>' +
         '</div>';
       }).join('');
@@ -535,45 +766,37 @@ window.updateHeaderRouteCardUI = function() {
     }
   }
 
-  // 도착지 / 중간점
+  // 도착지 입력 (Row 2): 레퍼런스와 동일하게 "도착지 입력" 제공, "추천 중간점" 배지/텍스트 완전 제거
   var destAddrEl = document.getElementById('headerDestAddr');
-  var destBadgeEl = document.getElementById('headerDestTypeBadge');
+  var destDotEl = document.getElementById('headerDestDot');
   if (destAddrEl) {
     if (state.confirmedPlace) {
       destAddrEl.textContent = '도착지: ' + state.confirmedPlace.place_name;
-      if (destBadgeEl) {
-        destBadgeEl.textContent = '확정 장소';
-        destBadgeEl.className = 'text-[9.5px] font-extrabold px-1.5 py-0.2 rounded bg-emerald-400 text-slate-900 shrink-0';
-      }
-    } else if (state.currentHubName) {
-      destAddrEl.textContent = '중간 약속 장소: ' + state.currentHubName;
-      if (destBadgeEl) {
-        destBadgeEl.textContent = '추천 중간점';
-        destBadgeEl.className = 'text-[9.5px] font-extrabold px-1.5 py-0.2 rounded bg-amber-400 text-slate-900 shrink-0';
-      }
+      destAddrEl.className = 'truncate block text-[13px] font-bold text-white';
+      if (destDotEl) destDotEl.className = 'w-2 h-2 rounded-full bg-white shrink-0';
     } else {
-      destAddrEl.textContent = '도착지: 중간 약속 장소 탐색 중';
-      if (destBadgeEl) {
-        destBadgeEl.textContent = '탐색 중';
-        destBadgeEl.className = 'text-[9.5px] font-extrabold px-1.5 py-0.2 rounded bg-white/20 text-white shrink-0';
-      }
+      destAddrEl.textContent = '도착지 입력';
+      destAddrEl.className = 'truncate block text-[13px] font-normal text-white/70 group-hover:text-white transition-colors';
+      if (destDotEl) destDotEl.className = 'w-2 h-2 rounded-full bg-white/40 shrink-0';
     }
   }
 
-  // 교통수단 버튼 활성화 갱신
+  // 교통수단 버튼 활성화 갱신 (부드러운 화이트 캡슐 하이라이트)
   var currentTrans = (state.meetFilter && state.meetFilter.transportPref) || 'transit';
   var btnCar = document.getElementById('headerTabCar');
   var btnTransit = document.getElementById('headerTabTransit');
   var btnWalk = document.getElementById('headerTabWalk');
   var btnBike = document.getElementById('headerTabBike');
 
-  var activeClass = 'press px-3 h-7 rounded-full bg-white text-[#0284c7] font-bold shadow-xs flex items-center justify-center gap-1 transition-all';
+  var activeClass = 'press px-3.5 h-7 rounded-full bg-white text-[#4a80f0] font-bold shadow-xs flex items-center justify-center gap-1 transition-all';
   var inactiveClass = 'press w-8 h-7 rounded-full flex items-center justify-center transition-all text-white/80 hover:text-white hover:bg-white/10';
 
   if (btnCar) btnCar.className = (currentTrans === 'car') ? activeClass : inactiveClass;
   if (btnTransit) btnTransit.className = (currentTrans === 'transit' || currentTrans === 'mixed') ? activeClass : inactiveClass;
   if (btnWalk) btnWalk.className = (currentTrans === 'walk') ? activeClass : inactiveClass;
   if (btnBike) btnBike.className = (currentTrans === 'bike') ? activeClass : inactiveClass;
+
+  window.renderQuickPlacesBar();
 
   if (window.lucide) lucide.createIcons();
 };
@@ -683,11 +906,12 @@ window.focusOrSearchDestination = function() {
 };
 
 window.openAddressOptionsDrawer = function() {
-  window.openAddModal();
+  window.openSavedPlacesModal();
 };
 
 function closeModal() {
   state.isEditingMyLocation = false;
+  state.savedPlaceTarget = null;
   if (addModal) addModal.classList.add('hidden');
   var input = document.getElementById('addressSearchInput');
   if (input) input.value = '';
@@ -810,11 +1034,19 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
+  var savedPlacesModalEl = document.getElementById('savedPlacesModal');
+  if (savedPlacesModalEl) {
+    savedPlacesModalEl.addEventListener('click', function(e) {
+      if (e.target === savedPlacesModalEl) window.closeSavedPlacesModal();
+    });
+  }
+
   window.addEventListener('resize', function() {
     if (map) map.invalidateSize();
   });
 
   syncMeetFilterUI();
+  if (window.renderQuickPlacesBar) window.renderQuickPlacesBar();
   locateMe(true);
   if (window.lucide) lucide.createIcons();
 });

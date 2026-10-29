@@ -77,13 +77,33 @@ body {
   box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
 }
 
-/* 상단 모임 경로 & 주소 플래너 바 */
+/* 상단 모임 경로 & 주소 플래너 바 (눈이 편안하고 가독성이 뛰어난 iOS 내비게이션 블루) */
 .route-planner-header {
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
-  border: 1px solid rgba(255, 255, 255, 0.28);
-  box-shadow: 0 14px 38px -4px rgba(2, 132, 199, 0.38), 0 4px 14px rgba(15, 23, 42, 0.12);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  background: #4a80f0; /* 부드럽고 눈이 피로하지 않은 애플/iOS 내비 블루 */
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  box-shadow: 0 10px 24px -4px rgba(74, 128, 240, 0.32), 0 2px 8px rgba(15, 23, 42, 0.06);
+}
+
+.route-planner-card {
+  background: rgba(255, 255, 255, 0.16);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 14px;
+}
+
+.route-planner-chip {
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+  backdrop-filter: blur(8px);
+  transition: all 0.15s ease;
+}
+
+.route-planner-chip:hover {
+  background: rgba(255, 255, 255, 0.28);
 }
 
 .press {
