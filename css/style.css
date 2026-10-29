@@ -293,24 +293,13 @@ body {
   transform: translate(-50%, 0) scale(1);
 }
 
-/* 바텀 시트 슬라이드 트랜지션 (MidPoint 시그니처 플로팅 캡슐 시스템) */
+/* 바텀 시트 슬라이드 트랜지션 */
 .sheet-collapsed {
-  max-height: 64px;
-  height: 64px;
-  overflow: hidden;
+  max-height: 285px;
 }
 
 .sheet-expanded {
-  max-height: 78vh;
-  height: 78vh;
-}
-
-#sheetPeekBar {
-  transition: background-color 0.15s ease;
-}
-
-#sheetPeekBar:hover {
-  background-color: rgba(248, 250, 252, 0.85);
+  max-height: 82vh;
 }
 
 /* 실시간 내비 독 펼침/접힘 트랜지션 */
