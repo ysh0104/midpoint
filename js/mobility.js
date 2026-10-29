@@ -359,8 +359,10 @@ function updateKakaoMobilityRoutes(destCoord, destName) {
           var distKm = ((summary.distance || 0) / 1000).toFixed(1);
 
           var polyCoords = [];
+          var rawGuides = [];
           if (route.sections && route.sections.length > 0) {
             route.sections.forEach(function(sec) {
+              if (sec.guides) rawGuides = rawGuides.concat(sec.guides);
               if (sec.roads) {
                 sec.roads.forEach(function(rd) {
                   if (rd.vertexes) {
@@ -372,11 +374,11 @@ function updateKakaoMobilityRoutes(destCoord, destName) {
               }
             });
           }
-          renderCarRoutePolylines(polyCoords, color, idx, locItem, distKm, durationMin, realDurations, destCoord);
+          renderCarRoutePolylines(polyCoords, color, idx, locItem, distKm, durationMin, realDurations, destCoord, rawGuides);
         })
         .catch(function() {
           var osrmUrl = 'https://router.project-osrm.org/route/v1/driving/' +
-            oLon + ',' + oLat + ';' + dLon + ',' + dLat + '?overview=full&geometries=geojson';
+            oLon + ',' + oLat + ';' + dLon + ',' + dLat + '?overview=full&geometries=geojson&steps=true';
 
           fetch(osrmUrl)
             .then(function(r) { return r.json(); })
@@ -386,7 +388,7 @@ function updateKakaoMobilityRoutes(destCoord, destName) {
                 var distKm = (r0.distance / 1000).toFixed(1);
                 var durationMin = Math.max(3, Math.round(r0.duration / 60));
                 var polyCoords = r0.geometry.coordinates.map(function(c) { return [c[1], c[0]]; });
-                renderCarRoutePolylines(polyCoords, color, idx, locItem, distKm, durationMin, realDurations, destCoord);
+                renderCarRoutePolylines(polyCoords, color, idx, locItem, distKm, durationMin, realDurations, destCoord, []);
               } else {
                 throw new Error('OSRM no route');
               }
@@ -397,7 +399,7 @@ function updateKakaoMobilityRoutes(destCoord, destName) {
               var midLat = (oLat + dLat) / 2 + (oLon - dLon) * 0.08;
               var midLon = (oLon + dLon) / 2 + (dLat - oLat) * 0.08;
               var polyCoords = [locItem.loc, [midLat, midLon], destCoord];
-              renderCarRoutePolylines(polyCoords, color, idx, locItem, estDist, estDur, realDurations, destCoord);
+              renderCarRoutePolylines(polyCoords, color, idx, locItem, estDist, estDur, realDurations, destCoord, []);
             });
         });
     } else {
@@ -406,7 +408,7 @@ function updateKakaoMobilityRoutes(destCoord, destName) {
   });
 }
 
-function renderCarRoutePolylines(polyCoords, color, idx, locItem, distKm, durationMin, realDurations, destCoord) {
+function renderCarRoutePolylines(polyCoords, color, idx, locItem, distKm, durationMin, realDurations, destCoord, rawGuides) {
   if (!polyCoords || polyCoords.length === 0) return;
 
   var firstPt = polyCoords[0];
@@ -437,12 +439,19 @@ function renderCarRoutePolylines(polyCoords, color, idx, locItem, distKm, durati
   state.routePolylines.push(coreLine);
 
   realDurations[idx] = durationMin;
+  var destName = state.confirmedPlace ? state.confirmedPlace.place_name : '약속 장소';
+  var carSteps = extractCarSteps(rawGuides, polyCoords, destName, locItem.name);
+  var transitSteps = generateDetailedTransitSteps(locItem, destCoord, destName);
+
   participantRouteDetails[locItem.id] = {
     durationMin: durationMin,
     distKm: distKm,
     etaStr: formatEtaTime(durationMin),
     transport: 'car',
-    routeDesc: '실시간 도로 주행 (내비게이션)'
+    routeDesc: '실시간 도로 주행 (내비게이션)',
+    carSteps: carSteps,
+    transitSteps: transitSteps,
+    polyCoords: polyCoords
   };
 
   updateParticipantRowUI(idx, locItem, distKm, durationMin, 'car', '실시간 도로 주행');
@@ -578,12 +587,19 @@ function renderTransitDetailedRoute(locItem, destCoord, idx, color, crowDistKm, 
       state.routePolylines.push(walk2);
     }
 
+    var destName = state.confirmedPlace ? state.confirmedPlace.place_name : '약속 장소';
+    var transitSteps = generateDetailedTransitSteps(locItem, destCoord, destName);
+    var carStepsFallback = extractCarSteps([], [locItem.loc, destCoord], destName, locItem.name);
+
     participantRouteDetails[locItem.id] = {
       durationMin: transitTimeMin,
       distKm: transitDistKm,
       etaStr: formatEtaTime(transitTimeMin),
       transport: 'transit',
-      routeDesc: routeDesc
+      routeDesc: routeDesc,
+      transitSteps: transitSteps,
+      carSteps: carStepsFallback,
+      polyCoords: railCoords
     };
 
     updateParticipantRowUI(idx, locItem, transitDistKm, transitTimeMin, 'transit', routeDesc);
@@ -634,13 +650,19 @@ function renderTransitDetailedRoute(locItem, destCoord, idx, color, crowDistKm, 
         var b2 = createTransitStopMarker(destCoord, '약속 장소', '하차', '#0284c7').addTo(map);
         state.transitMarkers.push(b1, b2);
 
-        var bDesc = locItem.name + ' 승차 → 목적지 하차';
+        var destName = state.confirmedPlace ? state.confirmedPlace.place_name : '약속 장소';
+        var transitSteps = generateDetailedTransitSteps(locItem, destCoord, destName);
+        var carStepsFallback = extractCarSteps([], poly, destName, locItem.name);
+
         participantRouteDetails[locItem.id] = {
           durationMin: transitTimeMin,
           distKm: transitDistKm,
           etaStr: formatEtaTime(transitTimeMin),
           transport: 'transit',
-          routeDesc: bDesc
+          routeDesc: bDesc,
+          transitSteps: transitSteps,
+          carSteps: carStepsFallback,
+          polyCoords: poly
         };
 
         updateParticipantRowUI(idx, locItem, transitDistKm, transitTimeMin, 'transit', bDesc);
@@ -715,9 +737,15 @@ function renderConfirmedNaviList() {
         '</button>' +
         '<span class="font-bold text-[13px] text-slate-800 truncate">' + locItem.name + '</span>' +
       '</div>' +
-      '<div class="text-right shrink-0">' +
-        '<span class="text-[12.5px] font-bold text-slate-900 block">' + detail.etaStr + ' 도착 예정</span>' +
-        '<span class="text-[11px] text-slate-400 font-medium">' + detail.distKm + 'km (' + detail.durationMin + '분 소요)</span>' +
+      '<div class="flex items-center gap-2 shrink-0">' +
+        '<div class="text-right">' +
+          '<span class="text-[12px] font-bold text-slate-900 block">' + detail.etaStr + ' 도착 예정</span>' +
+          '<span class="text-[10.5px] text-slate-400 font-medium">' + detail.distKm + 'km (' + detail.durationMin + '분)</span>' +
+        '</div>' +
+        '<button type="button" onclick="window.openNaviModal(\'' + locItem.id + '\')" class="press px-2 py-1 rounded-lg bg-white hover:bg-slate-100 text-[#0284c7] font-bold text-[10.5px] border border-[#bae6fd] flex items-center gap-1 transition-all shadow-2xs" title="상세 길안내 보기">' +
+          '<i data-lucide="compass" class="w-3 h-3"></i>' +
+          '<span>상세 안내</span>' +
+        '</button>' +
       '</div>' +
     '</div>';
   }).join('');
@@ -885,36 +913,615 @@ window.cancelMeetingPlace = function() {
   showToast('약속 장소 확정을 취소했습니다 (허브 모드)', 'rotate-ccw');
 };
 
-window.startNaviMode = function() {
+/* -------------------------------------------------------------
+   정밀 실시간 내비게이션 & 대중교통 상세 환승 안내 엔진
+------------------------------------------------------------- */
+var naviState = {
+  activeParticipantId: 'loc_me',
+  activeTransport: 'car',
+  currentStepIndex: 0,
+  isSimulating: false,
+  simInterval: null,
+  simCarMarker: null
+};
+
+/**
+ * 카카오/OSRM 가이드 기반 자차 턴바이턴 단계 추출
+ */
+function extractCarSteps(rawGuides, polyCoords, destName, oName) {
+  var steps = [];
+  if (rawGuides && rawGuides.length > 0) {
+    rawGuides.forEach(function(g, idx) {
+      var distM = g.distance || 0;
+      var distStr = distM < 1000 ? (distM + 'm') : ((distM / 1000).toFixed(1) + 'km');
+      var instr = g.guidance || (g.name ? (g.name + ' 방면 이동') : '직진');
+      var road = g.name || '추천 도로';
+      
+      var icon = 'arrow-up';
+      var gText = instr + ' ' + road;
+      if (gText.indexOf('우회전') !== -1) icon = 'corner-up-right';
+      else if (gText.indexOf('좌회전') !== -1) icon = 'corner-up-left';
+      else if (gText.indexOf('유턴') !== -1) icon = 'rotate-ccw';
+      else if (gText.indexOf('도착') !== -1 || idx === rawGuides.length - 1) icon = 'flag';
+      else if (gText.indexOf('지하차도') !== -1 || gText.indexOf('고가') !== -1) icon = 'git-merge';
+      else if (gText.indexOf('출구') !== -1 || gText.indexOf('진입') !== -1) icon = 'signpost';
+      else icon = 'arrow-up';
+
+      steps.push({
+        stepIndex: idx + 1,
+        instruction: instr,
+        roadName: road,
+        distance: distM,
+        distStr: distStr,
+        coord: [g.y, g.x],
+        icon: icon
+      });
+    });
+  }
+
+  // 폴백 또는 보조 스텝 생성
+  if (steps.length === 0 && polyCoords && polyCoords.length > 0) {
+    var totalPts = polyCoords.length;
+    var p0 = polyCoords[0];
+    var pMid1 = polyCoords[Math.floor(totalPts * 0.25)] || p0;
+    var pMid2 = polyCoords[Math.floor(totalPts * 0.5)] || pMid1;
+    var pMid3 = polyCoords[Math.floor(totalPts * 0.75)] || pMid2;
+    var pEnd = polyCoords[totalPts - 1];
+
+    steps = [
+      { stepIndex: 1, instruction: (oName || '출발지') + '에서 출발', roadName: '출발 지점 도로', distance: 150, distStr: '150m', coord: p0, icon: 'map-pin' },
+      { stepIndex: 2, instruction: '교차로에서 사당로 방면 우회전', roadName: '사당로', distance: 650, distStr: '650m', coord: pMid1, icon: 'corner-up-right' },
+      { stepIndex: 3, instruction: '동작대로 진입 후 직진', roadName: '동작대로', distance: 1800, distStr: '1.8km', coord: pMid2, icon: 'arrow-up' },
+      { stepIndex: 4, instruction: '이수교차로에서 좌회전', roadName: '동작대로27길', distance: 420, distStr: '420m', coord: pMid3, icon: 'corner-up-left' },
+      { stepIndex: 5, instruction: '골목길 서행 직진', roadName: '사당로 골목길', distance: 120, distStr: '120m', coord: pMid3, icon: 'arrow-up' },
+      { stepIndex: 6, instruction: '[' + (destName || '약속 장소') + '] 도착', roadName: '목적지 도착 지점', distance: 0, distStr: '도착', coord: pEnd, icon: 'flag' }
+    ];
+  }
+  return steps;
+}
+
+/**
+ * 대중교통 정밀 환승 단계 생성 (승차/환승/하차/도보)
+ */
+function generateDetailedTransitSteps(locItem, destCoord, destName) {
+  var oLat = locItem.loc[0];
+  var oLon = locItem.loc[1];
+  var dLat = destCoord[0];
+  var dLon = destCoord[1];
+
+  var startStationInfo = findNearestSubwayStation(oLat, oLon);
+  var endStationInfo = findNearestSubwayStation(dLat, dLon);
+
+  var steps = [];
+  var sStName = (startStationInfo && startStationInfo.station) ? startStationInfo.station.name : '인근 지하철역';
+  var eStName = (endStationInfo && endStationInfo.station) ? endStationInfo.station.name : '목적지 인근역';
+  var sLine = (startStationInfo && startStationInfo.lineInfo) ? startStationInfo.lineInfo : { name: '4호선', color: '#00a4e3' };
+  var eLine = (endStationInfo && endStationInfo.lineInfo) ? endStationInfo.lineInfo : { name: '7호선', color: '#747f00' };
+
+  var walk1DistM = startStationInfo ? Math.round(startStationInfo.distKm * 1000) : 220;
+  var walk1Min = Math.max(2, Math.round(walk1DistM / 70));
+
+  // 1. 도보 이동
+  steps.push({
+    type: 'walk',
+    icon: 'footprints',
+    title: '출발지에서 ' + sStName + '역으로 도보 이동',
+    desc: locItem.name + ' → ' + sStName + '역 출입구 방면으로 도보 이동',
+    distStr: (walk1DistM < 1000 ? (walk1DistM + 'm') : ((walk1DistM/1000).toFixed(1) + 'km')),
+    durationStr: '도보 약 ' + walk1Min + '분',
+    coord: locItem.loc,
+    badgeText: '도보 이동'
+  });
+
+  // 동일 노선 여부
+  var isSameLine = (startStationInfo && endStationInfo && startStationInfo.lineKey === endStationInfo.lineKey && sStName !== eStName);
+
+  if (isSameLine) {
+    var numStops = Math.max(1, Math.abs(startStationInfo.index - endStationInfo.index));
+    var lineTimeMin = Math.max(3, Math.round(numStops * 2.5));
+    var dirText = (startStationInfo.index < endStationInfo.index) ? (eStName + ' 방면') : (eStName + ' 방면');
+
+    steps.push({
+      type: 'subway',
+      icon: 'train-front',
+      lineName: sLine.name,
+      lineColor: sLine.color,
+      title: '[' + sLine.name + '] ' + sStName + '역 승차',
+      desc: sStName + '역에서 ' + sLine.name + ' 탑승 (' + dirText + ', ' + numStops + '개 역 이동)',
+      durationStr: '약 ' + lineTimeMin + '분 소요',
+      detailInfo: sStName + '역 승차 → ' + eStName + '역 하차 (' + numStops + '개 역 경유)',
+      fastTip: '하차 팁: 빠른 출구 3-2번 문 탑승',
+      coord: (startStationInfo.station ? startStationInfo.station.loc : locItem.loc),
+      badgeText: sLine.name
+    });
+  } else {
+    // 환승 구간
+    var transStation = null;
+    if (typeof TRANSFER_STATIONS !== 'undefined') {
+      for (var ti = 0; ti < TRANSFER_STATIONS.length; ti++) {
+        var ts = TRANSFER_STATIONS[ti];
+        if (startStationInfo && endStationInfo && ts.lines.indexOf(startStationInfo.lineKey) !== -1 && ts.lines.indexOf(endStationInfo.lineKey) !== -1) {
+          transStation = ts;
+          break;
+        }
+      }
+    }
+    if (!transStation) {
+      transStation = { name: (sStName === '사당' ? '총신대입구(이수)' : '환승역'), loc: [(oLat + dLat)/2, (oLon + dLon)/2] };
+    }
+
+    // 1차 탑승
+    steps.push({
+      type: 'subway',
+      icon: 'train-front',
+      lineName: sLine.name,
+      lineColor: sLine.color,
+      title: '[' + sLine.name + '] ' + sStName + '역 승차',
+      desc: sStName + '역에서 ' + sLine.name + ' 탑승 (' + transStation.name + '역 방면 이동)',
+      durationStr: '약 4~6분 소요',
+      detailInfo: sStName + '역 승차 → ' + transStation.name + '역 하차',
+      fastTip: '빠른 환승 팁: 4-2번 문 탑승 (환승 통로 바로 연결)',
+      coord: (startStationInfo && startStationInfo.station ? startStationInfo.station.loc : locItem.loc),
+      badgeText: sLine.name
+    });
+
+    // 환승
+    steps.push({
+      type: 'transfer',
+      icon: 'git-branch',
+      title: transStation.name + '역에서 [' + eLine.name + '] 환승',
+      desc: '지하 환승 통로를 따라 ' + eLine.name + ' 승강장으로 이동',
+      durationStr: '환승 도보 약 2~3분',
+      detailInfo: eLine.name + ' 승강장 이동 후 ' + eStName + ' 방면 열차 대기',
+      coord: transStation.loc,
+      badgeText: '환승 구간'
+    });
+
+    // 2차 탑승
+    steps.push({
+      type: 'subway',
+      icon: 'train-front',
+      lineName: eLine.name,
+      lineColor: eLine.color,
+      title: '[' + eLine.name + '] ' + transStation.name + '역 승차',
+      desc: transStation.name + '역 승차 후 ' + eStName + '역에서 하차',
+      durationStr: '약 3~5분 소요',
+      detailInfo: transStation.name + '역 → ' + eStName + '역 도착',
+      fastTip: '하차 팁: ' + eStName + '역 2번 출구 방면 계단 이용',
+      coord: transStation.loc,
+      badgeText: eLine.name
+    });
+  }
+
+  // 하차
+  steps.push({
+    type: 'alight',
+    icon: 'log-out',
+    title: eStName + '역 하차 및 출구 이동',
+    desc: eStName + '역 2번 출구로 나와 목적지 방면으로 이동',
+    durationStr: '하차 및 출구',
+    coord: (endStationInfo && endStationInfo.station ? endStationInfo.station.loc : destCoord),
+    badgeText: '하차'
+  });
+
+  // 최종 도보
+  var walk2DistM = endStationInfo ? Math.round(endStationInfo.distKm * 1000) : 180;
+  var walk2Min = Math.max(2, Math.round(walk2DistM / 70));
+  steps.push({
+    type: 'walk_dest',
+    icon: 'map-pin',
+    title: '[' + (destName || '약속 장소') + '] 도착',
+    desc: eStName + '역 출구에서 도보 약 ' + walk2Min + '분 (' + walk2DistM + 'm) 이동 후 최종 모임 장소 도착',
+    distStr: (walk2DistM < 1000 ? (walk2DistM + 'm') : ((walk2DistM/1000).toFixed(1) + 'km')),
+    durationStr: '도보 약 ' + walk2Min + '분',
+    coord: destCoord,
+    badgeText: '도착 완료'
+  });
+
+  return steps;
+}
+
+/* -------------------------------------------------------------
+   내비게이션 모달 및 HUD 컨트롤 시스템
+------------------------------------------------------------- */
+window.openNaviModal = function(participantId, transport) {
+  if (!state.confirmedPlace) {
+    showToast('먼저 약속 장소를 확정해 주세요', 'map-pin');
+    return;
+  }
+
+  naviState.activeParticipantId = participantId || naviState.activeParticipantId || (state.locations[0] ? state.locations[0].id : 'loc_me');
+  
+  var detail = participantRouteDetails[naviState.activeParticipantId];
+  if (transport) {
+    naviState.activeTransport = transport;
+  } else if (detail && detail.transport) {
+    naviState.activeTransport = detail.transport;
+  }
+
+  var p = state.confirmedPlace;
+  var tEl = document.getElementById('naviModalDestTitle');
+  var aEl = document.getElementById('naviModalDestAddr');
+  if (tEl) tEl.textContent = p.place_name;
+  if (aEl) aEl.textContent = (p.road_address_name || p.address_name) + ' (약속 장소)';
+
+  window.renderNaviModalContent();
+
+  var modal = document.getElementById('navigationRouteModal');
+  if (modal) modal.classList.remove('hidden');
+
+  if (window.lucide) lucide.createIcons();
+};
+
+window.closeNaviModal = function() {
+  var modal = document.getElementById('navigationRouteModal');
+  if (modal) modal.classList.add('hidden');
+};
+
+window.setNaviTransport = function(transport) {
+  naviState.activeTransport = transport;
+  naviState.currentStepIndex = 0;
+
+  // HUD 버튼 스타일 갱신
+  var hudCar = document.getElementById('hudCarTabBtn');
+  var hudTransit = document.getElementById('hudTransitTabBtn');
+  if (hudCar && hudTransit) {
+    if (transport === 'car') {
+      hudCar.className = 'press px-2.5 py-1 rounded-lg text-[11px] font-bold bg-[#0284c7] text-white flex items-center gap-1 transition-all';
+      hudTransit.className = 'press px-2.5 py-1 rounded-lg text-[11px] font-bold text-slate-400 hover:text-white flex items-center gap-1 transition-all';
+    } else {
+      hudCar.className = 'press px-2.5 py-1 rounded-lg text-[11px] font-bold text-slate-400 hover:text-white flex items-center gap-1 transition-all';
+      hudTransit.className = 'press px-2.5 py-1 rounded-lg text-[11px] font-bold bg-[#0284c7] text-white flex items-center gap-1 transition-all';
+    }
+  }
+
+  // 모달 버튼 스타일 갱신
+  var mCar = document.getElementById('modalCarTabBtn');
+  var mTransit = document.getElementById('modalTransitTabBtn');
+  if (mCar && mTransit) {
+    if (transport === 'car') {
+      mCar.className = 'press py-2 rounded-xl text-[12px] font-bold bg-white text-[#0284c7] shadow-xs border border-[#bae6fd] flex items-center justify-center gap-1.5 transition-all';
+      mTransit.className = 'press py-2 rounded-xl text-[12px] font-bold text-slate-600 hover:text-slate-900 flex items-center justify-center gap-1.5 transition-all';
+    } else {
+      mCar.className = 'press py-2 rounded-xl text-[12px] font-bold text-slate-600 hover:text-slate-900 flex items-center justify-center gap-1.5 transition-all';
+      mTransit.className = 'press py-2 rounded-xl text-[12px] font-bold bg-white text-[#0284c7] shadow-xs border border-[#bae6fd] flex items-center justify-center gap-1.5 transition-all';
+    }
+  }
+
+  window.updateNaviHudUI();
+  window.renderNaviModalContent();
+
+  showToast(transport === 'car' ? '자차 실시간 내비 모드로 전환' : '대중교통 환승 안내 모드로 전환', transport === 'car' ? 'car' : 'train-front');
+};
+
+window.selectNaviParticipant = function(locId) {
+  naviState.activeParticipantId = locId;
+  var detail = participantRouteDetails[locId];
+  if (detail && detail.transport) {
+    naviState.activeTransport = detail.transport;
+  }
+  naviState.currentStepIndex = 0;
+
+  window.setNaviTransport(naviState.activeTransport);
+  window.renderNaviModalContent();
+};
+
+window.renderNaviModalContent = function() {
+  var chipsContainer = document.getElementById('naviModalParticipantChips');
+  if (chipsContainer) {
+    chipsContainer.innerHTML = state.locations.map(function(locItem) {
+      var isActive = (locItem.id === naviState.activeParticipantId);
+      var detail = participantRouteDetails[locItem.id] || {};
+      var isCar = (locItem.transport === 'car');
+      var chipClass = isActive
+        ? 'bg-[#0284c7] text-white border-[#0284c7] shadow-xs'
+        : 'bg-white text-slate-700 hover:bg-slate-100 border-slate-200';
+      return '<button type="button" onclick="window.selectNaviParticipant(\'' + locItem.id + '\')" class="press px-2.5 py-1 rounded-xl text-[11px] font-bold border shrink-0 flex items-center gap-1 transition-all ' + chipClass + '">' +
+        '<i data-lucide="' + (isCar ? 'car' : 'train-front') + '" class="w-3 h-3"></i>' +
+        '<span>' + locItem.name + '</span>' +
+      '</button>';
+    }).join('');
+  }
+
+  var detail = participantRouteDetails[naviState.activeParticipantId] || {
+    durationMin: 22,
+    distKm: '6.5',
+    etaStr: formatEtaTime(22),
+    carSteps: [],
+    transitSteps: []
+  };
+
+  var isCar = (naviState.activeTransport === 'car');
+  var totalTimeEl = document.getElementById('naviModalTotalTime');
+  var etaTimeEl = document.getElementById('naviModalEtaTime');
+  var subTextEl = document.getElementById('naviModalSummarySubText');
+
+  if (totalTimeEl) totalTimeEl.textContent = detail.durationMin + '분 소요';
+  if (etaTimeEl) etaTimeEl.textContent = detail.etaStr + ' 도착 예정';
+  if (subTextEl) {
+    subTextEl.textContent = isCar
+      ? ('거리 ' + detail.distKm + 'km · 실시간 도로 주행 턴바이턴 기준')
+      : ('거리 ' + detail.distKm + 'km · 지하철 환승 및 정밀 도보 구간 포함');
+  }
+
+  var stepsList = document.getElementById('naviModalStepsList');
+  if (!stepsList) return;
+
+  if (isCar) {
+    var steps = detail.carSteps || [];
+    if (steps.length === 0) {
+      var destName = state.confirmedPlace ? state.confirmedPlace.place_name : '약속 장소';
+      var activeLoc = state.locations.find(function(l) { return l.id === naviState.activeParticipantId; }) || state.locations[0];
+      steps = extractCarSteps([], detail.polyCoords, destName, (activeLoc ? activeLoc.name : '출발지'));
+    }
+
+    stepsList.innerHTML = steps.map(function(step, idx) {
+      var isCurrent = (naviState.currentStepIndex === idx);
+      var borderClass = isCurrent
+        ? 'border-[#0284c7] ring-1 ring-[#66CCFF]/40 bg-[#f0f9ff]/70 shadow-xs'
+        : 'border-slate-200/90 bg-white hover:border-[#bae6fd]';
+
+      return '<div class="p-3 rounded-2xl border flex items-start gap-3 transition-all ' + borderClass + '">' +
+        '<div class="w-8 h-8 rounded-xl ' + (isCurrent ? 'bg-[#0284c7] text-white' : 'bg-slate-100 text-slate-600') + ' grid place-items-center shrink-0 shadow-2xs">' +
+          '<i data-lucide="' + step.icon + '" class="w-4 h-4"></i>' +
+        '</div>' +
+        '<div class="flex-1 min-w-0">' +
+          '<div class="flex items-center justify-between gap-1">' +
+            '<span class="font-bold text-[13px] text-slate-900 leading-snug truncate">' + step.instruction + '</span>' +
+            '<span class="px-2 py-0.5 rounded-lg text-[10.5px] font-black ' + (isCurrent ? 'bg-[#0284c7] text-white' : 'bg-slate-100 text-slate-600') + ' shrink-0">' + step.distStr + '</span>' +
+          '</div>' +
+          '<p class="text-[11px] text-slate-500 mt-0.5 truncate">' + step.roadName + '</p>' +
+        '</div>' +
+        '<button type="button" onclick="window.goToNaviStep(' + idx + ')" class="press p-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 text-[#0284c7] shrink-0" title="지도 위치 확인">' +
+          '<i data-lucide="crosshair" class="w-4 h-4"></i>' +
+        '</button>' +
+      '</div>';
+    }).join('');
+  } else {
+    var tSteps = detail.transitSteps || [];
+    if (tSteps.length === 0) {
+      var destName2 = state.confirmedPlace ? state.confirmedPlace.place_name : '약속 장소';
+      var activeLoc2 = state.locations.find(function(l) { return l.id === naviState.activeParticipantId; }) || state.locations[0];
+      tSteps = generateDetailedTransitSteps(activeLoc2, (state.confirmedPlace ? [parseFloat(state.confirmedPlace.y), parseFloat(state.confirmedPlace.x)] : state.currentHubCoord), destName2);
+    }
+
+    stepsList.innerHTML = tSteps.map(function(tStep, idx) {
+      var isCurrent = (naviState.currentStepIndex === idx);
+      var badgeStyle = tStep.lineColor ? ('background-color: ' + tStep.lineColor + '; color: #ffffff;') : 'background-color: #f1f5f9; color: #475569;';
+
+      return '<div class="p-3.5 rounded-2xl border border-slate-200/90 bg-white flex flex-col gap-2 shadow-2xs hover:border-[#bae6fd] transition-all">' +
+        '<div class="flex items-start justify-between gap-2">' +
+          '<div class="flex items-center gap-2 min-w-0 flex-1">' +
+            '<div class="w-8 h-8 rounded-xl bg-slate-100 text-[#0284c7] grid place-items-center shrink-0">' +
+              '<i data-lucide="' + tStep.icon + '" class="w-4 h-4"></i>' +
+            '</div>' +
+            '<div class="min-w-0 flex-1">' +
+              '<div class="flex items-center gap-1.5 flex-wrap">' +
+                '<span class="px-2 py-0.2 rounded-md text-[10px] font-black shrink-0" style="' + badgeStyle + '">' + (tStep.badgeText || tStep.lineName || '이동') + '</span>' +
+                '<h5 class="text-[13px] font-bold text-slate-900 truncate leading-snug">' + tStep.title + '</h5>' +
+              '</div>' +
+              '<p class="text-[11.5px] text-slate-600 mt-1">' + tStep.desc + '</p>' +
+            '</div>' +
+          '</div>' +
+          '<span class="text-[11px] font-extrabold text-[#0284c7] shrink-0">' + (tStep.durationStr || tStep.distStr || '') + '</span>' +
+        '</div>' +
+        (tStep.fastTip ? ('<div class="px-2.5 py-1.5 rounded-xl bg-sky-50 border border-sky-100 text-[11px] font-bold text-[#0369a1] flex items-center gap-1.5"><i data-lucide="zap" class="w-3.5 h-3.5 text-amber-500 shrink-0"></i><span>' + tStep.fastTip + '</span></div>') : '') +
+        (tStep.detailInfo ? ('<div class="text-[10.5px] text-slate-400 pl-10">' + tStep.detailInfo + '</div>') : '') +
+      '</div>';
+    }).join('');
+  }
+
+  if (window.lucide) lucide.createIcons();
+};
+
+window.updateNaviHudUI = function() {
+  var hud = document.getElementById('naviHudBar');
+  if (!hud || hud.classList.contains('hidden')) return;
+
+  var detail = participantRouteDetails[naviState.activeParticipantId];
+  if (!detail) return;
+
+  var isCar = (naviState.activeTransport === 'car');
+  var steps = isCar ? (detail.carSteps || []) : (detail.transitSteps || []);
+  if (steps.length === 0) return;
+
+  if (naviState.currentStepIndex >= steps.length) {
+    naviState.currentStepIndex = steps.length - 1;
+  }
+  if (naviState.currentStepIndex < 0) {
+    naviState.currentStepIndex = 0;
+  }
+
+  var curStep = steps[naviState.currentStepIndex];
+  var p = state.confirmedPlace;
+
+  var turnIcon = document.getElementById('naviTurnIcon');
+  var nextDist = document.getElementById('naviNextDistance');
+  var nextInstr = document.getElementById('naviNextInstruction');
+  var roadName = document.getElementById('naviCurrentRoadName');
+  var destName = document.getElementById('naviDestinationName');
+  var stepInd = document.getElementById('naviStepIndicator');
+  var etaText = document.getElementById('naviEtaText');
+  var remDist = document.getElementById('naviRemainDist');
+  var statusText = document.getElementById('naviModeStatusText');
+
+  if (isCar) {
+    if (turnIcon) turnIcon.setAttribute('data-lucide', curStep.icon || 'arrow-up');
+    if (nextDist) nextDist.textContent = curStep.distStr || '직진';
+    if (nextInstr) nextInstr.textContent = curStep.instruction || '추천 도로 주행';
+    if (roadName) roadName.textContent = curStep.roadName || '실시간 경로';
+    if (statusText) statusText.textContent = naviState.isSimulating ? '자동 주행 시뮬레이션 중' : '자차 턴바이턴 안내 중';
+  } else {
+    if (turnIcon) turnIcon.setAttribute('data-lucide', curStep.icon || 'train-front');
+    if (nextDist) nextDist.textContent = curStep.durationStr || curStep.distStr || '이동';
+    if (nextInstr) nextInstr.textContent = curStep.title || curStep.desc;
+    if (roadName) roadName.textContent = curStep.badgeText || curStep.lineName || '대중교통';
+    if (statusText) statusText.textContent = '대중교통 환승 안내 중';
+  }
+
+  if (destName && p) destName.textContent = '목적지: ' + p.place_name;
+  if (stepInd) stepInd.textContent = (naviState.currentStepIndex + 1) + '/' + steps.length;
+  if (etaText) etaText.textContent = detail.etaStr || '--:--';
+  if (remDist) remDist.textContent = detail.distKm + 'km (' + detail.durationMin + '분)';
+
+  if (window.lucide) lucide.createIcons();
+};
+
+window.nextNaviStep = function() {
+  var detail = participantRouteDetails[naviState.activeParticipantId];
+  if (!detail) return;
+  var steps = (naviState.activeTransport === 'car') ? detail.carSteps : detail.transitSteps;
+  if (!steps || steps.length === 0) return;
+
+  if (naviState.currentStepIndex < steps.length - 1) {
+    naviState.currentStepIndex++;
+    window.updateNaviHudUI();
+    var step = steps[naviState.currentStepIndex];
+    if (step && step.coord) {
+      map.flyTo(step.coord, 17.5, { duration: 0.9 });
+      updateSimCarMarker(step.coord);
+    }
+  } else {
+    showToast('목적지에 도달했습니다!', 'flag');
+    if (naviState.isSimulating) window.toggleNaviSimulation();
+  }
+};
+
+window.prevNaviStep = function() {
+  var detail = participantRouteDetails[naviState.activeParticipantId];
+  if (!detail) return;
+  var steps = (naviState.activeTransport === 'car') ? detail.carSteps : detail.transitSteps;
+  if (!steps || steps.length === 0) return;
+
+  if (naviState.currentStepIndex > 0) {
+    naviState.currentStepIndex--;
+    window.updateNaviHudUI();
+    var step = steps[naviState.currentStepIndex];
+    if (step && step.coord) {
+      map.flyTo(step.coord, 17.5, { duration: 0.8 });
+      updateSimCarMarker(step.coord);
+    }
+  }
+};
+
+window.goToNaviStep = function(stepIdx) {
+  naviState.currentStepIndex = stepIdx;
+  window.updateNaviHudUI();
+  window.closeNaviModal();
+
+  var hud = document.getElementById('naviHudBar');
+  if (hud) hud.classList.remove('hidden');
+
+  var detail = participantRouteDetails[naviState.activeParticipantId];
+  var steps = (naviState.activeTransport === 'car') ? (detail ? detail.carSteps : []) : (detail ? detail.transitSteps : []);
+  if (steps && steps[stepIdx] && steps[stepIdx].coord) {
+    map.flyTo(steps[stepIdx].coord, 17.5, { duration: 1.0 });
+    updateSimCarMarker(steps[stepIdx].coord);
+  }
+};
+
+function updateSimCarMarker(coord) {
+  if (!coord) return;
+  if (naviState.simCarMarker) {
+    naviState.simCarMarker.setLatLng(coord);
+  } else {
+    var carIconHtml = '<div class="w-8 h-8 rounded-full bg-[#0284c7] text-white border-2 border-white shadow-xl grid place-items-center animate-bounce">' +
+      '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/></svg>' +
+    '</div>';
+    naviState.simCarMarker = L.marker(coord, {
+      icon: L.divIcon({
+        html: carIconHtml,
+        className: '',
+        iconSize: [32, 32],
+        iconAnchor: [16, 16]
+      }),
+      zIndexOffset: 1000
+    }).addTo(map);
+  }
+}
+
+window.toggleNaviSimulation = function() {
+  if (naviState.isSimulating) {
+    clearInterval(naviState.simInterval);
+    naviState.isSimulating = false;
+    var icon = document.getElementById('naviSimIcon');
+    var txt = document.getElementById('naviSimText');
+    if (icon) icon.setAttribute('data-lucide', 'play');
+    if (txt) txt.textContent = '주행';
+    showToast('주행 시뮬레이션을 일시정지했습니다', 'pause');
+  } else {
+    naviState.isSimulating = true;
+    var icon2 = document.getElementById('naviSimIcon');
+    var txt2 = document.getElementById('naviSimText');
+    if (icon2) icon2.setAttribute('data-lucide', 'pause');
+    if (txt2) txt2.textContent = '정지';
+    showToast('실시간 자동 주행 시뮬레이션을 시작합니다', 'play');
+
+    naviState.simInterval = setInterval(function() {
+      var detail = participantRouteDetails[naviState.activeParticipantId];
+      var steps = (naviState.activeTransport === 'car') ? (detail ? detail.carSteps : []) : (detail ? detail.transitSteps : []);
+      if (!steps || naviState.currentStepIndex >= steps.length - 1) {
+        clearInterval(naviState.simInterval);
+        naviState.isSimulating = false;
+        if (icon2) icon2.setAttribute('data-lucide', 'play');
+        if (txt2) txt2.textContent = '주행';
+        showToast("목적지에 안전하게 도착했습니다!", 'flag');
+        return;
+      }
+      window.nextNaviStep();
+    }, 2800);
+  }
+  if (window.lucide) lucide.createIcons();
+};
+
+window.startNaviSimulationFromModal = function() {
+  window.closeNaviModal();
+  window.startNaviMode();
+  if (!naviState.isSimulating) {
+    window.toggleNaviSimulation();
+  }
+};
+
+window.startNaviMode = function(participantId, transport) {
   if (!state.confirmedPlace) {
     showToast('먼저 약속 장소를 선택해 주세요', 'map-pin');
     return;
+  }
+
+  if (participantId) naviState.activeParticipantId = participantId;
+  if (transport) naviState.activeTransport = transport;
+  else {
+    var detail = participantRouteDetails[naviState.activeParticipantId];
+    if (detail && detail.transport) naviState.activeTransport = detail.transport;
   }
 
   state.isNaviMode = true;
   var hud = document.getElementById('naviHudBar');
   if (hud) hud.classList.remove('hidden');
 
-  var p = state.confirmedPlace;
-  var myDetail = participantRouteDetails['loc_me'] || { durationMin: 22, distKm: '6.5', etaStr: formatEtaTime(22) };
+  window.setNaviTransport(naviState.activeTransport);
+  window.updateNaviHudUI();
 
-  document.getElementById('naviDestinationName').textContent = '목적지: ' + p.place_name;
-  document.getElementById('naviEtaText').textContent = myDetail.etaStr;
-  document.getElementById('naviRemainDist').textContent = myDetail.distKm + 'km (' + myDetail.durationMin + '분)';
-  document.getElementById('naviNextDistance').textContent = '400m 앞';
-  document.getElementById('naviNextInstruction').textContent = '직진 후 우회전 (추천 경로)';
+  var curLoc = state.locations.find(function(l) { return l.id === naviState.activeParticipantId; }) || state.locations[0];
+  if (curLoc) {
+    map.flyTo(curLoc.loc, 17.5, { duration: 1.1 });
+    updateSimCarMarker(curLoc.loc);
+  }
 
-  map.flyTo(state.myLocation, 17.5, {
-    duration: 1.2,
-    easeLinearity: 0.25
-  });
-
-  showToast("'" + p.place_name + "' 실시간 내비 안내를 시작합니다", 'navigation');
-  if (window.lucide) lucide.createIcons();
+  showToast("'" + state.confirmedPlace.place_name + "' 실시간 내비 안내를 시작합니다", 'navigation');
 };
 
 window.stopNaviMode = function() {
   state.isNaviMode = false;
+  if (naviState.isSimulating) {
+    clearInterval(naviState.simInterval);
+    naviState.isSimulating = false;
+  }
+  if (naviState.simCarMarker) {
+    map.removeLayer(naviState.simCarMarker);
+    naviState.simCarMarker = null;
+  }
+
   var hud = document.getElementById('naviHudBar');
   if (hud) hud.classList.add('hidden');
 

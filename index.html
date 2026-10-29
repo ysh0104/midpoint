@@ -123,37 +123,81 @@
 
 
     <!-- 2-1. 실시간 내비게이션 주행 HUD (내비 모드 활성화 시 표시) -->
-    <div id="naviHudBar" class="hidden absolute top-3.5 left-3.5 right-3.5 z-40 p-3.5 rounded-2xl bg-slate-900/95 text-white shadow-2xl border border-slate-700/80 backdrop-blur-md flex flex-col gap-2 transition-all">
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-2.5 min-w-0 pr-2">
-          <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-[#66CCFF] to-[#0284c7] text-white grid place-items-center shrink-0 shadow-sm shadow-[#66CCFF]/30">
-            <i id="naviTurnIcon" data-lucide="corner-up-right" class="w-5 h-5"></i>
+    <div id="naviHudBar" class="hidden absolute top-3.5 left-3.5 right-3.5 z-40 p-3 rounded-2xl bg-slate-900/95 text-white shadow-2xl border border-slate-700/80 backdrop-blur-md flex flex-col gap-2 transition-all">
+      <!-- 상단 컨트롤러: 교통수단 전환 & 액션 버튼 -->
+      <div class="flex items-center justify-between gap-1.5 pb-2 border-b border-slate-800">
+        <!-- 자차 / 대중교통 모드 전환 세그먼트 -->
+        <div class="inline-flex items-center bg-slate-800/90 p-0.5 rounded-xl border border-slate-700">
+          <button type="button" id="hudCarTabBtn" onclick="window.setNaviTransport('car')" class="press px-2.5 py-1 rounded-lg text-[11px] font-bold bg-[#0284c7] text-white flex items-center gap-1 transition-all">
+            <i data-lucide="car" class="w-3 h-3"></i>
+            <span>자차 주행</span>
+          </button>
+          <button type="button" id="hudTransitTabBtn" onclick="window.setNaviTransport('transit')" class="press px-2.5 py-1 rounded-lg text-[11px] font-bold text-slate-400 hover:text-white flex items-center gap-1 transition-all">
+            <i data-lucide="train-front" class="w-3 h-3"></i>
+            <span>대중교통</span>
+          </button>
+        </div>
+
+        <div class="flex items-center gap-1.5">
+          <button type="button" onclick="window.openNaviModal()" class="press px-2.5 py-1 rounded-xl bg-slate-800 hover:bg-slate-700 text-[#66CCFF] border border-slate-700 font-bold text-[11px] flex items-center gap-1 transition-all">
+            <i data-lucide="list" class="w-3.5 h-3.5"></i>
+            <span>전체 경로</span>
+          </button>
+          <button type="button" onclick="window.stopNaviMode()" class="press px-2.5 py-1 rounded-xl bg-rose-600/90 hover:bg-rose-600 text-white font-bold text-[11px] flex items-center gap-1 transition-all">
+            <i data-lucide="x" class="w-3.5 h-3.5"></i>
+            <span>종료</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 메인 안내 바 (턴바이턴 / 대중교통 단계) -->
+      <div class="flex items-center justify-between gap-2">
+        <div class="flex items-center gap-2.5 min-w-0 pr-1 flex-1">
+          <div id="naviTurnIconContainer" class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#66CCFF] to-[#0284c7] text-white grid place-items-center shrink-0 shadow-sm shadow-[#66CCFF]/30">
+            <i id="naviTurnIcon" data-lucide="corner-up-right" class="w-5 h-5 text-white"></i>
           </div>
-          <div class="min-w-0">
+          <div class="min-w-0 flex-1">
             <div class="flex items-center gap-1.5">
-              <span id="naviNextDistance" class="text-[15px] font-black text-[#66CCFF]">300m 앞</span>
+              <span id="naviNextDistance" class="text-[15px] font-black text-[#66CCFF] shrink-0">300m 앞</span>
               <span id="naviNextInstruction" class="text-[13px] font-bold text-white truncate">직진 후 우회전</span>
             </div>
-            <p id="naviDestinationName" class="text-[11px] text-slate-400 truncate">목적지: 약속 장소</p>
+            <div class="flex items-center gap-2 text-[10.5px] text-slate-400 mt-0.5 truncate">
+              <span id="naviCurrentRoadName" class="text-slate-300 font-medium truncate">동작대로</span>
+              <span class="text-slate-600">·</span>
+              <span id="naviDestinationName" class="truncate">목적지: 약속 장소</span>
+            </div>
           </div>
         </div>
-        <button type="button" onclick="window.stopNaviMode()" class="press px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-[11.5px] shrink-0 shadow-sm flex items-center gap-1">
-          <i data-lucide="square" class="w-3 h-3 fill-white"></i>
-          <span>안내 종료</span>
-        </button>
+
+        <!-- 스텝 조절 및 시뮬레이션 버튼 -->
+        <div class="flex items-center gap-1 shrink-0">
+          <button type="button" onclick="window.prevNaviStep()" class="press p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white" title="이전 안내">
+            <i data-lucide="chevron-left" class="w-4 h-4"></i>
+          </button>
+          <span id="naviStepIndicator" class="text-[11px] font-extrabold text-amber-400 px-1">1/6</span>
+          <button type="button" onclick="window.nextNaviStep()" class="press p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white" title="다음 안내">
+            <i data-lucide="chevron-right" class="w-4 h-4"></i>
+          </button>
+          <button type="button" id="naviSimToggleBtn" onclick="window.toggleNaviSimulation()" class="press ml-1 px-2 py-1 rounded-lg bg-emerald-600/90 hover:bg-emerald-600 text-white font-bold text-[10.5px] flex items-center gap-1" title="자동 주행 시뮬레이션">
+            <i id="naviSimIcon" data-lucide="play" class="w-3 h-3 fill-white"></i>
+            <span id="naviSimText">주행</span>
+          </button>
+        </div>
       </div>
-      <div class="flex items-center justify-between pt-2 border-t border-slate-800 text-[11.5px]">
+
+      <!-- 하단 요약 바 -->
+      <div class="flex items-center justify-between pt-1.5 border-t border-slate-800 text-[11px]">
         <div class="flex items-center gap-1.5">
           <span class="text-slate-400">도착 예정</span>
-          <span id="naviEtaText" class="font-black text-[#66CCFF] text-[13.5px]">--:--</span>
+          <span id="naviEtaText" class="font-black text-[#66CCFF] text-[13px]">--:--</span>
         </div>
         <div class="flex items-center gap-1.5">
           <span class="text-slate-400">남은 거리</span>
-          <span id="naviRemainDist" class="font-extrabold text-white text-[12.5px]">--km</span>
+          <span id="naviRemainDist" class="font-extrabold text-white text-[12px]">--km</span>
         </div>
-        <div class="flex items-center gap-1 text-slate-400 text-[10.5px]">
-          <span class="w-1.5 h-1.5 rounded-full bg-[#66CCFF]"></span>
-          <span>실시간 내비 안내 중</span>
+        <div class="flex items-center gap-1 text-slate-400 text-[10px]">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span id="naviModeStatusText">실시간 주행 안내 중</span>
         </div>
       </div>
     </div>
@@ -935,18 +979,93 @@
     </div>
   </div>
 
+  <!-- 9. 정밀 실시간 내비게이션 & 대중교통 상세 경로 모달 -->
+  <div id="navigationRouteModal" class="hidden absolute inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-end justify-center transition-opacity">
+    <div class="bg-white w-full max-w-[440px] h-[88vh] max-h-[740px] rounded-t-3xl shadow-2xl border-t border-slate-200/90 flex flex-col overflow-hidden animate-in slide-in-from-bottom duration-250">
+      
+      <!-- 모달 상단 헤더 -->
+      <div class="px-4 py-3 bg-white border-b border-slate-100 flex items-center justify-between shrink-0">
+        <div class="flex items-center gap-2.5 min-w-0 pr-2">
+          <div class="w-9 h-9 rounded-2xl bg-gradient-to-br from-[#66CCFF] to-[#0284c7] text-white grid place-items-center shrink-0 shadow-xs">
+            <i data-lucide="navigation" class="w-4.5 h-4.5"></i>
+          </div>
+          <div class="min-w-0">
+            <h3 id="naviModalDestTitle" class="text-[15px] font-black text-slate-900 tracking-tight truncate">미학당작업실</h3>
+            <p id="naviModalDestAddr" class="text-[11px] text-slate-500 truncate">서울 동작구 사당로 56 (약속 장소)</p>
+          </div>
+        </div>
+        <button type="button" onclick="window.closeNaviModal()" class="press p-1.5 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- 참가자 선택 칩 바 -->
+      <div class="px-4 py-2 bg-slate-50/90 border-b border-slate-100 flex items-center gap-1.5 overflow-x-auto no-scrollbar shrink-0">
+        <span class="text-[10.5px] font-bold text-slate-400 shrink-0">출발지:</span>
+        <div id="naviModalParticipantChips" class="flex items-center gap-1.5">
+          <!-- JS 동적 렌더링: 나 (자차), 다은 (대중교통), 영은 (대중교통) -->
+        </div>
+      </div>
+
+      <!-- 모드 전환 세그먼트 (자차 / 대중교통) -->
+      <div class="px-4 pt-2.5 pb-2 bg-white flex items-center justify-between gap-2 shrink-0">
+        <div class="grid grid-cols-2 gap-1 bg-slate-100/90 p-1 rounded-2xl border border-slate-200/80 flex-1">
+          <button type="button" id="modalCarTabBtn" onclick="window.setNaviTransport('car')" class="press py-2 rounded-xl text-[12px] font-bold bg-white text-[#0284c7] shadow-xs border border-[#bae6fd] flex items-center justify-center gap-1.5 transition-all">
+            <i data-lucide="car" class="w-4 h-4"></i>
+            <span>자차 실시간 내비</span>
+          </button>
+          <button type="button" id="modalTransitTabBtn" onclick="window.setNaviTransport('transit')" class="press py-2 rounded-xl text-[12px] font-bold text-slate-600 hover:text-slate-900 flex items-center justify-center gap-1.5 transition-all">
+            <i data-lucide="train-front" class="w-4 h-4"></i>
+            <span>대중교통 환승 안내</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 경로 종합 요약 카드 -->
+      <div class="px-4 py-1.5 shrink-0">
+        <div class="p-3 rounded-2xl bg-[#f0f9ff]/70 border border-[#bae6fd] flex items-center justify-between">
+          <div>
+            <div class="flex items-center gap-2">
+              <span id="naviModalTotalTime" class="text-[17px] font-black text-slate-900 tracking-tight">22분 소요</span>
+              <span id="naviModalEtaTime" class="text-[11.5px] font-bold text-[#0284c7]">오전 11:05 도착 예정</span>
+            </div>
+            <p id="naviModalSummarySubText" class="text-[11px] text-slate-600 mt-0.5">거리 6.5km · 실시간 도로 주행 기준</p>
+          </div>
+          <button type="button" id="modalSimStartBtn" onclick="window.startNaviSimulationFromModal()" class="press px-3 py-2 rounded-xl bg-[#0284c7] hover:bg-[#0369a1] text-white text-[11px] font-bold flex items-center gap-1 shadow-xs transition-all">
+            <i data-lucide="play" class="w-3.5 h-3.5 fill-white"></i>
+            <span>주행 시작</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 상세 스텝 스크롤 영역 (자차 턴바이턴 or 대중교통 환승 타임라인) -->
+      <div id="naviModalStepsList" class="flex-1 overflow-y-auto px-4 py-2 space-y-2.5 no-scrollbar bg-slate-50/50">
+        <!-- JS 렌더링 -->
+      </div>
+
+      <!-- 하단 액션 바 -->
+      <div class="p-3 bg-white border-t border-slate-100 flex items-center gap-2 shrink-0">
+        <button type="button" onclick="window.closeNaviModal(); window.startNaviMode();" class="press flex-1 py-2.5 rounded-xl bg-[#0284c7] hover:bg-[#0369a1] text-white font-bold text-[12px] shadow-xs flex items-center justify-center gap-1.5 transition-all">
+          <i data-lucide="navigation" class="w-4 h-4 fill-white"></i>
+          <span>지도 위 실시간 내비 HUD로 보기</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
 </div>
 
 <!-- 기능별 모듈 스크립트 분리 (Clean Modular Architecture) -->
-<script src="js/config.js?v=13"></script>
-<script src="js/state.js?v=13"></script>
-<script src="js/map.js?v=13"></script>
-<script src="js/mobility.js?v=13"></script>
-<script src="js/places.js?v=13"></script>
-<script src="js/weather.js?v=13"></script>
-<script src="js/care.js?v=13"></script>
-<script src="js/game.js?v=13"></script>
-<script src="js/chat.js?v=13"></script>
-<script src="js/ui.js?v=13"></script>
+<script src="js/config.js?v=14"></script>
+<script src="js/state.js?v=14"></script>
+<script src="js/map.js?v=14"></script>
+<script src="js/mobility.js?v=14"></script>
+<script src="js/places.js?v=14"></script>
+<script src="js/weather.js?v=14"></script>
+<script src="js/care.js?v=14"></script>
+<script src="js/game.js?v=14"></script>
+<script src="js/chat.js?v=14"></script>
+<script src="js/ui.js?v=14"></script>
 </body>
 </html>
