@@ -122,21 +122,21 @@
 
 
 
-    <!-- 2-1. 상단 미니 턴 / 실시간 알림 캡슐 (지도 시야를 가리지 않는 콤팩트 가이드) -->
-    <div id="naviTopMiniBanner" class="hidden absolute top-3.5 left-3.5 right-3.5 max-w-xl mx-auto z-40 p-2.5 px-3.5 rounded-2xl bg-slate-900/90 text-white backdrop-blur-md border border-slate-700/80 shadow-lg flex items-center justify-between gap-3 transition-all">
+    <!-- 2-1. 상단 미니 턴 / 실시간 알림 캡슐 (전체 테마와 일치하는 화이트 & 스카이블루 글래스모피즘) -->
+    <div id="naviTopMiniBanner" class="hidden absolute top-3.5 left-3.5 right-3.5 max-w-xl mx-auto z-40 p-2.5 px-3.5 rounded-2xl bg-white/95 backdrop-blur-xl border border-[#bae6fd] shadow-md shadow-slate-900/5 flex items-center justify-between gap-3 transition-all">
       <div class="flex items-center gap-2.5 min-w-0 flex-1">
         <div id="miniBannerIconBox" class="w-8 h-8 rounded-xl bg-gradient-to-br from-[#66CCFF] to-[#0284c7] text-white grid place-items-center shrink-0 shadow-xs">
           <i id="miniBannerIcon" data-lucide="train-front" class="w-4 h-4"></i>
         </div>
         <div class="min-w-0 flex-1">
           <div class="flex items-center gap-2">
-            <span id="miniBannerCountdown" class="text-[13px] font-black text-[#66CCFF] shrink-0">3분 후 도착</span>
-            <span id="miniBannerTitle" class="text-[12.5px] font-bold text-white truncate">2호선 문래역 승차</span>
+            <span id="miniBannerCountdown" class="text-[13px] font-black text-[#0284c7] shrink-0">3분 후 도착</span>
+            <span id="miniBannerTitle" class="text-[13px] font-extrabold text-slate-900 truncate">2호선 문래역 승차</span>
           </div>
-          <p id="miniBannerSub" class="text-[10.5px] text-slate-300 truncate">신도림 방면 · 4개 역 이동 (약 7분)</p>
+          <p id="miniBannerSub" class="text-[11px] text-slate-500 font-medium truncate">신도림 방면 · 4개 역 이동 (약 7분)</p>
         </div>
       </div>
-      <button type="button" onclick="window.stopNaviMode()" class="press p-1.5 rounded-lg bg-slate-800 hover:bg-rose-600 text-slate-400 hover:text-white transition-colors" title="길안내 종료">
+      <button type="button" onclick="window.stopNaviMode()" class="press p-1.5 rounded-lg bg-slate-50 hover:bg-rose-50 text-slate-400 hover:text-rose-500 border border-slate-200/80 transition-colors" title="길안내 종료">
         <i data-lucide="x" class="w-4 h-4"></i>
       </button>
     </div>
@@ -1059,15 +1059,15 @@
 </div>
 
 <!-- 기능별 모듈 스크립트 분리 (Clean Modular Architecture) -->
-<script src="js/config.js?v=15"></script>
-<script src="js/state.js?v=15"></script>
-<script src="js/map.js?v=15"></script>
-<script src="js/mobility.js?v=15"></script>
-<script src="js/places.js?v=15"></script>
-<script src="js/weather.js?v=15"></script>
-<script src="js/care.js?v=15"></script>
-<script src="js/game.js?v=15"></script>
-<script src="js/chat.js?v=15"></script>
-<script src="js/ui.js?v=15"></script>
+<script src="js/config.js?v=16"></script>
+<script src="js/state.js?v=16"></script>
+<script src="js/map.js?v=16"></script>
+<script src="js/mobility.js?v=16"></script>
+<script src="js/places.js?v=16"></script>
+<script src="js/weather.js?v=16"></script>
+<script src="js/care.js?v=16"></script>
+<script src="js/game.js?v=16"></script>
+<script src="js/chat.js?v=16"></script>
+<script src="js/ui.js?v=16"></script>
 </body>
 </html>
