@@ -48,9 +48,9 @@ body {
   outline: 0;
 }
 
-/* 지도 타일: 깔끔하고 또렷한 톤 */
+/* 지도 타일: 눈이 편안하고 세련된 모던 애플맵/토스 톤 (혼잡한 색감 완화) */
 .leaflet-tile-pane {
-  filter: saturate(1.05) contrast(1.02);
+  filter: saturate(0.85) contrast(1.02) brightness(1.01);
 }
 
 .leaflet-tile {
@@ -164,17 +164,17 @@ body {
 }
 
 .modern-label.hub-label {
-  background: #0f172a;
-  color: #ffffff;
-  border: 1.5px solid #334155;
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.25);
-}
-
-.modern-label.appt-label {
   background: #0284c7;
   color: #ffffff;
   border: 1.5px solid #66CCFF;
   box-shadow: 0 4px 14px rgba(2, 132, 199, 0.35);
+}
+
+.modern-label.appt-label {
+  background: #059669;
+  color: #ffffff;
+  border: 1.5px solid #34d399;
+  box-shadow: 0 4px 14px rgba(5, 150, 105, 0.35);
 }
 
 /* 티어드롭 핀 본체 */
@@ -214,17 +214,17 @@ body {
 .pin-theme-hub {
   width: 40px;
   height: 40px;
-  background: #0f172a;
+  background: linear-gradient(135deg, #0284c7, #0369a1);
   border: 2.5px solid #ffffff;
-  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.25);
+  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.35);
 }
 
 .pin-theme-appt {
   width: 40px;
   height: 40px;
-  background: linear-gradient(135deg, #66CCFF, #0284c7);
+  background: linear-gradient(135deg, #10b981, #059669);
   border: 2.5px solid #ffffff;
-  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.35);
+  box-shadow: 0 4px 14px rgba(5, 150, 105, 0.35);
 }
 
 .hub-ground-halo, .hub-ground-ripple {

@@ -423,9 +423,9 @@ function renderCarRoutePolylines(polyCoords, color, idx, locItem, distKm, durati
   }
 
   var casingLine = L.polyline(polyCoords, {
-    color: '#0f172a',
-    weight: 7.5,
-    opacity: 0.65,
+    color: '#ffffff',
+    weight: 7,
+    opacity: 0.9,
     lineCap: 'round',
     lineJoin: 'round'
   }).addTo(map);
@@ -550,9 +550,9 @@ function renderTransitDetailedRoute(locItem, destCoord, idx, color, crowDistKm, 
 
     if (railCoords.length >= 2) {
       var railBase = L.polyline(railCoords, {
-        color: '#0f172a',
+        color: '#ffffff',
         weight: 6.5,
-        opacity: 0.85,
+        opacity: 0.9,
         lineCap: 'round',
         lineJoin: 'round'
       }).addTo(map);
@@ -631,9 +631,9 @@ function renderTransitDetailedRoute(locItem, destCoord, idx, color, crowDistKm, 
         }
 
         var busBase = L.polyline(poly, {
-          color: '#1e3a8a',
+          color: '#ffffff',
           weight: 6,
-          opacity: 0.65,
+          opacity: 0.9,
           lineCap: 'round',
           lineJoin: 'round'
         }).addTo(map);

@@ -26,8 +26,8 @@ function initMap() {
     inertia: true
   }).setView(state.myLocation || DEFAULT_LOC, 14);
 
-  // 초고속 무제한 고화질 타일
-  L.tileLayer('https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}&hl=ko', {
+  // 초고속 무제한 고화질 모던 클린 타일 (혼잡한 상점·관광 POI 아이콘을 숨겨 애플맵/토스처럼 정갈하고 깔끔한 뷰 제공)
+  L.tileLayer('https://mt{s}.google.com/vt/lyrs=m&apistyle=s.t:2%7Cp.v:off&x={x}&y={y}&z={z}&hl=ko', {
     maxZoom: 20,
     minZoom: 6,
     keepBuffer: 16,
