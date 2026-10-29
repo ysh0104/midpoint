@@ -1315,6 +1315,7 @@ window.renderNaviModalContent = function() {
       var destName2 = state.confirmedPlace ? state.confirmedPlace.place_name : '약속 장소';
       var activeLoc2 = state.locations.find(function(l) { return l.id === naviState.activeParticipantId; }) || state.locations[0];
       tSteps = generateDetailedTransitSteps(activeLoc2, (state.confirmedPlace ? [parseFloat(state.confirmedPlace.y), parseFloat(state.confirmedPlace.x)] : state.currentHubCoord), destName2);
+      detail.transitSteps = tSteps;
     }
 
     stepsList.innerHTML = tSteps.map(function(tStep, idx) {
@@ -1354,11 +1355,33 @@ window.updateNaviHudUI = function() {
   if (!dock || dock.classList.contains('hidden')) return;
 
   var detail = participantRouteDetails[naviState.activeParticipantId];
-  if (!detail) return;
+  if (!detail) {
+    detail = {
+      durationMin: 22,
+      distKm: '6.5',
+      etaStr: formatEtaTime(22),
+      carSteps: [],
+      transitSteps: []
+    };
+    participantRouteDetails[naviState.activeParticipantId] = detail;
+  }
 
   var isCar = (naviState.activeTransport === 'car');
   var steps = isCar ? (detail.carSteps || []) : (detail.transitSteps || []);
-  if (steps.length === 0) return;
+  if (!steps || steps.length === 0) {
+    var pCoord = state.confirmedPlace ? [parseFloat(state.confirmedPlace.y), parseFloat(state.confirmedPlace.x)] : (state.currentHubCoord || [37.497952, 127.027619]);
+    var destName = state.confirmedPlace ? state.confirmedPlace.place_name : '약속 장소';
+    var activeLocFallback = state.locations.find(function(l) { return l.id === naviState.activeParticipantId; }) || state.locations[0];
+
+    if (isCar) {
+      steps = extractCarSteps([], detail.polyCoords, destName, (activeLocFallback ? activeLocFallback.name : '출발지'));
+      detail.carSteps = steps;
+    } else {
+      steps = generateDetailedTransitSteps(activeLocFallback, pCoord, destName);
+      detail.transitSteps = steps;
+    }
+  }
+  if (!steps || steps.length === 0) return;
 
   if (naviState.currentStepIndex >= steps.length) {
     naviState.currentStepIndex = steps.length - 1;
@@ -1476,6 +1499,106 @@ window.updateNaviHudUI = function() {
       if (mSub) mSub.textContent = curStep.stopsStr || curStep.desc || '대중교통 환승 안내';
       if (mIcon) mIcon.setAttribute('data-lucide', curStep.icon || 'train-front');
     }
+  }
+
+  // 6. 독 내부 전체 이동 흐름 타임라인 (#dockExpandedTimeline) 갱신
+  var timeline = document.getElementById('dockExpandedTimeline');
+  if (timeline) {
+    timeline.innerHTML = steps.map(function(s, idx) {
+      var isCurrent = (naviState.currentStepIndex === idx);
+      var isPast = (naviState.currentStepIndex > idx);
+
+      var badgeStyle = s.lineColor ? ('background-color: ' + s.lineColor + '; color: #ffffff;') : (isCar ? 'background-color: #0284c7; color: #ffffff;' : 'background-color: #f1f5f9; color: #475569;');
+      var borderClass = isCurrent 
+        ? 'border-[#0284c7] ring-2 ring-sky-300/60 bg-sky-50/80 shadow-xs' 
+        : (isPast ? 'border-slate-200/70 bg-slate-50/60 opacity-60' : 'border-slate-200/90 bg-white hover:border-[#bae6fd]');
+
+      var stepNumBadge = isCurrent 
+        ? '<span class="w-5 h-5 rounded-full bg-[#0284c7] text-white text-[10px] font-black grid place-items-center shrink-0 shadow-2xs">' + (idx + 1) + '</span>'
+        : (isPast 
+            ? '<span class="w-5 h-5 rounded-full bg-slate-300 text-white text-[10px] font-bold grid place-items-center shrink-0"><i data-lucide="check" class="w-3 h-3"></i></span>'
+            : '<span class="w-5 h-5 rounded-full bg-slate-100 text-slate-500 border border-slate-200 text-[10px] font-bold grid place-items-center shrink-0">' + (idx + 1) + '</span>');
+
+      var stepTitle = isCar ? (s.instruction || '주행') : (s.title || s.desc);
+      var stepBadge = isCar ? (s.distStr || '안내') : (s.badgeText || s.lineName || '이동');
+      var stepSub = isCar ? (s.roadName || '') : (s.stopsStr || s.desc || '');
+
+      return '<div data-step-index="' + idx + '" onclick="window.goToNaviStep(' + idx + ')" class="p-3 rounded-2xl border cursor-pointer transition-all ' + borderClass + '">' +
+        '<div class="flex items-start justify-between gap-2">' +
+          '<div class="flex items-center gap-2 min-w-0 flex-1">' +
+            stepNumBadge +
+            '<div class="w-7 h-7 rounded-xl ' + (isCurrent ? 'bg-[#0284c7] text-white' : 'bg-slate-100 text-[#0284c7]') + ' grid place-items-center shrink-0">' +
+              '<i data-lucide="' + (s.icon || 'arrow-up') + '" class="w-3.5 h-3.5"></i>' +
+            '</div>' +
+            '<div class="min-w-0 flex-1">' +
+              '<div class="flex items-center gap-1.5 flex-wrap">' +
+                '<span class="px-2 py-0.5 rounded-md text-[10px] font-black shrink-0" style="' + badgeStyle + '">' + stepBadge + '</span>' +
+                (s.countdownStr ? '<span class="px-1.5 py-0.5 rounded text-[10px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-300/60 shrink-0">' + s.countdownStr + '</span>' : '') +
+                (isCurrent ? '<span class="px-1.5 py-0.5 rounded text-[9.5px] font-black bg-[#0284c7] text-white shrink-0">현재 위치</span>' : '') +
+                '<h5 class="text-[12.5px] font-bold text-slate-900 truncate leading-snug">' + stepTitle + '</h5>' +
+              '</div>' +
+              (stepSub ? '<p class="text-[11px] text-slate-600 mt-1 truncate">' + stepSub + '</p>' : '') +
+            '</div>' +
+          '</div>' +
+          '<div class="text-right shrink-0">' +
+            '<span class="text-[11px] font-extrabold text-[#0284c7] block">' + (s.durationStr || s.distStr || '') + '</span>' +
+          '</div>' +
+        '</div>' +
+        (s.fastTip ? ('<div class="mt-2 px-2.5 py-1.5 rounded-xl bg-sky-50 border border-sky-100 text-[10.5px] font-bold text-[#0369a1] flex items-center gap-1.5"><i data-lucide="zap" class="w-3.5 h-3.5 text-amber-500 shrink-0"></i><span>' + s.fastTip + '</span></div>') : '') +
+        (s.nextTrainStr ? ('<div class="text-[10px] text-slate-400 pl-8 mt-1">' + s.nextTrainStr + '</div>') : '') +
+      '</div>';
+    }).join('');
+
+    // 만약 펼쳐져 있는 상태라면 현재 스텝으로 자연스럽게 스크롤 맞춤
+    if (dock.classList.contains('dock-expanded')) {
+      var activeEl = timeline.querySelector('[data-step-index="' + naviState.currentStepIndex + '"]');
+      if (activeEl) {
+        activeEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    }
+  }
+
+  if (window.lucide) lucide.createIcons();
+};
+
+window.toggleNaviDockExpand = function(forceExpand) {
+  var dock = document.getElementById('naviBottomDock');
+  var timeline = document.getElementById('dockExpandedTimeline');
+  var currentCard = document.getElementById('dockCurrentStepCard');
+  var label = document.getElementById('dockExpandLabel');
+  var icon = document.getElementById('dockExpandIcon');
+  if (!dock) return;
+
+  var isExpanded = dock.classList.contains('dock-expanded');
+  var willExpand = (typeof forceExpand === 'boolean') ? forceExpand : !isExpanded;
+
+  if (willExpand) {
+    dock.classList.remove('dock-collapsed');
+    dock.classList.add('dock-expanded');
+    if (timeline) timeline.classList.remove('hidden');
+    if (currentCard) currentCard.classList.add('hidden');
+    if (label) label.textContent = '현재 단계로 접기';
+    if (icon) icon.setAttribute('data-lucide', 'chevron-down');
+
+    // 최신 상태로 HUD 및 타임라인 렌더링
+    window.updateNaviHudUI();
+
+    // 현재 선택된 스텝으로 스크롤 이동
+    if (timeline) {
+      setTimeout(function() {
+        var activeEl = timeline.querySelector('[data-step-index="' + naviState.currentStepIndex + '"]');
+        if (activeEl) {
+          activeEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 50);
+    }
+  } else {
+    dock.classList.remove('dock-expanded');
+    dock.classList.add('dock-collapsed');
+    if (timeline) timeline.classList.add('hidden');
+    if (currentCard) currentCard.classList.remove('hidden');
+    if (label) label.textContent = '전체 이동 흐름 보기';
+    if (icon) icon.setAttribute('data-lucide', 'chevron-up');
   }
 
   if (window.lucide) lucide.createIcons();
@@ -1663,6 +1786,9 @@ window.stopNaviMode = function() {
     naviState.simCarMarker = null;
   }
 
+  // 독 상태를 축소 상태로 초기화
+  window.toggleNaviDockExpand(false);
+
   var dock = document.getElementById('naviBottomDock');
   if (dock) dock.classList.add('hidden');
 
@@ -1682,3 +1808,49 @@ window.stopNaviMode = function() {
   }
   showToast('내비게이션 안내를 종료했습니다', 'square');
 };
+
+// 하단 내비 독 터치 제스처 (위로 쓸어올리면 전체 흐름 펼침, 아래로 내리면 축소)
+function initNaviDockGestures() {
+  var handle = document.getElementById('dockExpandHandle');
+  var currentCard = document.getElementById('dockCurrentStepCard');
+  if (handle) {
+    var startY = 0;
+    handle.addEventListener('touchstart', function(e) {
+      if (e.touches && e.touches[0]) startY = e.touches[0].clientY;
+    }, { passive: true });
+
+    handle.addEventListener('touchend', function(e) {
+      if (e.changedTouches && e.changedTouches[0]) {
+        var diffY = e.changedTouches[0].clientY - startY;
+        if (diffY < -20) {
+          window.toggleNaviDockExpand(true);
+        } else if (diffY > 20) {
+          window.toggleNaviDockExpand(false);
+        }
+      }
+    }, { passive: true });
+  }
+
+  if (currentCard) {
+    var cardStartY = 0;
+    currentCard.addEventListener('touchstart', function(e) {
+      if (e.touches && e.touches[0]) cardStartY = e.touches[0].clientY;
+    }, { passive: true });
+
+    currentCard.addEventListener('touchend', function(e) {
+      if (e.changedTouches && e.changedTouches[0]) {
+        var diffY = e.changedTouches[0].clientY - cardStartY;
+        if (diffY < -30) {
+          window.toggleNaviDockExpand(true);
+        }
+      }
+    }, { passive: true });
+  }
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initNaviDockGestures);
+} else {
+  initNaviDockGestures();
+}
+

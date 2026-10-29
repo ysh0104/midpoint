@@ -273,6 +273,16 @@ body {
   max-height: 82vh;
 }
 
+/* 실시간 내비 독 펼침/접힘 트랜지션 */
+.dock-collapsed {
+  max-height: 295px;
+}
+
+.dock-expanded {
+  max-height: 80vh !important;
+  height: 80vh !important;
+}
+
 #bottomSheetScrollArea > * {
   flex-shrink: 0;
 }
