@@ -1,0 +1,9 @@
+{
+  "name": "midpoint-map",
+  "version": "1.0.0",
+  "description": "스마트 중간 장소 탐색 및 모임 조율 지도 서비스",
+  "private": true,
+  "scripts": {
+    "start": "serve ."
+  }
+}

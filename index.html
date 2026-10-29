@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>MidPoint - 스마트 중간 장소 탐색</title>
+<meta name="description" content="내 위치와 가고 싶은 주소들을 직접 입력해 실시간으로 최적의 중간 장소를 도출하는 스마트 지도 뷰어." />
+<meta name="theme-color" content="#ffffff" />
+<meta name="referrer" content="no-referrer" />
+
+<!-- Pretendard Font -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
+
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          brand: {
+            50: '#f0f9ff',
+            100: '#e0f2fe',
+            200: '#bae6fd',
+            300: '#7dd3fc',
+            400: '#66ccff',
+            500: '#38bdf8',
+            600: '#0284c7',
+            700: '#0369a1',
+            800: '#075985',
+            900: '#0c4a6e'
+          }
+        },
+        fontFamily: {
+          sans: ['Pretendard Variable', 'Pretendard', '-apple-system', 'BlinkMacSystemFont', 'system-ui', 'Segoe UI', 'Roboto', 'sans-serif']
+        }
+      }
+    }
+  };
+</script>
+
+<!-- Leaflet.js -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+<!-- Lucide Icons -->
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+
+<link rel="stylesheet" href="css/style.css?v=12" />
+</head>
+<body class="bg-zinc-200 text-slate-900 antialiased h-screen w-screen flex justify-center items-center">
+
+<!-- 메인 앱 컨테이너 (모바일 뷰어 프레임) -->
+<div class="relative w-full max-w-[440px] h-full sm:h-[900px] bg-white sm:rounded-3xl sm:border border-slate-300 shadow-[0_30px_90px_-20px_rgba(15,23,42,0.3)] overflow-hidden flex flex-col">
+
+  <!-- 토스트 알림 (최상단) -->
+  <div id="toast" class="toast glass absolute left-1/2 top-16 z-50 rounded-full pl-3 pr-4 py-2 flex items-center gap-2 shadow-xl shadow-slate-900/10 border border-slate-200/80" role="status">
+    <span class="bg-[#0284c7] grid place-items-center w-5 h-5 rounded-full text-white">
+      <i id="toastIcon" data-lucide="check" class="w-3 h-3" stroke-width="3"></i>
+    </span>
+    <span id="toastText" class="text-[12.5px] font-bold text-slate-900 tracking-tight whitespace-nowrap">알림</span>
+  </div>
+
+  <!-- 1. 상단 플로팅 헤더 -->
+  <header class="header-glass absolute top-3.5 left-3.5 right-3.5 z-30 rounded-2xl px-3.5 py-2.5 flex items-center justify-between transition-all">
+    <div class="flex items-center gap-2.5 min-w-0 pr-2">
+      <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-[#66CCFF] to-[#0284c7] text-white font-extrabold text-[12px] grid place-items-center shrink-0 shadow-sm shadow-[#66CCFF]/30">
+        <i data-lucide="compass" class="w-4.5 h-4.5"></i>
+      </div>
+      <div class="min-w-0">
+        <div class="flex items-center gap-1.5">
+          <h1 class="text-[15px] font-black text-slate-900 tracking-tight">MidPoint</h1>
+          <span id="statusBadge" class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#f0f9ff]/90 text-[#0284c7] border border-[#bae6fd] shrink-0">단독 모드</span>
+        </div>
+        <p id="participantCount" class="text-[11px] font-semibold text-slate-500 mt-0.5 flex items-center gap-1">
+          <span class="w-1.5 h-1.5 rounded-full bg-[#0284c7]"></span>출발지: 1곳 (내 위치)
+        </p>
+      </div>
+    </div>
+
+    <!-- 주소 추가 버튼 -->
+    <button id="openAddLocationBtn" type="button" class="press h-8 px-3.5 rounded-full bg-gradient-to-r from-[#66CCFF] to-[#0284c7] hover:from-[#38bdf8] hover:to-[#0369a1] text-white text-[12px] font-bold inline-flex items-center gap-1.5 shrink-0 shadow-xs shadow-[#66CCFF]/25 transition-all">
+      <i data-lucide="map-pin-plus" class="w-3.5 h-3.5 text-white"></i>
+      <span>주소 추가</span>
+    </button>
+  </header>
+
+  <!-- 2. 지도 중심 UI (화면 전체를 꽉 채우는 실제 지도) -->
+  <main class="relative flex-1 w-full h-full z-0 overflow-hidden">
+    <!-- 실제 Leaflet Map Container -->
+    <div id="realMap"></div>
+
+    <!-- 우측 하단 미니멀 플로팅 컨트롤러 (줌 인/아웃 + GPS 버튼) -->
+    <div class="absolute right-3.5 bottom-60 z-20 flex flex-col items-center gap-2">
+      <!-- 줌 인/아웃 버튼 그룹 -->
+      <div class="glass rounded-full flex flex-col p-1 shadow-md shadow-slate-900/10 border border-white/90">
+        <button id="zoomInBtn" type="button" title="지도 확대" class="press w-8 h-8 rounded-full grid place-items-center text-slate-700 hover:text-[#0284c7] hover:bg-white/80 transition-colors">
+          <i data-lucide="plus" class="w-4 h-4"></i>
+        </button>
+        <div class="w-5 h-[1px] bg-slate-200/80 mx-auto my-0.5"></div>
+        <button id="zoomOutBtn" type="button" title="지도 축소" class="press w-8 h-8 rounded-full grid place-items-center text-slate-700 hover:text-[#0284c7] hover:bg-white/80 transition-colors">
+          <i data-lucide="minus" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <!-- 내 위치 GPS 버튼 -->
+      <button id="gpsBtn" type="button" title="내 위치로 이동" class="press glass w-10 h-10 rounded-full grid place-items-center text-slate-800 shadow-md shadow-slate-900/10 border border-white/90 hover:border-[#66CCFF]">
+        <i data-lucide="crosshair" class="w-4.5 h-4.5 text-[#0284c7]"></i>
+      </button>
+
+      <!-- 모임 조율 채팅 플로팅 버튼 -->
+      <button id="chatFloatingBtn" type="button" onclick="window.toggleChatDrawer()" title="모임 장소 조율 채팅" class="relative press glass w-10 h-10 rounded-full grid place-items-center text-slate-800 shadow-md shadow-slate-900/10 border border-white/90 hover:border-[#66CCFF]">
+        <i data-lucide="message-square" class="w-4.5 h-4.5 text-[#0284c7]"></i>
+        <span id="chatBadge" class="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 text-white rounded-full text-[9px] font-black flex items-center justify-center shadow-xs chat-badge-pulse">2</span>
+      </button>
+
+      <!-- 약속 장소 날씨 & 주간 예보 플로팅 버튼 -->
+      <button id="weatherFloatingBtn" type="button" onclick="window.openWeatherCongestionModal()" title="약속 장소 실시간 날씨 & 일주일 예보" class="press glass w-10 h-10 rounded-full grid place-items-center text-slate-800 shadow-md shadow-slate-900/10 border border-white/90 hover:border-[#66CCFF] transition-all">
+        <i data-lucide="cloud-sun" class="w-4.5 h-4.5 text-[#0284c7]"></i>
+      </button>
+    </div>
+
+
+
+    <!-- 2-1. 실시간 내비게이션 주행 HUD (내비 모드 활성화 시 표시) -->
+    <div id="naviHudBar" class="hidden absolute top-3.5 left-3.5 right-3.5 z-40 p-3.5 rounded-2xl bg-slate-900/95 text-white shadow-2xl border border-slate-700/80 backdrop-blur-md flex flex-col gap-2 transition-all">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2.5 min-w-0 pr-2">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-[#66CCFF] to-[#0284c7] text-white grid place-items-center shrink-0 shadow-sm shadow-[#66CCFF]/30">
+            <i id="naviTurnIcon" data-lucide="corner-up-right" class="w-5 h-5"></i>
+          </div>
+          <div class="min-w-0">
+            <div class="flex items-center gap-1.5">
+              <span id="naviNextDistance" class="text-[15px] font-black text-[#66CCFF]">300m 앞</span>
+              <span id="naviNextInstruction" class="text-[13px] font-bold text-white truncate">직진 후 우회전</span>
+            </div>
+            <p id="naviDestinationName" class="text-[11px] text-slate-400 truncate">목적지: 약속 장소</p>
+          </div>
+        </div>
+        <button type="button" onclick="window.stopNaviMode()" class="press px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-[11.5px] shrink-0 shadow-sm flex items-center gap-1">
+          <i data-lucide="square" class="w-3 h-3 fill-white"></i>
+          <span>안내 종료</span>
+        </button>
+      </div>
+      <div class="flex items-center justify-between pt-2 border-t border-slate-800 text-[11.5px]">
+        <div class="flex items-center gap-1.5">
+          <span class="text-slate-400">도착 예정</span>
+          <span id="naviEtaText" class="font-black text-[#66CCFF] text-[13.5px]">--:--</span>
+        </div>
+        <div class="flex items-center gap-1.5">
+          <span class="text-slate-400">남은 거리</span>
+          <span id="naviRemainDist" class="font-extrabold text-white text-[12.5px]">--km</span>
+        </div>
+        <div class="flex items-center gap-1 text-slate-400 text-[10.5px]">
+          <span class="w-1.5 h-1.5 rounded-full bg-[#66CCFF]"></span>
+          <span>실시간 내비 안내 중</span>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- 3. 하단 플로팅 바텀 시트 (정보 & 출발지 관리) -->
+  <section id="bottomSheet" class="glass z-30 rounded-t-3xl border-t border-slate-200/80 shadow-[0_-10px_40px_rgba(15,23,42,0.12)] flex flex-col transition-all duration-300 sheet-collapsed">
+    <!-- 시트 핸들러 -->
+    <div id="sheetHandle" class="w-full py-2 flex flex-col items-center justify-center cursor-pointer select-none">
+      <div class="w-10 h-1 rounded-full bg-slate-300"></div>
+    </div>
+
+    <!-- 하나의 통합된 전체 스크롤 영역 (상단 정보 + 분석 카드 + 카페/맛집 리스트가 함께 자연스럽게 스크롤됨) -->
+    <div id="bottomSheetScrollArea" class="flex-1 overflow-y-auto px-4 pb-8 no-scrollbar flex flex-col gap-2.5">
+      <!-- 1. 기본 노출 요약 영역 (허브명 + 주소 + 출발지 현황) -->
+      <div id="defaultHubSummaryArea" class="flex items-center justify-between pt-0.5 shrink-0">
+        <div class="flex items-center gap-2.5 min-w-0 pr-2">
+          <div class="w-10 h-10 rounded-2xl bg-[#f0f9ff] border border-[#bae6fd] text-[#0284c7] grid place-items-center shrink-0">
+            <i id="hubIcon" data-lucide="map-pin" class="w-5 h-5 text-[#0284c7]"></i>
+          </div>
+          <div class="min-w-0">
+            <div class="flex items-center gap-1.5">
+              <span id="sheetSubTitle" class="text-[11px] font-extrabold text-slate-400">현재 중심 주소</span>
+              <span id="hubBadge" class="px-1.5 py-0.2 rounded text-[10px] font-bold bg-[#f0f9ff] text-[#0284c7] border border-[#bae6fd]">내 위치</span>
+            </div>
+            <h2 id="sheetMainTitle" class="text-[16px] font-black text-slate-900 tracking-tight leading-tight mt-0.5 truncate">주소 확인 중...</h2>
+          </div>
+        </div>
+        <div class="text-right shrink-0">
+          <span class="text-[10px] text-slate-400 block font-medium">출발지 현황</span>
+          <span id="summaryTime" class="text-[15px] font-black text-[#0284c7] tracking-tight leading-none">1곳</span>
+        </div>
+      </div>
+
+      <!-- 2. 등록된 출발지 가로 칩 리스트 (나 + 사용자가 추가한 주소들) -->
+      <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 shrink-0 min-h-[34px]" id="originChipsContainer">
+        <!-- JS 동적 렌더링 -->
+      </div>
+
+      <!-- 3. 실시간 교통 & 이동시간 분석 카드 (클릭 시 허브로 쭈우욱 확대) -->
+      <div id="transitAnalysisCard" onclick="window.zoomToHub(false)" class="press cursor-pointer hidden p-3 rounded-2xl bg-[#f0f9ff]/90 hover:bg-[#f0f9ff] border border-[#bae6fd] hover:border-[#66CCFF] shadow-xs hover:shadow-md transition-all flex flex-col gap-2 group shrink-0">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-[#0284c7]"></span>
+            <span class="text-[11.5px] font-extrabold text-[#0c4a6e]">교통 접근성 최적 환승 허브</span>
+            <span class="text-[10px] text-[#0284c7] font-bold group-hover:underline flex items-center gap-0.5">
+              <span>(탭하여 확대)</span>
+              <i data-lucide="zoom-in" class="w-3 h-3"></i>
+            </span>
+          </div>
+          <span id="trafficStatusBadge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-white text-[#0284c7] shadow-sm border border-[#bae6fd]">
+            대중교통 최적화
+          </span>
+        </div>
+
+        <div class="flex items-baseline justify-between">
+          <div>
+            <h3 id="transitHubTitle" class="text-[16px] font-black text-slate-900 tracking-tight">강남역 (2호선·신분당선)</h3>
+            <p id="transitHubDesc" class="text-[11px] text-[#0369a1] mt-0.5">양쪽 모두 환승 없이 가장 빠르게 닿는 최적의 중간점</p>
+          </div>
+          <div class="text-right">
+            <span class="text-[10px] text-slate-400 block font-semibold">시간 편차</span>
+            <span id="travelTimeDiff" class="text-[14px] font-black text-emerald-600">단 3분 차이</span>
+          </div>
+        </div>
+
+        <!-- 각 참가자별 예상 이동시간 바 -->
+        <div id="participantTimesList" class="mt-1 space-y-1.5 pt-1.5 border-t border-[#bae6fd]/60">
+          <!-- JS 동적 렌더링 -->
+        </div>
+
+        <!-- 약속 픽스 & 동선 생성 액션 바 (클릭 시 전원 실시간 동선 생성) -->
+        <div class="mt-1.5 pt-2 border-t border-[#bae6fd]/70 flex flex-col gap-1.5" onclick="event.stopPropagation()">
+          <div class="flex items-center justify-between text-[11px] text-[#0369a1] font-semibold px-0.5">
+            <span class="flex items-center gap-1">
+              <i data-lucide="check" class="w-3.5 h-3.5 text-[#0284c7]"></i>
+              <span>약속을 확정하면 참가자별 실시간 이동 동선이 생성됩니다</span>
+            </span>
+          </div>
+          <button type="button" onclick="window.confirmHubMeetingPlace()" class="press w-full py-3 px-4 rounded-xl bg-gradient-to-r from-[#66CCFF] to-[#0284c7] hover:from-[#38bdf8] hover:to-[#0369a1] text-white font-black text-[12.5px] flex items-center justify-center gap-2 shadow-sm shadow-[#66CCFF]/25 transition-all">
+            <i data-lucide="check" class="w-4 h-4"></i>
+            <span>이 중간 허브로 약속 확정하기</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 4. 확정된 약속 장소 전용 네비게이션 & 교통수단 안내 카드 -->
+      <div id="confirmedPlaceNaviCard" class="hidden p-4 rounded-2xl bg-white border border-slate-200/90 shadow-xs flex flex-col gap-3 shrink-0">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+            <span class="text-[11.5px] font-bold text-slate-500">약속 장소 확정</span>
+          </div>
+          <button type="button" onclick="window.cancelMeetingPlace()" class="text-slate-400 hover:text-slate-700 text-[11px] font-semibold transition-colors">
+            장소 변경
+          </button>
+        </div>
+
+        <div class="flex items-center justify-between gap-3">
+          <div class="min-w-0 pr-1">
+            <h3 id="confirmedNaviPlaceTitle" class="text-[17px] font-extrabold text-slate-900 tracking-tight leading-snug truncate">장소명</h3>
+            <p id="confirmedNaviPlaceAddr" class="text-[11.5px] text-slate-500 mt-0.5 truncate">상세 주소</p>
+          </div>
+          <button type="button" onclick="window.startNaviMode()" class="press px-3.5 py-2 rounded-xl bg-[#0284c7] hover:bg-[#0369a1] text-white font-bold text-[12px] shadow-xs flex items-center gap-1.5 shrink-0 transition-all">
+            <i data-lucide="navigation" class="w-3.5 h-3.5 fill-white"></i>
+            <span>실시간 내비 시작</span>
+          </button>
+        </div>
+
+        <!-- 각 참가자별 교통수단(자차/대중교통) 및 도착 예정 시각 -->
+        <div id="confirmedParticipantsNaviList" class="space-y-1.5 pt-2.5 border-t border-slate-100">
+          <!-- JS 동적 렌더링 -->
+        </div>
+      </div>
+
+      <!-- 5. 카테고리 탭 & 맞춤 설정 헤더 (스티키로 스크롤 시 상단에 자연스럽게 고정) -->
+      <div id="categoryStickyHeader" class="sticky top-0 z-20 pt-2 pb-2 -mx-4 px-4 bg-white/95 backdrop-blur-md border-y border-slate-100 shadow-2xs shrink-0 flex flex-col gap-2">
+        <div class="flex items-center justify-between gap-1.5">
+          <!-- 좌측 카테고리 세그먼트 탭 -->
+          <div class="inline-flex items-center gap-1 bg-slate-100/90 p-0.5 rounded-xl border border-slate-200/80 shrink-0" id="categoryTabGroup">
+            <button type="button" id="tabCafeBtn" onclick="window.switchPlaceCategory('CE7')" class="press h-8 px-3 rounded-lg text-[12px] font-bold bg-white text-[#0284c7] shadow-xs border border-[#bae6fd] transition-all whitespace-nowrap flex items-center justify-center">
+              인기 카페
+            </button>
+            <button type="button" id="tabFoodBtn" onclick="window.switchPlaceCategory('FD6')" class="press h-8 px-3 rounded-lg text-[12px] font-semibold text-slate-600 hover:text-slate-900 transition-all whitespace-nowrap flex items-center justify-center">
+              추천 맛집
+            </button>
+          </div>
+
+          <!-- 우측 모임 도구 버튼 그룹 -->
+          <div class="flex items-center gap-1.5 shrink-0">
+            <button type="button" onclick="window.openChatDrawer()" class="relative press h-8 px-2.5 rounded-xl bg-white hover:bg-sky-50/60 text-slate-700 hover:text-[#0284c7] font-bold text-[11.5px] border border-slate-200/90 shadow-2xs flex items-center gap-1.5 transition-all whitespace-nowrap" title="모임 장소 조율 채팅">
+              <i data-lucide="message-square" class="w-3.5 h-3.5 text-[#0284c7] shrink-0"></i>
+              <span class="whitespace-nowrap">모임 채팅</span>
+              <span id="chatHeaderBadge" class="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-rose-500 ring-2 ring-white shadow-xs"></span>
+            </button>
+            <button type="button" onclick="window.openGameModal()" class="press h-8 px-2.5 rounded-xl bg-white hover:bg-sky-50/60 text-slate-700 hover:text-[#0284c7] font-bold text-[11.5px] border border-slate-200/90 shadow-2xs flex items-center gap-1.5 transition-all whitespace-nowrap" title="랜덤 결정 게임">
+              <i data-lucide="dices" class="w-3.5 h-3.5 text-[#0284c7] shrink-0"></i>
+              <span class="whitespace-nowrap">랜덤 결정</span>
+            </button>
+            <button type="button" onclick="window.openMeetFilterModal()" class="relative press h-8 px-2.5 rounded-xl bg-white hover:bg-sky-50/60 text-slate-700 hover:text-[#0284c7] font-bold text-[11.5px] border border-slate-200/90 shadow-2xs flex items-center gap-1.5 transition-all whitespace-nowrap" title="모임 맞춤 필터">
+              <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5 text-[#0284c7] shrink-0"></i>
+              <span class="whitespace-nowrap">모임 맞춤</span>
+              <span id="activeFilterBadgeCount" class="hidden absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#0284c7] text-white text-[9.5px] font-black ring-2 ring-white shadow-xs flex items-center justify-center">1</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 퀵 모임 목적 필터 칩 바 (원터치 전환) -->
+        <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5" id="quickPurposeChips">
+          <button type="button" onclick="window.setQuickPurpose('all')" data-purpose="all" class="quick-purpose-chip press h-7.5 px-3 rounded-xl text-[11.5px] font-bold bg-[#0284c7] text-white shrink-0 transition-all shadow-xs flex items-center justify-center">
+            전체
+          </button>
+          <button type="button" onclick="window.setQuickPurpose('business')" data-purpose="business" class="quick-purpose-chip press h-7.5 px-3 rounded-xl text-[11.5px] font-semibold bg-slate-100 hover:bg-slate-200/80 text-slate-600 hover:text-slate-900 border border-slate-200/50 shrink-0 transition-all flex items-center justify-center">
+            비즈니스·미팅
+          </button>
+          <button type="button" onclick="window.setQuickPurpose('date')" data-purpose="date" class="quick-purpose-chip press h-7.5 px-3 rounded-xl text-[11.5px] font-semibold bg-slate-100 hover:bg-slate-200/80 text-slate-600 hover:text-slate-900 border border-slate-200/50 shrink-0 transition-all flex items-center justify-center">
+            데이트·소개팅
+          </button>
+          <button type="button" onclick="window.setQuickPurpose('friends')" data-purpose="friends" class="quick-purpose-chip press h-7.5 px-3 rounded-xl text-[11.5px] font-semibold bg-slate-100 hover:bg-slate-200/80 text-slate-600 hover:text-slate-900 border border-slate-200/50 shrink-0 transition-all flex items-center justify-center">
+            친구·수다
+          </button>
+          <button type="button" onclick="window.setQuickPurpose('group')" data-purpose="group" class="quick-purpose-chip press h-7.5 px-3 rounded-xl text-[11.5px] font-semibold bg-slate-100 hover:bg-slate-200/80 text-slate-600 hover:text-slate-900 border border-slate-200/50 shrink-0 transition-all flex items-center justify-center">
+            회식·단체
+          </button>
+        </div>
+      </div>
+
+      <!-- 활성화된 맞춤 조건 요약 배너 -->
+      <div id="filterSummaryBar" class="hidden mb-1 px-2.5 py-1.5 rounded-xl bg-[#f0f9ff] border border-[#bae6fd] flex items-center justify-between text-[11px]">
+        <div class="flex items-center gap-1.5 text-[#0369a1] font-semibold truncate">
+          <i data-lucide="check" class="w-3.5 h-3.5 text-[#0284c7] shrink-0"></i>
+          <span id="filterSummaryText">비즈니스 · 30대 추천</span>
+        </div>
+        <button type="button" onclick="window.resetMeetFilter()" class="text-slate-400 hover:text-[#0284c7] font-bold text-[10px] shrink-0 ml-1">초기화</button>
+      </div>
+
+      <!-- 추천 장소 리스트 (#placeList) -->
+      <div id="placeList" class="space-y-2"></div>
+    </div>
+  </section>
+
+  <!-- 4. [주소 검색 & 직접 입력 추가] 모달 -->
+  <div id="addLocationModal" class="hidden absolute inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 transition-opacity">
+    <div class="bg-white w-full max-w-[400px] rounded-t-3xl sm:rounded-3xl p-5 shadow-2xl flex flex-col gap-4">
+      <div class="flex items-center justify-between">
+        <div>
+          <h3 id="modalTitle" class="text-[17px] font-black text-slate-900 tracking-tight">출발지 주소 추가</h3>
+          <p id="modalSubTitle" class="text-[12px] text-slate-500 mt-0.5">주소나 지하철역을 입력하면 중간 지점을 찾아줍니다</p>
+        </div>
+        <button id="closeAddLocationModalBtn" type="button" class="p-1 rounded-full text-slate-400 hover:text-slate-700">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- GPS 실시간 내 위치 다시 잡기 버튼 (모달 내) -->
+      <button id="modalGpsRetryBtn" type="button" onclick="window.retryGpsFromModal()" class="w-full py-2.5 px-3 rounded-xl bg-[#f0f9ff] hover:bg-sky-100 text-[#0284c7] text-[12px] font-bold border border-[#bae6fd] flex items-center justify-center gap-1.5 transition-colors">
+        <i data-lucide="crosshair" class="w-4 h-4 text-[#0284c7]"></i>
+        <span>기기 실시간 GPS로 현재 위치 자동 감지</span>
+      </button>
+
+      <!-- 주소 검색 폼 (단일 통합 검색) -->
+      <form id="searchAddressForm" class="flex items-center gap-2 bg-slate-100 rounded-2xl px-3.5 py-2.5 border border-slate-200/90 focus-within:border-[#66CCFF] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#66CCFF]/25 transition-all">
+        <i data-lucide="search" class="w-4 h-4 text-slate-400 shrink-0"></i>
+        <input id="addressSearchInput" type="text" placeholder="아파트, 지하철역, 도로명 검색" class="bg-transparent text-[13.5px] font-medium text-slate-900 outline-none w-full placeholder:text-slate-400" autocomplete="off" />
+        <button id="searchAddressSubmitBtn" type="submit" class="press px-3.5 py-1.5 rounded-xl bg-[#0284c7] hover:bg-[#0369a1] text-white text-[12px] font-bold shrink-0 transition-all shadow-xs">
+          검색
+        </button>
+      </form>
+
+      <!-- 주소 검색 결과 리스트 (순수 값만 가져와 우리 디자인으로 렌더링) -->
+      <div id="searchResultsSection" class="hidden flex flex-col gap-1.5">
+        <div class="flex items-center justify-between px-0.5">
+          <span id="searchResultsCount" class="text-[11.5px] font-black text-[#0284c7]">검색 결과</span>
+          <span class="text-[10.5px] text-slate-400">장소를 선택하면 출발지로 등록됩니다</span>
+        </div>
+        <div id="searchResultsList" class="max-h-60 overflow-y-auto no-scrollbar space-y-1.5 pr-0.5">
+          <!-- JS 동적 렌더링 -->
+        </div>
+      </div>
+
+      <!-- 추천 주요 출발지 칩 -->
+      <div id="quickAddSection">
+        <span class="text-[11.5px] font-bold text-slate-500 block mb-1.5">자주 찾는 주요 출발지 원클릭 추가:</span>
+        <div class="flex flex-wrap gap-1.5" id="quickAddChips">
+          <button type="button" onclick="window.addPredefinedLocation('홍대입구역', 37.5575, 126.9245)" class="press px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-bold border border-slate-200/60">+ 홍대입구역</button>
+          <button type="button" onclick="window.addPredefinedLocation('판교역', 37.3948, 127.1111)" class="press px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-bold border border-slate-200/60">+ 판교역</button>
+          <button type="button" onclick="window.addPredefinedLocation('강남역', 37.4979, 127.0276)" class="press px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-bold border border-slate-200/60">+ 강남역</button>
+          <button type="button" onclick="window.addPredefinedLocation('잠실역', 37.5133, 127.1001)" class="press px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-bold border border-slate-200/60">+ 잠실역</button>
+          <button type="button" onclick="window.addPredefinedLocation('여의도역', 37.5216, 126.9242)" class="press px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-bold border border-slate-200/60">+ 여의도역</button>
+          <button type="button" onclick="window.addPredefinedLocation('종로3가역', 37.5716, 126.9918)" class="press px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-bold border border-slate-200/60">+ 종로3가역</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. [모임 맞춤 장소 기본 설정] 모달 -->
+  <div id="meetFilterModal" class="hidden absolute inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 transition-opacity">
+    <div class="bg-white w-full max-w-[420px] rounded-t-3xl sm:rounded-3xl p-5 shadow-2xl flex flex-col gap-4 max-h-[88vh] overflow-y-auto no-scrollbar">
+      <div class="flex items-center justify-between">
+        <div>
+          <div class="flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-[#0284c7]"></span>
+            <h3 class="text-[17px] font-black text-slate-900 tracking-tight">모임 맞춤 장소 설정</h3>
+          </div>
+          <p class="text-[12px] text-slate-500 mt-0.5">목적과 연령대, 성향에 꼭 맞는 카페와 맛집을 추천합니다</p>
+        </div>
+        <button id="closeMeetFilterModalBtn" type="button" onclick="window.closeMeetFilterModal()" class="p-1 rounded-full text-slate-400 hover:text-slate-700">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- 1. 모임 목적 -->
+      <div class="space-y-1.5">
+        <label class="text-[12px] font-black text-slate-800 flex items-center justify-between">
+          <span>1. 모임 목적</span>
+          <span class="text-[10.5px] text-slate-400 font-normal">어떤 성격의 만남인가요?</span>
+        </label>
+        <div class="grid grid-cols-2 gap-1.5" id="filterPurposeGroup">
+          <button type="button" data-val="all" onclick="window.selectFilterOption('purpose', 'all')" class="filter-opt-btn filter-opt-purpose p-2.5 rounded-xl border text-left flex flex-col gap-0.5 transition-all bg-[#f0f9ff] border-[#66CCFF] text-[#0284c7] font-extrabold ring-1 ring-[#66CCFF]">
+            <span class="text-[12px]">전체 (기본 추천)</span>
+            <span class="text-[10px] text-slate-400">대중적인 인기 핫플레이스</span>
+          </button>
+          <button type="button" data-val="business" onclick="window.selectFilterOption('purpose', 'business')" class="filter-opt-btn filter-opt-purpose p-2.5 rounded-xl border text-left flex flex-col gap-0.5 transition-all bg-slate-50 border-slate-200 text-slate-700">
+            <span class="text-[12px]">비즈니스 · 미팅</span>
+            <span class="text-[10px] text-slate-400">조용한 대화, 룸식당, 넓은 좌석</span>
+          </button>
+          <button type="button" data-val="date" onclick="window.selectFilterOption('purpose', 'date')" class="filter-opt-btn filter-opt-purpose p-2.5 rounded-xl border text-left flex flex-col gap-0.5 transition-all bg-slate-50 border-slate-200 text-slate-700">
+            <span class="text-[12px]">데이트 · 소개팅</span>
+            <span class="text-[10px] text-slate-400">감성 인테리어, 은은한 조명</span>
+          </button>
+          <button type="button" data-val="friends" onclick="window.selectFilterOption('purpose', 'friends')" class="filter-opt-btn filter-opt-purpose p-2.5 rounded-xl border text-left flex flex-col gap-0.5 transition-all bg-slate-50 border-slate-200 text-slate-700">
+            <span class="text-[12px]">친구 모임 · 수다</span>
+            <span class="text-[10px] text-slate-400">맛있는 디저트, 캐주얼 분위기</span>
+          </button>
+          <button type="button" data-val="group" onclick="window.selectFilterOption('purpose', 'group')" class="filter-opt-btn filter-opt-purpose col-span-2 p-2.5 rounded-xl border text-left flex flex-col gap-0.5 transition-all bg-slate-50 border-slate-200 text-slate-700">
+            <span class="text-[12px]">회식 · 단체 모임</span>
+            <span class="text-[10px] text-slate-400">다인원 예약 가능, 쾌적하고 넓은 공간</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 2. 연령대 -->
+      <div class="space-y-1.5 pt-1 border-t border-slate-100">
+        <label class="text-[12px] font-black text-slate-800 flex items-center justify-between">
+          <span>2. 연령대</span>
+          <span class="text-[10.5px] text-slate-400 font-normal">참석자 주요 연령층</span>
+        </label>
+        <div class="grid grid-cols-4 gap-1.5" id="filterAgeGroup">
+          <button type="button" data-val="all" onclick="window.selectFilterOption('ageGroup', 'all')" class="filter-opt-btn filter-opt-age py-2 px-1 rounded-xl border text-center text-[11.5px] font-bold transition-all bg-[#f0f9ff] border-[#66CCFF] text-[#0284c7] ring-1 ring-[#66CCFF]">
+            전체
+          </button>
+          <button type="button" data-val="20s" onclick="window.selectFilterOption('ageGroup', '20s')" class="filter-opt-btn filter-opt-age py-2 px-1 rounded-xl border text-center text-[11.5px] font-bold transition-all bg-slate-50 border-slate-200 text-slate-700">
+            20대
+          </button>
+          <button type="button" data-val="30s" onclick="window.selectFilterOption('ageGroup', '30s')" class="filter-opt-btn filter-opt-age py-2 px-1 rounded-xl border text-center text-[11.5px] font-bold transition-all bg-slate-50 border-slate-200 text-slate-700">
+            30대
+          </button>
+          <button type="button" data-val="40s" onclick="window.selectFilterOption('ageGroup', '40s')" class="filter-opt-btn filter-opt-age py-2 px-1 rounded-xl border text-center text-[11.5px] font-bold transition-all bg-slate-50 border-slate-200 text-slate-700">
+            40대+
+          </button>
+        </div>
+      </div>
+
+      <!-- 3. 성별 / 동행 성향 -->
+      <div class="space-y-1.5 pt-1 border-t border-slate-100">
+        <label class="text-[12px] font-black text-slate-800 flex items-center justify-between">
+          <span>3. 동행 및 성별 성향</span>
+          <span class="text-[10.5px] text-slate-400 font-normal">선호 메뉴 및 스타일</span>
+        </label>
+        <div class="grid grid-cols-3 gap-1.5" id="filterGenderGroup">
+          <button type="button" data-val="all" onclick="window.selectFilterOption('gender', 'all')" class="filter-opt-btn filter-opt-gender py-2 px-1 rounded-xl border text-center text-[11.5px] font-bold transition-all bg-[#f0f9ff] border-[#66CCFF] text-[#0284c7] ring-1 ring-[#66CCFF]">
+            남녀 혼합
+          </button>
+          <button type="button" data-val="female" onclick="window.selectFilterOption('gender', 'female')" class="filter-opt-btn filter-opt-gender py-2 px-1 rounded-xl border text-center text-[11.5px] font-bold transition-all bg-slate-50 border-slate-200 text-slate-700">
+            여성 선호
+          </button>
+          <button type="button" data-val="male" onclick="window.selectFilterOption('gender', 'male')" class="filter-opt-btn filter-opt-gender py-2 px-1 rounded-xl border text-center text-[11.5px] font-bold transition-all bg-slate-50 border-slate-200 text-slate-700">
+            남성 선호
+          </button>
+        </div>
+      </div>
+
+      <!-- 4. 주요 이동 수단 선호도 (자차 vs 대중교통) -->
+      <div class="space-y-1.5 pt-1 border-t border-slate-100">
+        <label class="text-[12px] font-black text-slate-800 flex items-center justify-between">
+          <span>4. 이동 수단 기준</span>
+          <span class="text-[10.5px] text-slate-400 font-normal">중간 지점 선정 가중치</span>
+        </label>
+        <div class="grid grid-cols-3 gap-1.5" id="filterTransportGroup">
+          <button type="button" data-val="transit" onclick="window.selectFilterOption('transportPref', 'transit')" class="filter-opt-btn filter-opt-transport py-2 px-1 rounded-xl border text-center text-[11.5px] font-bold transition-all bg-slate-50 border-slate-200 text-slate-700">
+            대중교통 우선
+          </button>
+          <button type="button" data-val="car" onclick="window.selectFilterOption('transportPref', 'car')" class="filter-opt-btn filter-opt-transport py-2 px-1 rounded-xl border text-center text-[11.5px] font-bold transition-all bg-slate-50 border-slate-200 text-slate-700">
+            자차 우선
+          </button>
+          <button type="button" data-val="mixed" onclick="window.selectFilterOption('transportPref', 'mixed')" class="filter-opt-btn filter-opt-transport py-2 px-1 rounded-xl border text-center text-[11.5px] font-bold transition-all bg-[#f0f9ff] border-[#66CCFF] text-[#0284c7] ring-1 ring-[#66CCFF]">
+            혼합 (환승+주차)
+          </button>
+        </div>
+      </div>
+
+      <!-- 하단 버튼 영역 -->
+      <div class="flex items-center gap-2 pt-2 border-t border-slate-100">
+        <button type="button" onclick="window.resetMeetFilter()" class="press flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-bold text-[12.5px] hover:bg-slate-50 transition-all">
+          초기화
+        </button>
+        <button type="button" onclick="window.applyMeetFilterModal()" class="press flex-2 py-2.5 px-4 rounded-xl bg-gradient-to-r from-[#66CCFF] to-[#0284c7] hover:from-[#38bdf8] hover:to-[#0369a1] text-white font-black text-[12.5px] shadow-sm shadow-[#66CCFF]/25 transition-all flex items-center justify-center gap-1.5">
+          <i data-lucide="check" class="w-4 h-4"></i>
+          <span>설정 적용 및 추천받기</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4.5 약속 장소 일주일 날씨 & 이동 혼잡도 분석 모달 -->
+  <div id="weatherCongestionModal" class="hidden absolute inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4 transition-all">
+    <div class="w-full max-w-sm bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl border border-slate-200/80 overflow-hidden flex flex-col max-h-[88vh] animate-in fade-in zoom-in-95 duration-200">
+      <!-- 헤더 -->
+      <div class="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-sky-50/80 to-white shrink-0">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-xl bg-sky-100 text-[#0284c7] grid place-items-center border border-sky-200 shadow-2xs">
+            <i data-lucide="cloud-sun" class="w-4.5 h-4.5"></i>
+          </div>
+          <div>
+            <h3 class="text-[15px] font-black text-slate-900 tracking-tight">일주일 약속 날씨 예보</h3>
+            <p id="modalTargetPlaceName" class="text-[11px] text-[#0369a1] font-semibold truncate max-w-[210px]">약속 장소 기준 주간 기상 분석</p>
+          </div>
+        </div>
+        <button type="button" onclick="window.closeWeatherCongestionModal()" class="press w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 grid place-items-center transition-colors">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <!-- 내용 스크롤 영역 -->
+      <div class="p-4 overflow-y-auto space-y-3.5 no-scrollbar">
+        <!-- 1. 오늘 현재 실시간 날씨 요약 카드 -->
+        <div class="p-3.5 rounded-2xl bg-gradient-to-br from-sky-50/90 via-sky-50/40 to-white border border-sky-200/80 shadow-xs flex flex-col gap-2.5">
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] font-extrabold text-[#0369a1] flex items-center gap-1.5">
+              <i data-lucide="sun" class="w-3.5 h-3.5 text-[#0284c7]"></i>
+              <span>오늘 실시간 날씨</span>
+            </span>
+            <span id="modalWeatherUpdated" class="text-[9.5px] text-slate-400 font-medium">기상청 실시간 동기화</span>
+          </div>
+
+          <div class="flex items-center justify-between">
+            <div>
+              <div class="flex items-baseline gap-2">
+                <span id="modalWeatherTemp" class="text-[26px] font-black text-slate-900 tracking-tight">17°C</span>
+                <span id="modalWeatherCondition" class="text-[13.5px] font-bold text-slate-700">맑음</span>
+              </div>
+              <p id="modalWeatherFeel" class="text-[11px] text-slate-500 mt-0.5">체감 온도 16.5°C · 습도 48%</p>
+            </div>
+            <div class="w-12 h-12 rounded-2xl bg-white border border-sky-100 shadow-sm grid place-items-center text-[#0284c7]">
+              <i id="modalWeatherBigIcon" data-lucide="sun" class="w-6.5 h-6.5"></i>
+            </div>
+          </div>
+
+          <div class="p-2 rounded-xl bg-white/90 border border-sky-100 text-[10.5px] text-slate-600 flex items-center gap-2 shadow-2xs">
+            <i data-lucide="info" class="w-3.5 h-3.5 text-[#0284c7] shrink-0"></i>
+            <span id="modalWeatherCareTip">선선한 저녁 날씨 · 가벼운 외투 착용 추천</span>
+          </div>
+        </div>
+
+        <!-- 2. 일주일 7-Day 주간 날씨 예보 리스트 -->
+        <div class="p-3.5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex flex-col gap-2.5">
+          <div class="flex items-center justify-between">
+            <span class="text-[11.5px] font-extrabold text-slate-800 flex items-center gap-1.5">
+              <i data-lucide="calendar" class="w-3.5 h-3.5 text-[#0284c7]"></i>
+              <span>일주일 주간 일기 예보</span>
+            </span>
+            <span class="text-[10px] text-slate-400 font-medium">향후 7일간 기상</span>
+          </div>
+
+          <!-- 7일치 주간 예보 아이템 렌더링 컨테이너 -->
+          <div id="modalWeeklyForecastList" class="space-y-1.5">
+            <!-- JS 동적 생성 -->
+          </div>
+        </div>
+
+        <!-- 3. 지하철역 및 이동 혼잡도 분석 카드 -->
+        <div class="p-3.5 rounded-2xl bg-slate-50/80 border border-slate-200/80 shadow-xs flex flex-col gap-2">
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] font-extrabold text-slate-700 flex items-center gap-1.5">
+              <i data-lucide="train-front" class="w-3.5 h-3.5 text-[#0284c7]"></i>
+              <span>지하철역 실시간 혼잡도</span>
+            </span>
+            <span id="modalCongestionStationName" class="text-[10.5px] font-bold text-[#0284c7] bg-white px-2 py-0.5 rounded-md border border-slate-200">사당역</span>
+          </div>
+
+          <div class="flex items-center justify-between">
+            <span id="modalCongestionStatusTitle" class="text-[14px] font-black text-slate-800">원활한 이동 가능</span>
+            <span id="modalCongestionPill" class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200">원활</span>
+          </div>
+          <p id="modalCongestionDesc" class="text-[10.5px] text-slate-500 leading-relaxed">현재 열차 배차 간격이 안정적이며 환승 통로 통행이 수월합니다.</p>
+
+          <div class="p-2 rounded-xl bg-white border border-slate-200 text-[10.5px] text-slate-600 flex items-center gap-1.5 shadow-2xs">
+            <i data-lucide="sparkles" class="w-3.5 h-3.5 text-[#0284c7] shrink-0"></i>
+            <span id="modalCongestionTip">열차 중간 칸(4~6번 칸)이 비교적 승객 밀도가 낮아 쾌적합니다.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 하단 닫기 버튼 -->
+      <div class="p-3.5 bg-white border-t border-slate-100 shrink-0">
+        <button type="button" onclick="window.closeWeatherCongestionModal()" class="press w-full py-2.5 rounded-xl bg-[#0284c7] hover:bg-[#0369a1] text-white font-bold text-[12.5px] transition-all shadow-xs">
+          확인 완료
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. 모빌리티 배려 쿠폰 상세 모달 (카카오 T 택시 / 쏘카) -->
+  <div id="mobilityVoucherModal" class="hidden absolute inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 transition-opacity">
+    <div class="bg-white w-full max-w-sm rounded-t-3xl sm:rounded-3xl p-5 shadow-2xl border border-slate-200/80 animate-in fade-in zoom-in-95 duration-200 flex flex-col gap-4">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div class="flex items-center gap-2">
+          <div id="voucherIconWrap" class="w-9 h-9 rounded-xl bg-amber-50 text-amber-700 grid place-items-center border border-amber-200">
+            <i id="voucherMainIcon" data-lucide="ticket" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 id="voucherModalTitle" class="text-[16px] font-black text-slate-900 tracking-tight">Kakao T 택시 5,000원권</h3>
+            <p id="voucherModalSub" class="text-[11.5px] text-slate-500">원거리 이동 참가자 전용 배려 바우처</p>
+          </div>
+        </div>
+        <button type="button" onclick="window.closeMobilityVoucherModal()" class="p-1 rounded-full text-slate-400 hover:text-slate-700">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- 바우처 카드 본체 -->
+      <div id="voucherCardBox" class="p-4 rounded-2xl bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-white border border-amber-200 flex flex-col gap-2.5">
+        <div class="flex items-center justify-between">
+          <span id="voucherBrandBadge" class="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-amber-100 text-amber-800 border border-amber-200">Kakao T 블루</span>
+          <span class="text-[11px] font-extrabold text-slate-500">유효기간: 2026.12.31까지</span>
+        </div>
+        <div>
+          <span id="voucherDiscountAmount" class="text-[22px] font-black text-slate-900 tracking-tight">5,000원 할인</span>
+          <p id="voucherTargetNote" class="text-[11.5px] text-slate-600 font-semibold mt-0.5">가장 먼 곳에서 출발하는 참가자에게 제공되는 혜택</p>
+        </div>
+        <!-- 쿠폰 코드 박스 -->
+        <div class="mt-1 p-2.5 rounded-xl bg-white border border-slate-200 flex items-center justify-between shadow-2xs">
+          <div>
+            <span class="text-[9.5px] text-slate-400 block font-semibold">쿠폰 코드</span>
+            <span id="voucherCodeText" class="font-mono text-[13px] font-black text-[#0284c7] tracking-wider">MIDPOINT-KAKAOT-5000</span>
+          </div>
+          <button type="button" onclick="window.copyVoucherCode()" class="press px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-bold flex items-center gap-1 transition-all">
+            <i data-lucide="copy" class="w-3 h-3"></i>
+            <span>코드 복사</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 이용 안내 -->
+      <div class="text-[11px] text-slate-500 space-y-1 bg-slate-50 p-3 rounded-xl border border-slate-200/60">
+        <p class="flex items-center gap-1 font-semibold text-slate-700">
+          <i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-600"></i>
+          <span>이용 안내</span>
+        </p>
+        <p id="voucherTermsText">• 카카오 T 앱 [내 정보 > 쿠폰 등록]에서 코드를 등록 후 결제 시 사용 가능합니다.</p>
+        <p>• 중간 지점 모임 장소로 이동 시 편리하게 사용하실 수 있습니다.</p>
+      </div>
+
+      <!-- 액션 버튼 -->
+      <div class="flex items-center gap-2 pt-1">
+        <button id="voucherAppLaunchBtn" type="button" onclick="window.launchMobilityApp()" class="press flex-1 py-3 px-4 rounded-xl bg-gradient-to-r from-[#66CCFF] to-[#0284c7] hover:from-[#38bdf8] hover:to-[#0369a1] text-white font-extrabold text-[12.5px] shadow-sm shadow-[#66CCFF]/25 flex items-center justify-center gap-1.5 transition-all">
+          <i data-lucide="external-link" class="w-4 h-4"></i>
+          <span id="voucherAppBtnText">카카오 T에서 쿠폰 등록하기</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. 친구들이 택시비 모아 선물하기 모달 -->
+  <div id="taxiGiftModal" class="hidden absolute inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 transition-opacity">
+    <div class="bg-white w-full max-w-sm rounded-t-3xl sm:rounded-3xl p-5 shadow-2xl border border-slate-200/80 animate-in fade-in zoom-in-95 duration-200 flex flex-col gap-4">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div class="flex items-center gap-2">
+          <div class="w-9 h-9 rounded-xl bg-[#f0f9ff] text-[#0284c7] grid place-items-center border border-[#bae6fd]">
+            <i data-lucide="heart-handshake" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="text-[16px] font-black text-slate-900 tracking-tight">택시비 선물하기</h3>
+            <p id="taxiGiftTargetSub" class="text-[11.5px] text-slate-500">원거리 친구를 위한 십시일반 배려</p>
+          </div>
+        </div>
+        <button type="button" onclick="window.closeTaxiGiftModal()" class="p-1 rounded-full text-slate-400 hover:text-slate-700">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 flex flex-col gap-2">
+        <p class="text-[12px] text-slate-700 leading-snug">
+          오늘 가장 멀리서 이동하는 <strong id="taxiGiftTargetName" class="text-[#0284c7]">친구</strong> 님의 이동 부담을 덜어주기 위해 함께 택시비를 지원해보세요!
+        </p>
+      </div>
+
+      <!-- 지원 금액 선택 -->
+      <div class="space-y-1.5">
+        <label class="text-[11.5px] font-extrabold text-slate-700">선물할 지원 금액</label>
+        <div class="grid grid-cols-3 gap-2" id="taxiGiftAmountGroup">
+          <button type="button" onclick="window.selectGiftAmount(3000)" class="gift-amt-btn active press py-2 rounded-xl border border-[#bae6fd] bg-[#f0f9ff] text-[#0284c7] text-[12px] font-black transition-all">3,000원</button>
+          <button type="button" onclick="window.selectGiftAmount(5000)" class="gift-amt-btn press py-2 rounded-xl border border-slate-200 bg-white text-slate-700 text-[12px] font-bold transition-all">5,000원</button>
+          <button type="button" onclick="window.selectGiftAmount(10000)" class="gift-amt-btn press py-2 rounded-xl border border-slate-200 bg-white text-slate-700 text-[12px] font-bold transition-all">10,000원</button>
+        </div>
+      </div>
+
+      <!-- 송금/공유 수단 -->
+      <div class="flex flex-col gap-2 pt-1">
+        <button type="button" onclick="window.sendTaxiGiftKakao()" class="press w-full py-3 px-4 rounded-xl bg-[#fee500] hover:bg-[#fedd00] text-[#3c1e1e] font-extrabold text-[12.5px] shadow-sm flex items-center justify-center gap-1.5 transition-all">
+          <i data-lucide="message-circle" class="w-4 h-4"></i>
+          <span>카카오톡으로 택시비 선물 메시지 보내기</span>
+        </button>
+        <button type="button" onclick="window.closeTaxiGiftModal()" class="w-full py-2 text-center text-slate-400 hover:text-slate-600 text-[11.5px] font-semibold">
+          닫기
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 7. 랜덤 결정 도우미 모달 (룰렛 & 제비뽑기) -->
+  <div id="randomGameModal" class="hidden absolute inset-0 z-[60] bg-slate-900/50 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 transition-opacity">
+    <div class="bg-white w-full max-w-sm rounded-t-3xl sm:rounded-3xl p-5 shadow-2xl border border-slate-200/80 animate-in fade-in zoom-in-95 duration-200 flex flex-col gap-3.5 max-h-[92vh] overflow-y-auto no-scrollbar">
+      
+      <!-- 모달 헤더 -->
+      <div class="flex items-center justify-between pb-2.5 border-b border-slate-100">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-[#66CCFF] to-[#0284c7] text-white grid place-items-center shadow-xs shadow-[#66CCFF]/25">
+            <i data-lucide="dices" class="w-4.5 h-4.5 text-white"></i>
+          </div>
+          <div>
+            <h3 class="text-[15px] font-black text-slate-900 tracking-tight">모임 결정 도우미</h3>
+            <p class="text-[11px] text-slate-500">장소 고민 & 밥값·커피 쏘기를 랜덤으로 결정</p>
+          </div>
+        </div>
+        <button type="button" onclick="window.closeGameModal()" class="p-1 rounded-full text-slate-400 hover:text-slate-700">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- 게임 모드 탭 (룰렛 vs 제비뽑기) -->
+      <div class="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl border border-slate-200/60">
+        <button id="tabGameRouletteBtn" type="button" onclick="window.switchGameTab('roulette')" class="flex-1 py-1.5 rounded-lg text-[12px] font-black bg-white text-[#0284c7] shadow-xs border border-[#bae6fd] transition-all flex items-center justify-center gap-1.5">
+          <i data-lucide="disc" class="w-3.5 h-3.5 text-[#0284c7]"></i>
+          <span>돌려돌려 룰렛</span>
+        </button>
+        <button id="tabGameDrawBtn" type="button" onclick="window.switchGameTab('draw')" class="flex-1 py-1.5 rounded-lg text-[12px] font-bold text-slate-500 hover:text-[#0284c7] transition-all flex items-center justify-center gap-1.5">
+          <i data-lucide="shuffle" class="w-3.5 h-3.5"></i>
+          <span>두근두근 제비뽑기</span>
+        </button>
+      </div>
+
+      <!-- 빠른 프리셋 로더 칩 (4분할 균등 그리드) -->
+      <div>
+        <div class="flex items-center justify-between mb-1">
+          <span class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">추천 프리셋</span>
+        </div>
+        <div class="game-preset-grid">
+          <button type="button" data-preset="places" onclick="window.loadGamePreset('places')" class="game-preset-btn active press">
+            <i data-lucide="map-pin" class="w-4 h-4"></i>
+            <span class="text-[10.5px] leading-none tracking-tight">주변 장소</span>
+          </button>
+          <button type="button" data-preset="participants" onclick="window.loadGamePreset('participants')" class="game-preset-btn press">
+            <i data-lucide="users" class="w-4 h-4"></i>
+            <span class="text-[10.5px] leading-none tracking-tight">모임원 내기</span>
+          </button>
+          <button type="button" data-preset="menu" onclick="window.loadGamePreset('menu')" class="game-preset-btn press">
+            <i data-lucide="utensils" class="w-4 h-4"></i>
+            <span class="text-[10.5px] leading-none tracking-tight">메뉴 카테고리</span>
+          </button>
+          <button type="button" data-preset="coffee" onclick="window.loadGamePreset('coffee')" class="game-preset-btn press">
+            <i data-lucide="coffee" class="w-4 h-4"></i>
+            <span class="text-[10.5px] leading-none tracking-tight">커피 쏘기</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 현재 등록된 항목 칩 & 직접 추가 입력창 -->
+      <div class="bg-slate-50 p-2.5 rounded-2xl border border-slate-200/80 flex flex-col gap-1.5">
+        <div class="flex items-center justify-between text-[11px]">
+          <span class="font-extrabold text-slate-700">결정 대상 항목</span>
+          <span class="text-[10px] text-slate-400">클릭하여 삭제</span>
+        </div>
+        <div id="gameChipsList" class="flex items-center gap-1.5 flex-wrap max-h-[56px] overflow-y-auto no-scrollbar">
+          <!-- JS 렌더링 -->
+        </div>
+        <div class="flex items-center gap-1.5 pt-1 border-t border-slate-200/60">
+          <input id="gameCustomInput" type="text" placeholder="직접 추가 (예: 피자, 삼겹살, 지각비)" class="flex-1 px-2.5 py-1 rounded-xl border border-slate-200 bg-white text-[11px] outline-none focus:border-[#66CCFF]" onkeydown="if(event.key==='Enter'){event.preventDefault();window.addCustomGameItem();}" />
+          <button type="button" onclick="window.addCustomGameItem()" class="press px-3.5 py-1 rounded-xl bg-[#0284c7] hover:bg-[#0369a1] text-white text-[11px] font-bold shrink-0 shadow-xs">
+            추가
+          </button>
+        </div>
+      </div>
+
+      <!-- [1] 룰렛 뷰 -->
+      <div id="gameRouletteView" class="flex flex-col items-center gap-3 py-1">
+        <div class="roulette-container my-1">
+          <!-- 모던 정밀 인디케이터 포인터 -->
+          <div class="roulette-pointer">
+            <svg width="24" height="28" viewBox="0 0 24 28" fill="none">
+              <path d="M10.2 26.6a2 2 0 0 0 3.6 0l9.4-19.2A2 2 0 0 0 21.4 4.5H2.6a2 2 0 0 0-1.8 2.9l9.4 19.2z" fill="#0284c7" stroke="#ffffff" stroke-width="2"/>
+              <circle cx="12" cy="10" r="3" fill="#66CCFF"/>
+            </svg>
+          </div>
+          <canvas id="rouletteCanvas" class="roulette-canvas" width="220" height="220" style="width: 220px; height: 220px;"></canvas>
+        </div>
+
+        <button id="spinRouletteBtn" type="button" onclick="window.spinRoulette()" class="press w-full py-3 px-4 rounded-xl bg-gradient-to-r from-[#66CCFF] to-[#0284c7] hover:from-[#38bdf8] hover:to-[#0369a1] text-white font-black text-[13px] shadow-sm shadow-[#66CCFF]/25 flex items-center justify-center gap-2 transition-all">
+          <i id="spinBtnIcon" data-lucide="rotate-cw" class="w-4 h-4"></i>
+          <span id="spinBtnText">룰렛 돌리기</span>
+        </button>
+
+        <!-- 당첨 결과 박스 -->
+        <div id="rouletteResultBox" class="hidden w-full p-3.5 rounded-2xl bg-slate-50 border border-slate-200/90 shadow-xs flex flex-col items-center gap-2 text-center animate-in fade-in zoom-in-95">
+          <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-sky-50 text-[#0284c7] border border-[#bae6fd] text-[10.5px] font-extrabold">
+            <i data-lucide="sparkles" class="w-3 h-3 text-[#0284c7]"></i>
+            <span>랜덤 당첨 결과</span>
+          </span>
+          <h4 id="rouletteResultText" class="text-[19px] font-black text-slate-900 tracking-tight">결과</h4>
+          <button id="rouletteConfirmPlaceBtn" type="button" class="hidden press w-full py-2.5 px-3 rounded-xl bg-[#0284c7] hover:bg-[#0369a1] text-white font-bold text-[12px] shadow-xs flex items-center justify-center gap-1.5 transition-all mt-1">
+            <i data-lucide="check" class="w-4 h-4"></i>
+            <span>이 장소로 약속 확정하기</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- [2] 제비뽑기 뷰 -->
+      <div id="gameDrawView" class="hidden flex flex-col gap-3 py-1">
+        <div class="flex items-center justify-between text-[11px] px-1">
+          <span class="text-slate-500">카드를 터치하여 결과를 확인하세요</span>
+          <div class="flex items-center gap-1">
+            <button type="button" onclick="window.revealAllDrawCards()" class="press px-2 py-0.5 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 font-bold text-[10.5px]">
+              전체 공개
+            </button>
+            <button type="button" onclick="window.resetLuckyDraw()" class="press px-2 py-0.5 rounded-lg bg-[#f0f9ff] text-[#0284c7] hover:bg-sky-100 font-bold text-[10.5px] flex items-center gap-0.5">
+              <i data-lucide="rotate-cw" class="w-2.5 h-2.5"></i>
+              <span>다시 섞기</span>
+            </button>
+          </div>
+        </div>
+
+        <div id="luckyDrawCardsGrid" class="grid grid-cols-2 gap-2.5 max-h-[220px] overflow-y-auto no-scrollbar p-1">
+          <!-- JS 렌더링 -->
+        </div>
+
+        <!-- 제비뽑기 당첨/선택 결과 박스 -->
+        <div id="drawResultBox" class="hidden w-full p-3.5 rounded-2xl bg-slate-50 border border-slate-200/90 shadow-xs flex flex-col items-center gap-2 text-center animate-in fade-in">
+          <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-sky-50 text-[#0284c7] border border-[#bae6fd] text-[10.5px] font-extrabold">
+            <i data-lucide="sparkles" class="w-3 h-3 text-[#0284c7]"></i>
+            <span>뽑은 제비 결과</span>
+          </span>
+          <h4 id="drawResultText" class="text-[18px] font-black text-slate-900 tracking-tight">결과</h4>
+          <button id="drawConfirmPlaceBtn" type="button" class="press w-full py-2.5 px-3 rounded-xl bg-[#0284c7] hover:bg-[#0369a1] text-white font-bold text-[12px] shadow-xs flex items-center justify-center gap-1.5 transition-all mt-1">
+            <i data-lucide="check" class="w-4 h-4"></i>
+            <span>이 장소로 약속 확정하기</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 8. 모임 장소 조율 채팅방 (Drawer / Modal) -->
+  <div id="chatDrawerModal" class="hidden absolute inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-end justify-center transition-opacity">
+    <div class="bg-white w-full max-w-[440px] h-[86vh] max-h-[720px] rounded-t-3xl shadow-2xl border-t border-slate-200/90 flex flex-col overflow-hidden animate-in slide-in-from-bottom duration-250">
+      
+      <!-- 채팅방 상단 헤더 -->
+      <div class="px-4 py-3 bg-white border-b border-slate-100 flex items-center justify-between shrink-0">
+        <div class="flex items-center gap-2.5 min-w-0 pr-2">
+          <div class="w-9 h-9 rounded-2xl bg-gradient-to-br from-[#66CCFF] to-[#0284c7] text-white grid place-items-center shrink-0 shadow-xs">
+            <i data-lucide="message-square" class="w-4.5 h-4.5"></i>
+          </div>
+          <div class="min-w-0">
+            <div class="flex items-center gap-1.5">
+              <h3 class="text-[15px] font-black text-slate-900 tracking-tight truncate">모임 장소 조율방</h3>
+              <span id="chatParticipantCountBadge" class="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-[#f0f9ff] text-[#0284c7] border border-[#bae6fd]">3명</span>
+            </div>
+            <p id="chatParticipantsSubText" class="text-[11px] text-slate-500 truncate">나, 다은, 영은</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-1">
+          <button type="button" onclick="window.openGameModal()" class="press p-2 rounded-xl text-slate-500 hover:text-[#0284c7] hover:bg-slate-100 transition-colors" title="랜덤 결정 룰렛 열기">
+            <i data-lucide="dices" class="w-4.5 h-4.5"></i>
+          </button>
+          <button type="button" onclick="window.closeChatDrawer()" class="press p-1.5 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- 퀵 안내 배너 (현재 중간 지점 및 빠른 공유) -->
+      <div id="chatHubBanner" class="px-4 py-2 bg-[#f0f9ff] border-b border-[#bae6fd]/60 flex items-center justify-between text-[11px] shrink-0">
+        <div class="flex items-center gap-1.5 text-[#0369a1] font-medium truncate">
+          <i data-lucide="map-pin" class="w-3.5 h-3.5 text-[#0284c7] shrink-0"></i>
+          <span id="chatHubBannerText">중간 지점 확인 중...</span>
+        </div>
+        <button type="button" onclick="window.sendChatHubShare()" class="press text-[#0284c7] hover:underline font-bold text-[10.5px] shrink-0">
+          채팅에 공유
+        </button>
+      </div>
+
+      <!-- 채팅 메시지 스크롤 영역 -->
+      <div id="chatMessageList" class="flex-1 overflow-y-auto p-4 space-y-3.5 bg-slate-50/70 no-scrollbar">
+        <!-- JS 렌더링 -->
+      </div>
+
+      <!-- 퀵 액션 칩 바 (한 번 탭으로 중간지점/장소/룰렛 즉시 제안) -->
+      <div class="px-3 pt-2 pb-1 bg-white border-t border-slate-100 flex items-center gap-1.5 overflow-x-auto no-scrollbar shrink-0">
+        <button type="button" onclick="window.sendChatHubShare()" class="press px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-[#f0f9ff] hover:text-[#0284c7] hover:border-[#bae6fd] text-slate-600 text-[11px] font-bold border border-slate-200/80 shrink-0 flex items-center gap-1 transition-all">
+          <i data-lucide="map-pin" class="w-3 h-3 text-[#0284c7]"></i>
+          <span>중간 지점 공유</span>
+        </button>
+        <button type="button" onclick="window.sendChatTopPlaceShare()" class="press px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-[#f0f9ff] hover:text-[#0284c7] hover:border-[#bae6fd] text-slate-600 text-[11px] font-bold border border-slate-200/80 shrink-0 flex items-center gap-1 transition-all">
+          <i data-lucide="coffee" class="w-3 h-3 text-[#0284c7]"></i>
+          <span>인기 장소 추천</span>
+        </button>
+        <button type="button" onclick="window.sendChatRouletteInvite()" class="press px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-[#f0f9ff] hover:text-[#0284c7] hover:border-[#bae6fd] text-slate-600 text-[11px] font-bold border border-slate-200/80 shrink-0 flex items-center gap-1 transition-all">
+          <i data-lucide="dices" class="w-3 h-3 text-purple-600"></i>
+          <span>룰렛으로 결정하자</span>
+        </button>
+        <button type="button" onclick="window.sendChatPlacePoll()" class="press px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-[#f0f9ff] hover:text-[#0284c7] hover:border-[#bae6fd] text-slate-600 text-[11px] font-bold border border-slate-200/80 shrink-0 flex items-center gap-1 transition-all">
+          <i data-lucide="check-square" class="w-3 h-3 text-[#0284c7]"></i>
+          <span>장소 투표 올리기</span>
+        </button>
+        <button type="button" onclick="window.sendChatLocationStatus()" class="press px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-[#f0f9ff] hover:text-[#0284c7] hover:border-[#bae6fd] text-slate-600 text-[11px] font-bold border border-slate-200/80 shrink-0 flex items-center gap-1 transition-all">
+          <i data-lucide="navigation" class="w-3 h-3 text-emerald-600"></i>
+          <span>내 출발지 알리기</span>
+        </button>
+      </div>
+
+      <!-- 하단 메시지 입력 폼 -->
+      <div class="p-3 bg-white border-t border-slate-100 flex items-center gap-2 shrink-0">
+        <input id="chatInputText" type="text" placeholder="메시지를 입력하거나 장소를 조율해보세요..." class="flex-1 px-3.5 py-2.5 rounded-2xl bg-slate-100 border border-transparent focus:border-[#66CCFF] focus:bg-white text-[12px] text-slate-800 outline-none transition-all" onkeydown="if(event.key==='Enter'&&!event.isComposing){event.preventDefault();window.sendChatMessage();}" />
+        <button id="chatSendBtn" type="button" onclick="window.sendChatMessage()" class="press w-10 h-10 rounded-2xl bg-[#0284c7] hover:bg-[#0369a1] text-white grid place-items-center shrink-0 transition-all shadow-xs shadow-[#66CCFF]/25" title="전송">
+          <i data-lucide="send" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<!-- 기능별 모듈 스크립트 분리 (Clean Modular Architecture) -->
+<script src="js/config.js?v=13"></script>
+<script src="js/state.js?v=13"></script>
+<script src="js/map.js?v=13"></script>
+<script src="js/mobility.js?v=13"></script>
+<script src="js/places.js?v=13"></script>
+<script src="js/weather.js?v=13"></script>
+<script src="js/care.js?v=13"></script>
+<script src="js/game.js?v=13"></script>
+<script src="js/chat.js?v=13"></script>
+<script src="js/ui.js?v=13"></script>
+</body>
+</html>
