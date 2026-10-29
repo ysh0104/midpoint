@@ -48,9 +48,9 @@ body {
   outline: 0;
 }
 
-/* 지도 타일: 눈이 편안하고 세련된 모던 애플맵/토스 톤 (혼잡한 색감 완화) */
+/* 지도 타일: 눈이 편안한 자연 지형 파스텔 톤 (산림 녹음, 하천 소프트 블루, 지형 음영의 온화한 색감) */
 .leaflet-tile-pane {
-  filter: saturate(0.85) contrast(1.02) brightness(1.01);
+  filter: saturate(0.96) contrast(1.01) brightness(1.01);
 }
 
 .leaflet-tile {

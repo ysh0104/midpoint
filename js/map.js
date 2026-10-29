@@ -26,8 +26,8 @@ function initMap() {
     inertia: true
   }).setView(state.myLocation || DEFAULT_LOC, 14);
 
-  // 초고속 무제한 고화질 모던 클린 타일 (혼잡한 상점·관광 POI 아이콘을 숨겨 애플맵/토스처럼 정갈하고 깔끔한 뷰 제공)
-  L.tileLayer('https://mt{s}.google.com/vt/lyrs=m&apistyle=s.t:2%7Cp.v:off&x={x}&y={y}&z={z}&hl=ko', {
+  // 초고속 고화질 내추럴 지형 파스텔 타일 (lyrs=p 지형 기복도 + s.t:2|s.e:l.i|p.v:off 로 혼잡한 상점 아이콘은 숨기고 산·공원·하천의 눈이 편안한 파스텔 자연색 유지)
+  L.tileLayer('https://mt{s}.google.com/vt/lyrs=p&apistyle=s.t:2%7Cs.e:l.i%7Cp.v:off&x={x}&y={y}&z={z}&hl=ko', {
     maxZoom: 20,
     minZoom: 6,
     keepBuffer: 16,
