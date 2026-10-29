@@ -144,6 +144,7 @@ function updateLocationsAndMidpoint() {
     if (window.updateWeatherAndCongestion) {
       window.updateWeatherAndCongestion(state.myAddress || '내 위치', state.myLocation);
     }
+    if (window.updateHeaderRouteCardUI) window.updateHeaderRouteCardUI();
   } else {
     if (transitCard && !state.confirmedPlace) transitCard.classList.remove('hidden');
 
@@ -321,6 +322,7 @@ function updateLocationsAndMidpoint() {
   }
 
   renderOriginChips();
+  if (window.updateHeaderRouteCardUI) window.updateHeaderRouteCardUI();
   if (window.lucide) lucide.createIcons();
 }
 
@@ -867,6 +869,7 @@ window.confirmMeetingPlace = function(idOrName, fallbackName) {
   if (scrollArea) scrollArea.scrollTop = 0;
 
   updateKakaoMobilityRoutes(pCoord, p.place_name);
+  if (window.updateHeaderRouteCardUI) window.updateHeaderRouteCardUI();
   showToast("'" + p.place_name + "'(으)로 약속 장소가 확정되었습니다! (실시간 동선 안내 시작)", 'check-check');
 
   // 모달이 열려있다면 닫아 지도와 네비 카드가 즉시 보이도록 전환
@@ -900,6 +903,7 @@ window.cancelMeetingPlace = function() {
   if (transitCard && state.locations.length > 1) transitCard.classList.remove('hidden');
   if (defaultSummary) defaultSummary.classList.remove('hidden');
   if (originChips) originChips.classList.remove('hidden');
+  if (window.updateHeaderRouteCardUI) window.updateHeaderRouteCardUI();
 
   if (state.currentHubCoord) {
     map.flyTo(state.currentHubCoord, 15, { duration: 0.8 });

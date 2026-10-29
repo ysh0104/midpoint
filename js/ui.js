@@ -132,10 +132,13 @@ window.retryGpsFromModal = function() {
 };
 
 function onLocationResolved(coords, addrText, isInit, toastMsg) {
+  state.realGpsLocation = coords;
+  state.realGpsAddress = addrText;
   state.myLocation = coords;
   state.myAddress = addrText;
   state.locations[0].loc = coords;
   state.locations[0].addr = addrText;
+  state.locations[0].isCustom = false;
 
   var tokens = addrText.split(' ').filter(Boolean);
   var shortName = '내 위치';
@@ -145,6 +148,7 @@ function onLocationResolved(coords, addrText, isInit, toastMsg) {
     shortName = tokens[tokens.length - 1];
   }
   state.locations[0].shortName = shortName;
+  state.locations[0].name = '내 위치';
 
   try {
     localStorage.setItem('user_last_my_location', JSON.stringify({
@@ -161,6 +165,7 @@ function onLocationResolved(coords, addrText, isInit, toastMsg) {
   if (pulseEl) pulseEl.className = 'w-2 h-2 rounded-full bg-[#0284c7] shrink-0';
 
   updateLocationsAndMidpoint();
+  if (window.updateHeaderRouteCardUI) window.updateHeaderRouteCardUI();
   showToast(toastMsg, 'check');
 }
 
@@ -225,6 +230,7 @@ window.removeLocation = function(locId) {
 
   state.locations = state.locations.filter(function(item) { return item.id !== locId; });
   updateLocationsAndMidpoint();
+  if (window.updateHeaderRouteCardUI) window.updateHeaderRouteCardUI();
   showToast('출발지를 삭제했습니다', 'trash-2');
 };
 
@@ -342,7 +348,11 @@ window.addPredefinedLocation = function(name, lat, lng) {
     state.locations[0].name = '내 위치';
     state.locations[0].shortName = name;
     state.locations[0].loc = [lat, lng];
+    state.locations[0].name = name;
+    state.locations[0].shortName = name;
+    state.locations[0].loc = [lat, lng];
     state.locations[0].addr = name;
+    state.locations[0].isCustom = true;
     try {
       localStorage.setItem('user_last_my_location', JSON.stringify({
         coords: [lat, lng],
@@ -354,8 +364,9 @@ window.addPredefinedLocation = function(name, lat, lng) {
     if (addrEl) addrEl.textContent = name;
     map.setView([lat, lng], 14, { animate: true });
     updateLocationsAndMidpoint();
+    if (window.updateHeaderRouteCardUI) window.updateHeaderRouteCardUI();
     closeModal();
-    showToast('내 위치가 "' + name + '"(으)로 변경되었습니다', 'map-pin');
+    showToast('출발지가 "' + name + '"(으)로 변경되었습니다', 'map-pin');
     return;
   }
 
@@ -372,6 +383,7 @@ window.addPredefinedLocation = function(name, lat, lng) {
   if (naviCard) naviCard.classList.add('hidden');
   state.locations.push(newLoc);
   updateLocationsAndMidpoint();
+  if (window.updateHeaderRouteCardUI) window.updateHeaderRouteCardUI();
   closeModal();
   showToast(name + ' 추가 완료! 중간 지점을 계산했습니다', 'map-pin-plus');
 };
@@ -383,10 +395,11 @@ window.selectSearchResult = function(resultId) {
   if (state.isEditingMyLocation) {
     state.myLocation = [item.lat, item.lon];
     state.myAddress = item.fullAddress;
-    state.locations[0].name = '내 위치';
+    state.locations[0].name = item.shortName;
     state.locations[0].shortName = item.shortName;
     state.locations[0].loc = [item.lat, item.lon];
     state.locations[0].addr = item.fullAddress;
+    state.locations[0].isCustom = true;
     try {
       localStorage.setItem('user_last_my_location', JSON.stringify({
         coords: [item.lat, item.lon],
@@ -401,8 +414,9 @@ window.selectSearchResult = function(resultId) {
     var nCard = document.getElementById('confirmedPlaceNaviCard');
     if (nCard) nCard.classList.add('hidden');
     updateLocationsAndMidpoint();
+    if (window.updateHeaderRouteCardUI) window.updateHeaderRouteCardUI();
     closeModal();
-    showToast('내 위치가 "' + item.shortName + '"(으)로 변경되었습니다', 'map-pin');
+    showToast('출발지가 "' + item.shortName + '"(으)로 변경되었습니다', 'map-pin');
     return;
   }
 
@@ -420,6 +434,7 @@ window.selectSearchResult = function(resultId) {
   if (naviCard2) naviCard2.classList.add('hidden');
   state.locations.push(newLoc);
   updateLocationsAndMidpoint();
+  if (window.updateHeaderRouteCardUI) window.updateHeaderRouteCardUI();
   closeModal();
   showToast(item.shortName + ' 출발지로 추가되었습니다', 'map-pin-plus');
 };
@@ -431,13 +446,13 @@ window.openEditMyLocationModal = function() {
   var titleEl = document.getElementById('modalTitle');
   var subTitleEl = document.getElementById('modalSubTitle');
   var gpsRetryBtn = document.getElementById('modalGpsRetryBtn');
-  if (titleEl) titleEl.textContent = '내 위치 변경';
-  if (subTitleEl) subTitleEl.textContent = '현재 계신 동네나 건물, 지하철역을 검색해 내 위치로 지정하세요';
+  if (titleEl) titleEl.textContent = '내 출발지 주소 변경';
+  if (subTitleEl) subTitleEl.textContent = '현재 위치뿐만 아니라 집, 회사, 역 등 모임을 시작할 다른 주소를 검색해 지정하세요';
   if (gpsRetryBtn) gpsRetryBtn.classList.remove('hidden');
   if (addModal) addModal.classList.remove('hidden');
   var input = document.getElementById('addressSearchInput');
   if (input) {
-    input.placeholder = '내 위치 검색 (예: 역삼동, 판교역, 아파트명)';
+    input.placeholder = '출발 주소 검색 (예: 강남역, 판교 테크노밸리, 아파트명)';
     input.focus();
   }
   if (window.lucide) lucide.createIcons();
@@ -458,6 +473,217 @@ window.openAddModal = function() {
     input.focus();
   }
   if (window.lucide) lucide.createIcons();
+};
+
+// --------------------------------------------------------------------
+// 상단 모임 경로 & 주소 플래너 바 인터랙션 구현
+// --------------------------------------------------------------------
+window.updateHeaderRouteCardUI = function() {
+  var header = document.getElementById('topHeader');
+  if (!header) return;
+
+  var myLoc = state.locations[0];
+  var myOriginAddrEl = document.getElementById('headerMyOriginAddr');
+  var myOriginBadgeEl = document.getElementById('headerMyOriginTypeBadge');
+  var gpsRestoreBtn = document.getElementById('headerGpsRestoreBtn');
+
+  if (myLoc) {
+    var isCustom = !!myLoc.isCustom;
+    if (myOriginAddrEl) {
+      var displayAddr = myLoc.addr || myLoc.name || state.myAddress || '위치 확인 중';
+      myOriginAddrEl.textContent = (isCustom ? '출발지: ' : '현위치: ') + displayAddr;
+      myOriginAddrEl.title = displayAddr;
+    }
+    if (myOriginBadgeEl) {
+      if (isCustom) {
+        myOriginBadgeEl.textContent = '지정 주소';
+        myOriginBadgeEl.className = 'text-[9.5px] font-extrabold px-1.5 py-0.2 rounded bg-amber-400 text-slate-900 shrink-0';
+      } else {
+        myOriginBadgeEl.textContent = '현위치 GPS';
+        myOriginBadgeEl.className = 'text-[9.5px] font-extrabold px-1.5 py-0.2 rounded bg-emerald-400 text-slate-900 shrink-0';
+      }
+    }
+    if (gpsRestoreBtn) {
+      if (isCustom) {
+        gpsRestoreBtn.classList.remove('hidden');
+      } else {
+        gpsRestoreBtn.classList.add('hidden');
+      }
+    }
+  }
+
+  // 추가 참가자 출발지 (2명 이상일 때)
+  var othersContainer = document.getElementById('headerOtherParticipantsArea');
+  if (othersContainer) {
+    if (state.locations.length > 1) {
+      othersContainer.classList.remove('hidden');
+      othersContainer.innerHTML = state.locations.slice(1).map(function(item) {
+        return '<div class="flex items-center justify-between gap-1 text-[10.5px] text-white/90 bg-white/10 px-2 py-0.5 rounded-lg">' +
+          '<div class="flex items-center gap-1.5 min-w-0 flex-1">' +
+            '<span class="w-1.5 h-1.5 rounded-full bg-sky-200 shrink-0"></span>' +
+            '<span class="font-extrabold text-white shrink-0">' + item.name + ':</span>' +
+            '<span class="truncate text-white/80">' + (item.addr || item.name) + '</span>' +
+          '</div>' +
+          '<button type="button" onclick="window.removeLocation(\'' + item.id + '\')" class="press p-0.5 text-white/60 hover:text-rose-200 transition-colors shrink-0" title="출발지 삭제">' +
+            '<i data-lucide="x" class="w-3 h-3"></i>' +
+          '</button>' +
+        '</div>';
+      }).join('');
+    } else {
+      othersContainer.classList.add('hidden');
+      othersContainer.innerHTML = '';
+    }
+  }
+
+  // 도착지 / 중간점
+  var destAddrEl = document.getElementById('headerDestAddr');
+  var destBadgeEl = document.getElementById('headerDestTypeBadge');
+  if (destAddrEl) {
+    if (state.confirmedPlace) {
+      destAddrEl.textContent = '도착지: ' + state.confirmedPlace.place_name;
+      if (destBadgeEl) {
+        destBadgeEl.textContent = '확정 장소';
+        destBadgeEl.className = 'text-[9.5px] font-extrabold px-1.5 py-0.2 rounded bg-emerald-400 text-slate-900 shrink-0';
+      }
+    } else if (state.currentHubName) {
+      destAddrEl.textContent = '중간 약속 장소: ' + state.currentHubName;
+      if (destBadgeEl) {
+        destBadgeEl.textContent = '추천 중간점';
+        destBadgeEl.className = 'text-[9.5px] font-extrabold px-1.5 py-0.2 rounded bg-amber-400 text-slate-900 shrink-0';
+      }
+    } else {
+      destAddrEl.textContent = '도착지: 중간 약속 장소 탐색 중';
+      if (destBadgeEl) {
+        destBadgeEl.textContent = '탐색 중';
+        destBadgeEl.className = 'text-[9.5px] font-extrabold px-1.5 py-0.2 rounded bg-white/20 text-white shrink-0';
+      }
+    }
+  }
+
+  // 교통수단 버튼 활성화 갱신
+  var currentTrans = (state.meetFilter && state.meetFilter.transportPref) || 'transit';
+  var btnCar = document.getElementById('headerTabCar');
+  var btnTransit = document.getElementById('headerTabTransit');
+  var btnWalk = document.getElementById('headerTabWalk');
+  var btnBike = document.getElementById('headerTabBike');
+
+  var activeClass = 'press px-3 h-7 rounded-full bg-white text-[#0284c7] font-bold shadow-xs flex items-center justify-center gap-1 transition-all';
+  var inactiveClass = 'press w-8 h-7 rounded-full flex items-center justify-center transition-all text-white/80 hover:text-white hover:bg-white/10';
+
+  if (btnCar) btnCar.className = (currentTrans === 'car') ? activeClass : inactiveClass;
+  if (btnTransit) btnTransit.className = (currentTrans === 'transit' || currentTrans === 'mixed') ? activeClass : inactiveClass;
+  if (btnWalk) btnWalk.className = (currentTrans === 'walk') ? activeClass : inactiveClass;
+  if (btnBike) btnBike.className = (currentTrans === 'bike') ? activeClass : inactiveClass;
+
+  if (window.lucide) lucide.createIcons();
+};
+
+window.setHeaderTransport = function(mode) {
+  if (!state.meetFilter) state.meetFilter = {};
+  state.meetFilter.transportPref = mode;
+
+  // 모든 참가자 기본 교통수단 동기화
+  var mappedTransport = (mode === 'car') ? 'car' : 'transit';
+  state.locations.forEach(function(l) {
+    l.transport = mappedTransport;
+  });
+
+  if (state.confirmedPlace) {
+    var destCoord = [parseFloat(state.confirmedPlace.y), parseFloat(state.confirmedPlace.x)];
+    updateKakaoMobilityRoutes(destCoord, state.confirmedPlace.place_name);
+    renderConfirmedNaviList();
+  }
+
+  window.updateHeaderRouteCardUI();
+  var modeNames = { car: '자차', transit: '대중교통', walk: '도보', bike: '자전거' };
+  var modeIcons = { car: 'car', transit: 'bus', walk: 'footprints', bike: 'bike' };
+  showToast(modeNames[mode] + ' 이동 모드로 설정되었습니다', modeIcons[mode] || 'navigation');
+};
+
+window.restoreMyLiveGps = function() {
+  if (state.realGpsLocation && state.realGpsAddress) {
+    state.myLocation = state.realGpsLocation;
+    state.myAddress = state.realGpsAddress;
+    state.locations[0].loc = state.realGpsLocation;
+    state.locations[0].addr = state.realGpsAddress;
+    state.locations[0].shortName = '내 위치';
+    state.locations[0].name = '내 위치';
+    state.locations[0].isCustom = false;
+    map.setView(state.realGpsLocation, 15, { animate: true });
+    updateLocationsAndMidpoint();
+    window.updateHeaderRouteCardUI();
+    showToast('실시간 내 GPS 위치로 복귀했습니다', 'crosshair');
+  } else {
+    showToast('실시간 GPS 위치를 다시 탐색합니다...', 'crosshair');
+    locateMe(false);
+  }
+};
+
+window.setMyCustomOrigin = function(name, addr, lat, lng) {
+  state.locations[0].isCustom = true;
+  state.locations[0].name = name;
+  state.locations[0].shortName = name;
+  state.locations[0].addr = addr;
+  state.locations[0].loc = [lat, lng];
+  state.myLocation = [lat, lng];
+  state.myAddress = addr;
+  state.confirmedPlace = null;
+
+  var naviCard = document.getElementById('confirmedPlaceNaviCard');
+  if (naviCard) naviCard.classList.add('hidden');
+
+  map.setView([lat, lng], 15, { animate: true });
+  updateLocationsAndMidpoint();
+  window.updateHeaderRouteCardUI();
+  showToast('출발지를 "' + name + '"(으)로 설정했습니다', 'map-pin');
+};
+
+window.toggleOriginAddressMode = function() {
+  if (state.locations[0].isCustom) {
+    window.restoreMyLiveGps();
+  } else {
+    window.openEditMyLocationModal();
+  }
+};
+
+window.toggleTopHeaderCompact = function() {
+  var header = document.getElementById('topHeader');
+  var card = document.getElementById('headerRouteCard');
+  var quickBar = document.getElementById('headerQuickLocBar');
+  var icon = document.getElementById('headerCollapseIcon');
+  if (!header || !card) return;
+
+  var isCollapsed = card.classList.contains('hidden');
+  if (isCollapsed) {
+    card.classList.remove('hidden');
+    if (quickBar) quickBar.classList.remove('hidden');
+    if (icon) icon.setAttribute('data-lucide', 'chevron-up');
+  } else {
+    card.classList.add('hidden');
+    if (quickBar) quickBar.classList.add('hidden');
+    if (icon) icon.setAttribute('data-lucide', 'chevron-down');
+  }
+  if (window.lucide) lucide.createIcons();
+};
+
+window.openOriginAddressPicker = function() {
+  window.openEditMyLocationModal();
+};
+
+window.focusOrSearchDestination = function() {
+  if (state.confirmedPlace) {
+    var pCoord = [parseFloat(state.confirmedPlace.y), parseFloat(state.confirmedPlace.x)];
+    map.flyTo(pCoord, 16.5, { duration: 0.8 });
+    showToast(state.confirmedPlace.place_name + ' 위치로 이동', 'map-pin');
+  } else if (state.currentHubCoord) {
+    window.zoomToHub(false);
+  } else {
+    window.openAddModal();
+  }
+};
+
+window.openAddressOptionsDrawer = function() {
+  window.openAddModal();
 };
 
 function closeModal() {

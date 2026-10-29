@@ -77,6 +77,15 @@ body {
   box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
 }
 
+/* 상단 모임 경로 & 주소 플래너 바 */
+.route-planner-header {
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  box-shadow: 0 14px 38px -4px rgba(2, 132, 199, 0.38), 0 4px 14px rgba(15, 23, 42, 0.12);
+}
+
 .press {
   transition: transform 0.12s ease, opacity 0.12s ease;
 }
