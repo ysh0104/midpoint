@@ -46,7 +46,7 @@
 <!-- Lucide Icons -->
 <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
 
-<link rel="stylesheet" href="css/style.css?v=14" />
+<link rel="stylesheet" href="css/style.css?v=16" />
 </head>
 <body class="bg-zinc-200 text-slate-900 antialiased h-screen w-screen flex justify-center items-center">
 
@@ -162,7 +162,7 @@
     <div id="realMap"></div>
 
     <!-- 우측 하단 미니멀 플로팅 컨트롤러 (줌 인/아웃 + GPS 버튼) -->
-    <div class="absolute right-3.5 bottom-60 z-20 flex flex-col items-center gap-2">
+    <div class="absolute right-3.5 bottom-20 z-20 flex flex-col items-center gap-2">
       <!-- 줌 인/아웃 버튼 그룹 -->
       <div class="glass rounded-full flex flex-col p-1 shadow-md shadow-slate-900/10 border border-white/90">
         <button id="zoomInBtn" type="button" title="지도 확대" class="press w-8 h-8 rounded-full grid place-items-center text-slate-700 hover:text-[#0284c7] hover:bg-white/80 transition-colors">
@@ -290,39 +290,50 @@
     </div>
   </main>
 
-  <!-- 3. 하단 플로팅 바텀 시트 (정보 & 출발지 관리) -->
+  <!-- 3. 하단 MidPoint 시그니처 플로팅 바텀 시트 (공평 중간점 & 모임 허브) -->
   <section id="bottomSheet" class="glass z-30 rounded-t-3xl border-t border-slate-200/80 shadow-[0_-10px_40px_rgba(15,23,42,0.12)] flex flex-col transition-all duration-300 sheet-collapsed">
     <!-- 시트 핸들러 -->
-    <div id="sheetHandle" class="w-full py-2 flex flex-col items-center justify-center cursor-pointer select-none">
+    <div id="sheetHandle" onclick="window.toggleBottomSheet()" class="w-full pt-2 pb-1 flex flex-col items-center justify-center cursor-pointer select-none">
       <div class="w-10 h-1 rounded-full bg-slate-300"></div>
     </div>
 
-    <!-- 하나의 통합된 전체 스크롤 영역 (상단 정보 + 분석 카드 + 카페/맛집 리스트가 함께 자연스럽게 스크롤됨) -->
-    <div id="bottomSheetScrollArea" class="flex-1 overflow-y-auto px-4 pb-8 no-scrollbar flex flex-col gap-2.5">
-      <!-- 1. 기본 노출 요약 영역 (허브명 + 주소 + 출발지 현황) -->
-      <div id="defaultHubSummaryArea" class="flex items-center justify-between pt-0.5 shrink-0">
-        <div class="flex items-center gap-2.5 min-w-0 pr-2">
-          <div class="w-10 h-10 rounded-2xl bg-[#f0f9ff] border border-[#bae6fd] text-[#0284c7] grid place-items-center shrink-0">
-            <i id="hubIcon" data-lucide="map-pin" class="w-5 h-5 text-[#0284c7]"></i>
-          </div>
-          <div class="min-w-0">
-            <div class="flex items-center gap-1.5">
-              <span id="sheetSubTitle" class="text-[11px] font-extrabold text-slate-400">현재 중심 주소</span>
-              <span id="hubBadge" class="px-1.5 py-0.2 rounded text-[10px] font-bold bg-[#f0f9ff] text-[#0284c7] border border-[#bae6fd]">내 위치</span>
-            </div>
-            <h2 id="sheetMainTitle" class="text-[16px] font-black text-slate-900 tracking-tight leading-tight mt-0.5 truncate">주소 확인 중...</h2>
-          </div>
+    <!-- 3-1. MidPoint 시그니처 퀵 캡슐 요약 바 (접힌 상태에서도 항상 노출되는 미니멀 핵심 바) -->
+    <div id="sheetPeekBar" onclick="window.toggleBottomSheet()" class="cursor-pointer px-4 pb-2 pt-0.5 flex items-center justify-between gap-2 select-none shrink-0 group">
+      <!-- 좌측: 모임 상태 뱃지 & 스마트 중간 지점 정보 -->
+      <div class="flex items-center gap-2.5 min-w-0 flex-1">
+        <div id="peekHubIconWrap" class="w-8 h-8 rounded-xl bg-[#4a80f0]/10 text-[#4a80f0] flex items-center justify-center shrink-0">
+          <i id="peekHubIcon" data-lucide="sparkles" class="w-4 h-4"></i>
         </div>
-        <div class="text-right shrink-0">
-          <span class="text-[10px] text-slate-400 block font-medium">출발지 현황</span>
-          <span id="summaryTime" class="text-[15px] font-black text-[#0284c7] tracking-tight leading-none">1곳</span>
+        <div class="min-w-0 flex-1">
+          <div class="flex items-center gap-1.5">
+            <span id="peekBadge" class="text-[9.5px] font-extrabold px-1.5 py-0.2 rounded-md bg-[#4a80f0]/15 text-[#4a80f0] shrink-0">중간점 탐색</span>
+            <span id="peekSubInfo" class="text-[11px] font-semibold text-slate-500 truncate">친구 추가 시 최적의 중간역 계산</span>
+          </div>
+          <h3 id="peekMainTitle" class="text-[13.5px] font-black text-slate-900 tracking-tight truncate mt-0.5">주변 인기 장소 확인</h3>
         </div>
       </div>
 
-      <!-- 2. 등록된 출발지 가로 칩 리스트 (나 + 사용자가 추가한 주소들) -->
-      <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 shrink-0 min-h-[34px]" id="originChipsContainer">
-        <!-- JS 동적 렌더링 -->
+      <!-- 우측: 액션 캡슐 힌트 (위로 올리기 화살표) -->
+      <div class="flex items-center gap-1 pl-2 shrink-0">
+        <span id="peekActionText" class="text-[11px] font-bold text-[#4a80f0]">장소 보기</span>
+        <div class="w-6 h-6 rounded-full bg-slate-100 group-hover:bg-[#4a80f0] text-slate-500 group-hover:text-white flex items-center justify-center transition-all">
+          <i id="peekChevron" data-lucide="chevron-up" class="w-3.5 h-3.5 transition-transform"></i>
+        </div>
       </div>
+    </div>
+
+    <!-- 하위 호환용 히든 컨테이너 (JS 에러 방지용, 화면에 노출되지 않음) -->
+    <div id="defaultHubSummaryArea" style="display: none !important;" class="hidden">
+      <span id="sheetSubTitle"></span>
+      <span id="hubBadge"></span>
+      <span id="sheetMainTitle"></span>
+      <span id="summaryTime"></span>
+      <span id="hubIcon"></span>
+    </div>
+    <div id="originChipsContainer" style="display: none !important;" class="hidden"></div>
+
+    <!-- 하나의 통합된 전체 스크롤 영역 (위로 올렸을 때 펼쳐지는 MidPoint 모임 허브) -->
+    <div id="bottomSheetScrollArea" class="flex-1 overflow-y-auto px-4 pb-8 no-scrollbar flex flex-col gap-2.5">
 
       <!-- 3. 실시간 교통 & 이동시간 분석 카드 (클릭 시 허브로 쭈우욱 확대) -->
       <div id="transitAnalysisCard" onclick="window.zoomToHub(false)" class="press cursor-pointer hidden p-3 rounded-2xl bg-[#f0f9ff]/90 hover:bg-[#f0f9ff] border border-[#bae6fd] hover:border-[#66CCFF] shadow-xs hover:shadow-md transition-all flex flex-col gap-2 group shrink-0">
@@ -1207,15 +1218,15 @@
 </div>
 
 <!-- 기능별 모듈 스크립트 분리 (Clean Modular Architecture) -->
-<script src="js/config.js?v=20"></script>
-<script src="js/state.js?v=20"></script>
-<script src="js/map.js?v=20"></script>
-<script src="js/mobility.js?v=20"></script>
-<script src="js/places.js?v=20"></script>
-<script src="js/weather.js?v=20"></script>
-<script src="js/care.js?v=20"></script>
-<script src="js/game.js?v=20"></script>
-<script src="js/chat.js?v=20"></script>
-<script src="js/ui.js?v=20"></script>
+<script src="js/config.js?v=22"></script>
+<script src="js/state.js?v=22"></script>
+<script src="js/map.js?v=22"></script>
+<script src="js/mobility.js?v=22"></script>
+<script src="js/places.js?v=22"></script>
+<script src="js/weather.js?v=22"></script>
+<script src="js/care.js?v=22"></script>
+<script src="js/game.js?v=22"></script>
+<script src="js/chat.js?v=22"></script>
+<script src="js/ui.js?v=22"></script>
 </body>
 </html>

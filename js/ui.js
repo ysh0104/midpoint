@@ -797,6 +797,7 @@ window.updateHeaderRouteCardUI = function() {
   if (btnBike) btnBike.className = (currentTrans === 'bike') ? activeClass : inactiveClass;
 
   window.renderQuickPlacesBar();
+  if (window.updatePeekBarUI) window.updatePeekBarUI();
 
   if (window.lucide) lucide.createIcons();
 };
@@ -922,6 +923,87 @@ function closeModal() {
 }
 
 // --------------------------------------------------------------------
+// MidPoint 시그니처 바텀 시트 (플로팅 캡슐 제어 및 피크 바 갱신)
+// --------------------------------------------------------------------
+window.toggleBottomSheet = function(forceExpand) {
+  var sheet = document.getElementById('bottomSheet');
+  if (!sheet) return;
+
+  if (typeof forceExpand === 'boolean') {
+    state.sheetExpanded = forceExpand;
+  } else {
+    state.sheetExpanded = !state.sheetExpanded;
+  }
+
+  if (state.sheetExpanded) {
+    sheet.classList.remove('sheet-collapsed');
+    sheet.classList.add('sheet-expanded');
+  } else {
+    sheet.classList.remove('sheet-expanded');
+    sheet.classList.add('sheet-collapsed');
+    var scrollArea = document.getElementById('bottomSheetScrollArea');
+    if (scrollArea) scrollArea.scrollTop = 0;
+  }
+
+  if (window.updatePeekBarUI) window.updatePeekBarUI();
+  if (map) {
+    setTimeout(function() { map.invalidateSize(); }, 320);
+  }
+};
+
+window.updatePeekBarUI = function() {
+  var count = (state.locations && state.locations.length) || 1;
+  var peekBadge = document.getElementById('peekBadge');
+  var peekSubInfo = document.getElementById('peekSubInfo');
+  var peekMainTitle = document.getElementById('peekMainTitle');
+  var peekActionText = document.getElementById('peekActionText');
+  var peekHubIcon = document.getElementById('peekHubIcon');
+  var peekHubIconWrap = document.getElementById('peekHubIconWrap');
+
+  if (state.confirmedPlace) {
+    if (peekBadge) {
+      peekBadge.textContent = '약속 확정';
+      peekBadge.className = 'text-[9.5px] font-extrabold px-1.5 py-0.2 rounded-md bg-emerald-100 text-emerald-700 shrink-0';
+    }
+    if (peekSubInfo) peekSubInfo.textContent = '실시간 내비게이션 준비 완료';
+    if (peekMainTitle) peekMainTitle.textContent = state.confirmedPlace.place_name;
+    if (peekActionText) peekActionText.textContent = state.sheetExpanded ? '시트 접기 ∨' : '길안내 보기 ∧';
+    if (peekHubIconWrap) peekHubIconWrap.className = 'w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0';
+    if (peekHubIcon) peekHubIcon.setAttribute('data-lucide', 'check-circle-2');
+  } else if (count >= 2 && state.currentHubName) {
+    if (peekBadge) {
+      peekBadge.textContent = '최적 중간점';
+      peekBadge.className = 'text-[9.5px] font-extrabold px-1.5 py-0.2 rounded-md bg-[#4a80f0]/15 text-[#4a80f0] shrink-0';
+    }
+    var diffEl = document.getElementById('travelTimeDiff');
+    var diffText = (diffEl && diffEl.textContent) ? ('시간 편차 ' + diffEl.textContent.trim()) : '공평한 이동시간';
+    if (peekSubInfo) peekSubInfo.textContent = count + '곳 출발 · ' + diffText;
+    if (peekMainTitle) peekMainTitle.textContent = state.currentHubName;
+    if (peekActionText) peekActionText.textContent = state.sheetExpanded ? '시트 접기 ∨' : '모임 장소 ∧';
+    if (peekHubIconWrap) peekHubIconWrap.className = 'w-8 h-8 rounded-xl bg-[#4a80f0]/10 text-[#4a80f0] flex items-center justify-center shrink-0';
+    if (peekHubIcon) peekHubIcon.setAttribute('data-lucide', 'scale');
+  } else {
+    // 1명 단독 모드
+    if (peekBadge) {
+      peekBadge.textContent = '중간점 탐색';
+      peekBadge.className = 'text-[9.5px] font-extrabold px-1.5 py-0.2 rounded-md bg-[#4a80f0]/15 text-[#4a80f0] shrink-0';
+    }
+    if (peekSubInfo) peekSubInfo.textContent = '친구 추가 시 가장 공평한 중간역 계산';
+    if (peekMainTitle) peekMainTitle.textContent = '주변 인기 카페·맛집 탐색';
+    if (peekActionText) peekActionText.textContent = state.sheetExpanded ? '시트 접기 ∨' : '장소 보기 ∧';
+    if (peekHubIconWrap) peekHubIconWrap.className = 'w-8 h-8 rounded-xl bg-[#4a80f0]/10 text-[#4a80f0] flex items-center justify-center shrink-0';
+    if (peekHubIcon) peekHubIcon.setAttribute('data-lucide', 'sparkles');
+  }
+
+  var chevron = document.getElementById('peekChevron');
+  if (chevron) {
+    chevron.setAttribute('data-lucide', state.sheetExpanded ? 'chevron-down' : 'chevron-up');
+  }
+
+  if (window.lucide) lucide.createIcons();
+};
+
+// --------------------------------------------------------------------
 // UI 이벤트 리스너 등록 & 초기 구동 (Bootstrap)
 // --------------------------------------------------------------------
 document.addEventListener('DOMContentLoaded', function() {
@@ -929,16 +1011,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
   var sheet = document.getElementById('bottomSheet');
   var sheetHandle = document.getElementById('sheetHandle');
-  if (sheetHandle && sheet) {
+  if (sheetHandle) {
     sheetHandle.addEventListener('click', function() {
-      state.sheetExpanded = !state.sheetExpanded;
-      if (state.sheetExpanded) {
-        sheet.classList.remove('sheet-collapsed');
-        sheet.classList.add('sheet-expanded');
-      } else {
-        sheet.classList.remove('sheet-expanded');
-        sheet.classList.add('sheet-collapsed');
-      }
+      window.toggleBottomSheet();
     });
   }
 
@@ -946,9 +1021,7 @@ document.addEventListener('DOMContentLoaded', function() {
   if (scrollArea && sheet) {
     scrollArea.addEventListener('scroll', function() {
       if (!state.sheetExpanded && scrollArea.scrollTop > 8) {
-        state.sheetExpanded = true;
-        sheet.classList.remove('sheet-collapsed');
-        sheet.classList.add('sheet-expanded');
+        window.toggleBottomSheet(true);
       }
     }, { passive: true });
   }
@@ -1047,6 +1120,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   syncMeetFilterUI();
   if (window.renderQuickPlacesBar) window.renderQuickPlacesBar();
+  if (window.updatePeekBarUI) window.updatePeekBarUI();
   locateMe(true);
   if (window.lucide) lucide.createIcons();
 });
