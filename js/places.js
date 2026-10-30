@@ -153,7 +153,7 @@ function fetchKakaoPlaces(centerCoord, distanceText) {
         kakaoPlacesCache[p.id] = p;
         kakaoPlacesCache[p.place_name] = p;
 
-        var iconHtml = '<div class="place-pop-marker" style="animation-delay: ' + delaySec + 's;">' +
+        var iconHtml = '<div class="place-pop-marker" style="animation-delay: ' + delaySec + 's;" data-place-id="' + p.id + '">' +
           '<span class="w-2.5 h-2.5 rounded-full ' + dotColor + ' shrink-0"></span>' +
           '<span>' + shortName + '</span>' +
         '</div>';
@@ -168,14 +168,35 @@ function fetchKakaoPlaces(centerCoord, distanceText) {
           zIndexOffset: 650
         }).addTo(map);
 
+        var onMarkerSelect = function(e) {
+          if (e) {
+            if (e.stopPropagation) e.stopPropagation();
+            if (e.originalEvent && e.originalEvent.stopPropagation) e.originalEvent.stopPropagation();
+          }
+          window.openPlaceDetailModal(p);
+          if (map && p.y && p.x) {
+            map.panTo(pCoord, { animate: true, duration: 0.35 });
+          }
+        };
+
+        m.on('click', onMarkerSelect);
         if (window.bindInstantMarkerTap) {
-          window.bindInstantMarkerTap(m, function() {
-            window.openPlaceCardPopupDirect(p.id);
-          });
+          window.bindInstantMarkerTap(m, onMarkerSelect);
+        }
+
+        var bindElementDirectly = function(el) {
+          if (!el) return;
+          el.onclick = onMarkerSelect;
+          var child = el.querySelector('.place-pop-marker');
+          if (child) child.onclick = onMarkerSelect;
+        };
+
+        var markerEl = m.getElement();
+        if (markerEl) {
+          bindElementDirectly(markerEl);
         } else {
-          m.on('click', function(e) {
-            if (e && e.originalEvent) e.originalEvent.stopPropagation();
-            window.openPlaceCardPopupDirect(p.id);
+          m.on('add', function() {
+            bindElementDirectly(m.getElement());
           });
         }
         state.placeMarkers.push(m);
@@ -330,9 +351,12 @@ window.getPlacePhoto = function(p) {
 
 window.selectedModalPlace = null;
 
+var _placeModalOpenedAt = 0;
+
 // 장소 상세 모달 열기 (가게 사진, 캐치테이블/네이버 예약, 사진 등록, 모임 확정)
 window.openPlaceDetailModal = function(place) {
   if (!place) return;
+  _placeModalOpenedAt = Date.now();
   window.selectedModalPlace = place;
 
   var modal = document.getElementById('placeDetailModal');
@@ -405,14 +429,19 @@ window.openPlaceDetailModal = function(place) {
   if (window.lucide) lucide.createIcons();
 };
 
-window.closePlaceDetailModal = function() {
+window.closePlaceDetailModal = function(e, force) {
+  // 모달이 열린 직후 400ms 동안은 방금 전 발생한 클릭/터치 이벤트 잔여 전달로 인한 즉시 닫힘 방지
+  if (!force && (Date.now() - _placeModalOpenedAt < 400)) {
+    if (e && e.stopPropagation) e.stopPropagation();
+    return;
+  }
   var modal = document.getElementById('placeDetailModal');
   if (modal) modal.classList.add('hidden');
 };
 
 window.addMemoryForCurrentPlace = function() {
   var p = window.selectedModalPlace;
-  window.closePlaceDetailModal();
+  window.closePlaceDetailModal(null, true);
   if (p && window.openAddMemoryModal) {
     window.openAddMemoryModal(p.place_name);
   }
@@ -420,7 +449,7 @@ window.addMemoryForCurrentPlace = function() {
 
 window.confirmCurrentModalPlace = function() {
   var p = window.selectedModalPlace;
-  window.closePlaceDetailModal();
+  window.closePlaceDetailModal(null, true);
   if (p && window.confirmMeetingPlace) {
     window.confirmMeetingPlace(p.id, p.place_name);
   }
@@ -428,7 +457,7 @@ window.confirmCurrentModalPlace = function() {
 
 window.shareCurrentPlaceToChat = function() {
   var p = window.selectedModalPlace;
-  window.closePlaceDetailModal();
+  window.closePlaceDetailModal(null, true);
   if (p && window.sharePlaceToChat) {
     window.sharePlaceToChat(p.id);
   }
@@ -634,7 +663,7 @@ window.searchPlaceKeywordDirect = function(keyword) {
         var shortName = p.place_name.length > 7 ? p.place_name.slice(0, 6) + '…' : p.place_name;
         kakaoPlacesCache[p.id] = p;
         kakaoPlacesCache[p.place_name] = p;
-        var iconHtml = '<div class="place-pop-marker">' +
+        var iconHtml = '<div class="place-pop-marker" data-place-id="' + p.id + '">' +
           '<span class="w-2.5 h-2.5 rounded-full bg-[#0284c7] shrink-0"></span>' +
           '<span>' + shortName + '</span>' +
         '</div>';
@@ -643,14 +672,35 @@ window.searchPlaceKeywordDirect = function(keyword) {
           zIndexOffset: 650
         }).addTo(map);
 
+        var onMarkerSelect = function(e) {
+          if (e) {
+            if (e.stopPropagation) e.stopPropagation();
+            if (e.originalEvent && e.originalEvent.stopPropagation) e.originalEvent.stopPropagation();
+          }
+          window.openPlaceDetailModal(p);
+          if (map && p.y && p.x) {
+            map.panTo(pCoord, { animate: true, duration: 0.35 });
+          }
+        };
+
+        m.on('click', onMarkerSelect);
         if (window.bindInstantMarkerTap) {
-          window.bindInstantMarkerTap(m, function() {
-            window.openPlaceCardPopupDirect(p.id);
-          });
+          window.bindInstantMarkerTap(m, onMarkerSelect);
+        }
+
+        var bindSearchElement = function(el) {
+          if (!el) return;
+          el.onclick = onMarkerSelect;
+          var child = el.querySelector('.place-pop-marker');
+          if (child) child.onclick = onMarkerSelect;
+        };
+
+        var searchEl = m.getElement();
+        if (searchEl) {
+          bindSearchElement(searchEl);
         } else {
-          m.on('click', function(e) {
-            if (e && e.originalEvent) e.originalEvent.stopPropagation();
-            window.openPlaceCardPopupDirect(p.id);
+          m.on('add', function() {
+            bindSearchElement(m.getElement());
           });
         }
         state.placeMarkers.push(m);

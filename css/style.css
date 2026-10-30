@@ -310,13 +310,17 @@ body {
 .place-pop-marker:hover, .place-pop-marker:focus {
   border-color: #2563eb;
   color: #2563eb;
-  transform: translate(-50%, -50%) scale(1.1);
+  transform: translate(-50%, -50%) scale(1.05);
   box-shadow: 0 8px 22px rgba(37, 99, 235, 0.28);
   z-index: 9999 !important;
 }
 
 .place-pop-marker:active {
-  transform: translate(-50%, -50%) scale(0.96) !important;
+  background: #f0f9ff !important;
+  border-color: #0284c7 !important;
+  color: #0284c7 !important;
+  transform: translate(-50%, -50%) scale(1.02) !important;
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.25) !important;
 }
 
 

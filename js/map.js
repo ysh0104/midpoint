@@ -305,11 +305,13 @@ window.bindInstantMarkerTap = function(marker, callback) {
   var lastTriggerTime = 0;
   var safeTrigger = function(e) {
     var now = Date.now();
-    if (now - lastTriggerTime < 280) return;
+    if (now - lastTriggerTime < 350) return;
     lastTriggerTime = now;
     if (e) {
       if (e.stopPropagation) e.stopPropagation();
-      if (e.originalEvent && e.originalEvent.stopPropagation) e.originalEvent.stopPropagation();
+      if (e.originalEvent && e.originalEvent.stopPropagation) {
+        e.originalEvent.stopPropagation();
+      }
     }
     try {
       callback(e);
@@ -366,9 +368,9 @@ window.bindInstantMarkerTap = function(marker, callback) {
       }
 
       var dist = Math.hypot(endX - startX, endY - startY);
-      // 손가락 미세 떨림이나 클릭 시 16px 미만 움직임은 모두 정당한 탭으로 인식
-      if (dist < 16 && dt < 600) {
-        if (e.cancelable) e.preventDefault();
+      // 모바일/태블릿 터치 환경에서만 pointerup/touchend 조기 반응 (데스크톱 마우스는 native click 이벤트로 0ms 즉각 처리)
+      var isTouch = (e.pointerType === 'touch' || (e.touches && e.touches.length > 0) || (e.changedTouches && e.changedTouches.length > 0));
+      if (isTouch && dist < 16 && dt < 600) {
         safeTrigger(e);
       }
     };
