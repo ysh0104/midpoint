@@ -205,7 +205,22 @@ window.openPlaceCardPopup = function(place, markerOrCoord) {
         '</a>') : '<div class="py-1.5 px-2 rounded-xl bg-slate-50 text-slate-400 text-[10px] text-center font-medium">정보 준비중</div>') +
       '</div>';
 
-  var popupHtml = '<div class="p-3.5 flex flex-col gap-2.5 max-w-[240px] select-none">' +
+  var catchtableUrl = 'https://app.catchtable.co.kr/ct/search/total?query=' + encodeURIComponent(pName);
+  var naverBookingUrl = 'https://search.naver.com/search.naver?query=' + encodeURIComponent(pName + ' 예약');
+
+  var bookingButtonsHtml = 
+    '<div class="grid grid-cols-2 gap-1.5 pt-2 border-t border-slate-100">' +
+      '<a href="' + catchtableUrl + '" target="_blank" rel="noopener noreferrer" class="press py-1.5 px-2 rounded-xl bg-gradient-to-r from-[#ff3d00] to-[#ff5722] hover:from-[#e53600] hover:to-[#f4511e] text-white font-extrabold text-[10.5px] shadow-2xs flex items-center justify-center gap-1 transition-all" title="캐치테이블 실시간 예약 / 웨이팅">' +
+        '<i data-lucide="utensils" class="w-3 h-3"></i>' +
+        '<span>캐치테이블</span>' +
+      '</a>' +
+      '<a href="' + naverBookingUrl + '" target="_blank" rel="noopener noreferrer" class="press py-1.5 px-2 rounded-xl bg-[#03c75a] hover:bg-[#02b351] text-white font-extrabold text-[10.5px] shadow-2xs flex items-center justify-center gap-1 transition-all" title="네이버 스마트플레이스 예약">' +
+        '<i data-lucide="calendar-check" class="w-3 h-3"></i>' +
+        '<span>네이버 예약</span>' +
+      '</a>' +
+    '</div>';
+
+  var popupHtml = '<div class="p-3.5 flex flex-col gap-2 max-w-[250px] select-none">' +
     '<div class="flex items-center justify-between">' +
       badgeHtml +
     '</div>' +
@@ -213,7 +228,8 @@ window.openPlaceCardPopup = function(place, markerOrCoord) {
       '<h4 class="text-[14px] font-black text-slate-900 leading-snug truncate">' + pName + '</h4>' +
       '<p class="text-[11px] text-slate-500 truncate mt-0.5">' + pAddr + '</p>' +
     '</div>' +
-    '<div class="pt-2 border-t border-slate-100 flex flex-col gap-1.5">' +
+    bookingButtonsHtml +
+    '<div class="flex flex-col gap-1.5">' +
       actionButtonsHtml +
     '</div>' +
   '</div>';
@@ -264,6 +280,9 @@ window.openPlaceCardPopup = function(place, markerOrCoord) {
           : 'bg-[#f0f9ff] hover:bg-sky-100 text-[#0284c7] border border-[#bae6fd] shadow-2xs';
         var confirmBtnText = isConfirmed ? '확정된 장소' : '여기서 모이기';
 
+        var ctUrl = 'https://app.catchtable.co.kr/ct/search/total?query=' + encodeURIComponent(p.place_name);
+        var nvUrl = 'https://search.naver.com/search.naver?query=' + encodeURIComponent(p.place_name + ' 예약');
+
         return '<div class="bg-white rounded-2xl p-3 border ' + (isConfirmed ? 'border-emerald-400 ring-2 ring-emerald-100' : 'border-slate-200/80') + ' shadow-sm hover:border-[#66CCFF] transition-all flex flex-col gap-2" data-idx="' + i + '">' +
           '<div class="flex items-start justify-between">' +
             '<div class="min-w-0 pr-2">' +
@@ -279,7 +298,17 @@ window.openPlaceCardPopup = function(place, markerOrCoord) {
               '<i data-lucide="crosshair" class="w-4 h-4"></i>' +
             '</button>' +
           '</div>' +
-          '<div class="flex items-center justify-between pt-1 border-t border-slate-100 text-[11px]">' +
+          '<div class="flex items-center gap-1.5 pt-1.5 border-t border-slate-100">' +
+            '<a href="' + ctUrl + '" target="_blank" rel="noopener noreferrer" class="press flex-1 py-1.5 px-2 rounded-xl bg-gradient-to-r from-[#ff3d00] to-[#ff5722] hover:from-[#e53600] hover:to-[#f4511e] text-white font-extrabold text-[10.5px] shadow-2xs flex items-center justify-center gap-1 transition-all" title="캐치테이블 실시간 예약 / 웨이팅">' +
+              '<i data-lucide="utensils" class="w-3 h-3"></i>' +
+              '<span>캐치테이블</span>' +
+            '</a>' +
+            '<a href="' + nvUrl + '" target="_blank" rel="noopener noreferrer" class="press flex-1 py-1.5 px-2 rounded-xl bg-[#03c75a] hover:bg-[#02b351] text-white font-extrabold text-[10.5px] shadow-2xs flex items-center justify-center gap-1 transition-all" title="네이버 스마트플레이스 예약">' +
+              '<i data-lucide="calendar-check" class="w-3 h-3"></i>' +
+              '<span>네이버 예약</span>' +
+            '</a>' +
+          '</div>' +
+          '<div class="flex items-center justify-between pt-0.5 text-[11px]">' +
             (p.phone ? ('<span class="text-slate-400 font-medium truncate max-w-[100px]">' + p.phone + '</span>') : '<span class="text-slate-300">전화번호 미등록</span>') +
             '<div class="flex items-center gap-1.5">' +
               '<button type="button" onclick="window.sharePlaceToChat(\'' + id + '\')" class="press px-2 py-1 rounded-lg bg-[#f0f9ff] hover:bg-sky-100 text-[#0284c7] font-bold text-[10.5px] border border-[#bae6fd] flex items-center gap-1 transition-all" title="모임 채팅방에 장소 공유">' +
@@ -507,6 +536,9 @@ window.searchPlaceKeywordDirect = function(keyword) {
           var distStr = isNaN(distMeter) ? '' : (distMeter < 1000 ? (distMeter + 'm') : ((distMeter/1000).toFixed(1) + 'km'));
           var subCat = p.category_name ? p.category_name.split(' > ').pop() : keyword;
           var isConfirmed = state.confirmedPlace && state.confirmedPlace.id === p.id;
+          var ctUrl = 'https://app.catchtable.co.kr/ct/search/total?query=' + encodeURIComponent(p.place_name);
+          var nvUrl = 'https://search.naver.com/search.naver?query=' + encodeURIComponent(p.place_name + ' 예약');
+
           return '<div class="bg-white rounded-2xl p-3 border ' + (isConfirmed ? 'border-emerald-400 ring-2 ring-emerald-100' : 'border-slate-200/80') + ' shadow-sm hover:border-[#66CCFF] transition-all flex flex-col gap-2" data-idx="' + i + '">' +
             '<div class="flex items-start justify-between">' +
               '<div class="min-w-0 pr-2">' +
@@ -517,9 +549,23 @@ window.searchPlaceKeywordDirect = function(keyword) {
                 '<h4 class="text-[14px] font-extrabold text-slate-900 truncate mt-1 hover:text-[#0284c7] cursor-pointer" onclick="window.focusKakaoPlace(\'' + id + '\')">' + p.place_name + '</h4>' +
                 '<p class="text-[11px] text-slate-500 truncate mt-0.5">' + (p.road_address_name || p.address_name) + '</p>' +
               '</div>' +
+              '<button type="button" onclick="window.focusKakaoPlace(\'' + id + '\')" class="press p-2 rounded-xl bg-slate-50 text-slate-500 shrink-0 hover:bg-slate-100">' +
+                '<i data-lucide="crosshair" class="w-4 h-4"></i>' +
+              '</button>' +
+            '</div>' +
+            '<div class="flex items-center gap-1.5 pt-1.5 border-t border-slate-100">' +
+              '<a href="' + ctUrl + '" target="_blank" rel="noopener noreferrer" class="press flex-1 py-1.5 px-2 rounded-xl bg-gradient-to-r from-[#ff3d00] to-[#ff5722] hover:from-[#e53600] hover:to-[#f4511e] text-white font-extrabold text-[10.5px] shadow-2xs flex items-center justify-center gap-1 transition-all" title="캐치테이블 실시간 예약 / 웨이팅">' +
+                '<i data-lucide="utensils" class="w-3 h-3"></i>' +
+                '<span>캐치테이블</span>' +
+              '</a>' +
+              '<a href="' + nvUrl + '" target="_blank" rel="noopener noreferrer" class="press flex-1 py-1.5 px-2 rounded-xl bg-[#03c75a] hover:bg-[#02b351] text-white font-extrabold text-[10.5px] shadow-2xs flex items-center justify-center gap-1 transition-all" title="네이버 스마트플레이스 예약">' +
+                '<i data-lucide="calendar-check" class="w-3 h-3"></i>' +
+                '<span>네이버 예약</span>' +
+              '</a>' +
             '</div>' +
           '</div>';
         }).join('');
+        if (window.lucide) lucide.createIcons();
       }
     })
     .catch(function(err) {

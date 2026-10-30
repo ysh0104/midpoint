@@ -954,6 +954,11 @@ window.confirmMeetingPlace = function(idOrName, fallbackName) {
   if (pTitleEl) pTitleEl.textContent = p.place_name;
   if (pAddrEl) pAddrEl.textContent = (p.road_address_name || p.address_name) + ' (약속 장소)';
 
+  var ctLink = document.getElementById('confirmedCatchTableLink');
+  var nvLink = document.getElementById('confirmedNaverBookingLink');
+  if (ctLink) ctLink.href = 'https://app.catchtable.co.kr/ct/search/total?query=' + encodeURIComponent(p.place_name);
+  if (nvLink) nvLink.href = 'https://search.naver.com/search.naver?query=' + encodeURIComponent(p.place_name + ' 예약');
+
   document.getElementById('sheetMainTitle').textContent = p.place_name;
   document.getElementById('sheetSubTitle').textContent = (p.road_address_name || p.address_name) + ' (약속 장소)';
   var locAddr = document.getElementById('locationAddress');
