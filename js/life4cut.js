@@ -22,7 +22,7 @@ var life4CutState = {
 
 // 감성 넘치는 인생네컷 기본 샘플 컷 (카메라가 없거나 빠른 시연 시 원클릭 적용)
 var SAMPLE_SHOTS = [
-  'https://images.unsplash.com/photo-1543807535-eceef0bc6599?w=600&auto=format&fit=crop&q=80', // 친구들과 건배/음식
+  'images/ondaljib.png', // 친구들과 온달집 닭다리살 숯불구이 모임
   'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=600&auto=format&fit=crop&q=80', // 환하게 웃는 모임 순간
   'https://images.unsplash.com/photo-1511632765486-a01980e01a18?w=600&auto=format&fit=crop&q=80', // 따뜻한 카페/파티 조명
   'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=600&auto=format&fit=crop&q=80'  // 인생네컷 시그니처 포즈

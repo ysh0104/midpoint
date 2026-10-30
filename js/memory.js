@@ -24,8 +24,7 @@ var DEFAULT_MEMORIES = [
     friends: ['승훈 (나)', '민수', '지은'],
     menu: '닭다리살 숯불구이 & 심야우동',
     memo: '퇴근하고 셋이서 2호선 중간역 잡고 급벙개! 비 오는 날 숯불향에 포차 감성 제대로였음.',
-    // 고화질 따뜻한 음식/포차 감성 사진 Unsplash URL
-    photo: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=600&auto=format&fit=crop&q=80',
+    photo: 'images/ondaljib.png',
     tiltDeg: -3.5 // 폴라로이드 감성 미세 회전 각도
   },
   {
@@ -62,6 +61,12 @@ function initMemories() {
     var raw = localStorage.getItem(memoryStore.storageKey);
     if (raw) {
       memoryStore.memories = JSON.parse(raw);
+      // 온달집 사진을 전달받은 최신 사진으로 동기화
+      var ondal = memoryStore.memories.find(function(m) { return m.id === 'mem_gangnam_01'; });
+      if (ondal) {
+        ondal.photo = 'images/ondaljib.png';
+      }
+      localStorage.setItem(memoryStore.storageKey, JSON.stringify(memoryStore.memories));
     } else {
       memoryStore.memories = DEFAULT_MEMORIES.slice();
       localStorage.setItem(memoryStore.storageKey, JSON.stringify(memoryStore.memories));
