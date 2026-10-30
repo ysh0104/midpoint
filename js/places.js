@@ -363,3 +363,74 @@ function syncMeetFilterUI() {
   }
   if (window.lucide) lucide.createIcons();
 }
+
+window.searchPlaceKeywordDirect = function(keyword) {
+  var center = state.currentHubCoord || state.myLocation || DEFAULT_LOC;
+  var centerName = state.currentHubName || '내 위치';
+  showToast(keyword + ' 검색 중...', 'search');
+
+  var listEl = document.getElementById('placeList');
+  if (listEl) {
+    listEl.innerHTML = '<div class="py-6 text-center text-slate-400 text-[12px] flex items-center justify-center gap-2">' +
+      '<span class="w-3.5 h-3.5 border-2 border-[#0284c7] border-t-transparent rounded-full animate-spin"></span>' +
+      '<span>주변 ' + keyword + ' 찾는 중...</span>' +
+    '</div>';
+  }
+
+  var kwUrl = 'https://dapi.kakao.com/v2/local/search/keyword.json?query=' + encodeURIComponent(keyword) +
+    '&x=' + center[1] + '&y=' + center[0] + '&radius=2000&sort=distance&size=15';
+
+  fetch(kwUrl, { headers: { 'Authorization': 'KakaoAK ' + KAKAO_REST_KEY } })
+    .then(function(r) { return r.ok ? r.json() : { documents: [] }; })
+    .then(function(d) {
+      var docs = (d && d.documents) ? d.documents : [];
+      if (docs.length === 0) {
+        showToast('주변 ' + keyword + ' 결과가 없습니다.', 'alert-circle');
+        return;
+      }
+      clearPlaceMarkers();
+      docs.slice(0, 10).forEach(function(p, idx) {
+        var pCoord = [parseFloat(p.y), parseFloat(p.x)];
+        var shortName = p.place_name.length > 7 ? p.place_name.slice(0, 6) + '…' : p.place_name;
+        var iconHtml = '<div class="place-pop-marker press px-2.5 py-1 rounded-full text-[11px] font-extrabold bg-white border border-[#bae6fd] text-slate-800 shadow-md whitespace-nowrap hover:scale-105 hover:border-[#66CCFF] hover:text-[#0284c7] transition-all flex items-center gap-1.5 cursor-pointer backdrop-blur-sm">' +
+          '<span class="w-2 h-2 rounded-full bg-[#0284c7]"></span>' +
+          '<span>' + shortName + '</span>' +
+        '</div>';
+        var m = L.marker(pCoord, {
+          icon: L.divIcon({ html: iconHtml, className: '', iconSize: [80, 24], iconAnchor: [40, 12] })
+        }).addTo(map);
+        m.on('click', function() {
+          map.flyTo(pCoord, 16.5, { duration: 0.8 });
+          showToast(p.place_name + ' 위치로 이동', 'crosshair');
+        });
+        state.placeMarkers.push(m);
+      });
+
+      if (listEl) {
+        listEl.innerHTML = docs.slice(0, 10).map(function(p, i) {
+          var id = 'kakao_p_' + i;
+          kakaoPlacesCache[id] = p;
+          var distMeter = parseInt(p.distance, 10);
+          var distStr = isNaN(distMeter) ? '' : (distMeter < 1000 ? (distMeter + 'm') : ((distMeter/1000).toFixed(1) + 'km'));
+          var subCat = p.category_name ? p.category_name.split(' > ').pop() : keyword;
+          var isConfirmed = state.confirmedPlace && state.confirmedPlace.id === p.id;
+          return '<div class="bg-white rounded-2xl p-3 border ' + (isConfirmed ? 'border-emerald-400 ring-2 ring-emerald-100' : 'border-slate-200/80') + ' shadow-sm hover:border-[#66CCFF] transition-all flex flex-col gap-2" data-idx="' + i + '">' +
+            '<div class="flex items-start justify-between">' +
+              '<div class="min-w-0 pr-2">' +
+                '<div class="flex items-center gap-1.5 flex-wrap">' +
+                  '<span class="px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-slate-100 text-slate-700">' + subCat + '</span>' +
+                  '<span class="text-[10.5px] text-slate-400 font-semibold ml-auto">' + distStr + '</span>' +
+                '</div>' +
+                '<h4 class="text-[14px] font-extrabold text-slate-900 truncate mt-1 hover:text-[#0284c7] cursor-pointer" onclick="window.focusKakaoPlace(\'' + id + '\')">' + p.place_name + '</h4>' +
+                '<p class="text-[11px] text-slate-500 truncate mt-0.5">' + (p.road_address_name || p.address_name) + '</p>' +
+              '</div>' +
+            '</div>' +
+          '</div>';
+        }).join('');
+      }
+    })
+    .catch(function(err) {
+      console.warn(err);
+      showToast('검색 중 오류가 발생했습니다.', 'alert-triangle');
+    });
+};

@@ -717,11 +717,15 @@ window.updateHeaderRouteCardUI = function() {
   var myOriginAddrEl = document.getElementById('headerMyOriginAddr');
   var myOriginBadgeEl = document.getElementById('headerMyOriginTypeBadge');
   var gpsRestoreBtn = document.getElementById('headerGpsRestoreBtn');
+  var topSearchAddr = document.getElementById('topSearchDisplayAddr');
 
   if (myLoc) {
     var isCustom = !!myLoc.isCustom;
+    var displayAddr = myLoc.addr || myLoc.name || state.myAddress || '위치 확인 중';
+    if (topSearchAddr) {
+      topSearchAddr.textContent = displayAddr;
+    }
     if (myOriginAddrEl) {
-      var displayAddr = myLoc.addr || myLoc.name || state.myAddress || '위치 확인 중';
       myOriginAddrEl.textContent = (isCustom ? '출발지: ' : '현위치: ') + displayAddr;
       myOriginAddrEl.title = displayAddr;
     }
@@ -869,24 +873,36 @@ window.toggleOriginAddressMode = function() {
   }
 };
 
-window.toggleTopHeaderCompact = function() {
-  var header = document.getElementById('topHeader');
-  var card = document.getElementById('headerRouteCard');
-  var quickBar = document.getElementById('headerQuickLocBar');
-  var icon = document.getElementById('headerCollapseIcon');
-  if (!header || !card) return;
-
-  var isCollapsed = card.classList.contains('hidden');
-  if (isCollapsed) {
-    card.classList.remove('hidden');
-    if (quickBar) quickBar.classList.remove('hidden');
-    if (icon) icon.setAttribute('data-lucide', 'chevron-up');
-  } else {
-    card.classList.add('hidden');
-    if (quickBar) quickBar.classList.add('hidden');
-    if (icon) icon.setAttribute('data-lucide', 'chevron-down');
-  }
+window.openRoutePlanner = function() {
+  state.routePlannerOpen = true;
+  var searchBar = document.getElementById('topSearchBarContainer');
+  var routeHeader = document.getElementById('topHeader');
+  if (searchBar) searchBar.classList.add('hidden');
+  if (routeHeader) routeHeader.classList.remove('hidden');
+  if (window.updateHeaderRouteCardUI) window.updateHeaderRouteCardUI();
   if (window.lucide) lucide.createIcons();
+};
+
+window.closeRoutePlanner = function() {
+  state.routePlannerOpen = false;
+  var searchBar = document.getElementById('topSearchBarContainer');
+  var routeHeader = document.getElementById('topHeader');
+  if (routeHeader) routeHeader.classList.add('hidden');
+  if (searchBar) searchBar.classList.remove('hidden');
+  if (window.updateHeaderRouteCardUI) window.updateHeaderRouteCardUI();
+  if (window.lucide) lucide.createIcons();
+};
+
+window.handleSearchInputClick = function() {
+  // 검색창 탭 시: 길찾기 모드로 전환하면서 목적지 검색 열기
+  window.openRoutePlanner();
+  setTimeout(function() {
+    window.focusOrSearchDestination();
+  }, 100);
+};
+
+window.toggleTopHeaderCompact = function() {
+  window.closeRoutePlanner();
 };
 
 window.openOriginAddressPicker = function() {

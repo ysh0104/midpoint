@@ -46,7 +46,7 @@
 <!-- Lucide Icons -->
 <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
 
-<link rel="stylesheet" href="css/style.css?v=26" />
+<link rel="stylesheet" href="css/style.css?v=27" />
 </head>
 <body class="bg-zinc-200 text-slate-900 antialiased h-screen w-screen flex justify-center items-center">
 
@@ -61,33 +61,123 @@
     <span id="toastText" class="text-[12.5px] font-bold text-slate-900 tracking-tight whitespace-nowrap">알림</span>
   </div>
 
-  <!-- 1. 상단 모임 경로 & 주소 플래너 바 (Kakao/Naver 내비 스타일) -->
-  <header id="topHeader" class="route-planner-header absolute top-3 left-3 right-3 z-30 rounded-2xl p-2.5 text-white flex flex-col gap-2 transition-all">
-    
-    <!-- 1-1. 상단 교통수단 선택 바 (자차 / 대중교통 / 도보 / 자전거) + 헤더 액션 -->
-    <div class="flex items-center justify-between">
-      <!-- 교통수단 아이콘 탭 -->
-      <div class="inline-flex items-center gap-1.5" id="headerTransportGroup">
-        <button type="button" onclick="window.setHeaderTransport('car')" id="headerTabCar" class="press w-8 h-7 rounded-full flex items-center justify-center transition-all text-white/80 hover:text-white hover:bg-white/10" title="자차">
-          <i data-lucide="car" class="w-4 h-4"></i>
-        </button>
-        <button type="button" onclick="window.setHeaderTransport('transit')" id="headerTabTransit" class="press px-3.5 h-7 rounded-full bg-white text-[#4a80f0] font-bold shadow-xs flex items-center justify-center gap-1 transition-all" title="대중교통">
-          <i data-lucide="bus" class="w-4 h-4"></i>
-        </button>
-        <button type="button" onclick="window.setHeaderTransport('walk')" id="headerTabWalk" class="press w-8 h-7 rounded-full flex items-center justify-center transition-all text-white/80 hover:text-white hover:bg-white/10" title="도보">
-          <i data-lucide="footprints" class="w-4 h-4"></i>
-        </button>
-        <button type="button" onclick="window.setHeaderTransport('bike')" id="headerTabBike" class="press w-8 h-7 rounded-full flex items-center justify-center transition-all text-white/80 hover:text-white hover:bg-white/10" title="자전거">
-          <i data-lucide="bike" class="w-4 h-4"></i>
-        </button>
+  <!-- 1. 기본 상단 미니멀 검색바 & 길찾기 버튼 & 카테고리 칩 (오른쪽 레퍼런스 스타일) -->
+  <div id="topSearchBarContainer" class="absolute top-3 left-3 right-3 z-30 flex flex-col gap-2 transition-all select-none">
+    <!-- 검색창 + 길찾기 버튼 Row -->
+    <div class="flex items-center gap-2">
+      <!-- 검색창 본체 (화이트 라운드 필, 돋보기 + 주소 + 마이크 + AI 그라디언트 링) -->
+      <div onclick="window.handleSearchInputClick()" class="press flex-1 h-[48px] bg-white rounded-2xl shadow-[0_4px_18px_rgba(15,23,42,0.08)] border border-slate-200/90 px-3.5 flex items-center justify-between gap-2.5 cursor-pointer hover:border-[#4a80f0] transition-all">
+        <!-- 돋보기 아이콘 -->
+        <i data-lucide="search" class="w-5 h-5 text-slate-800 shrink-0"></i>
+        <!-- 주소 텍스트 (실시간 내 위치 주소 반영) -->
+        <span id="topSearchDisplayAddr" class="flex-1 text-[13.5px] font-medium text-slate-800 truncate">주소 확인 중...</span>
+        <!-- 우측 액션: 마이크 & 그라디언트 링 -->
+        <div class="flex items-center gap-2 shrink-0">
+          <button type="button" onclick="event.stopPropagation(); window.openEditMyLocationModal();" class="p-1 text-slate-700 hover:text-[#4a80f0] transition-colors" title="주소 검색">
+            <i data-lucide="mic" class="w-5 h-5"></i>
+          </button>
+          <!-- AI 추천 그라디언트 링 -->
+          <div onclick="event.stopPropagation(); window.openMeetFilterModal();" class="w-6 h-6 rounded-full p-[2px] bg-gradient-to-tr from-amber-400 via-rose-500 to-indigo-500 flex items-center justify-center cursor-pointer shadow-2xs hover:scale-105 transition-transform" title="모임 맞춤 필터 및 AI 추천">
+            <div class="w-full h-full bg-white rounded-full flex items-center justify-center">
+              <span class="w-2.5 h-2.5 rounded-full bg-gradient-to-tr from-amber-400 via-rose-500 to-indigo-500"></span>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <!-- 우측 액션: 앱 로고/미니 타이틀 및 접기/펼치기 토글 -->
+      <!-- 우측 [ ↗ 길찾기 ] 버튼 (파란색 사각 라운드 버튼) -->
+      <button type="button" onclick="window.openRoutePlanner()" class="press w-[52px] h-[48px] bg-[#2563eb] hover:bg-[#1d4ed8] text-white rounded-2xl shadow-[0_4px_14px_rgba(37,99,235,0.35)] flex flex-col items-center justify-center shrink-0 transition-all group" title="길찾기 및 모임 경로 플래너 열기">
+        <i data-lucide="corner-up-right" class="w-4 h-4 text-white group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" stroke-width="2.6"></i>
+        <span class="text-[10px] font-black tracking-tight text-white mt-0.5">길찾기</span>
+      </button>
+    </div>
+
+    <!-- 하단 수평 퀵 카테고리 칩 바 -->
+    <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+      <!-- 👥 친구위치 (MidPoint 시그니처 킬러 피처!) -->
+      <button type="button" onclick="window.openAddModal()" class="press px-3 h-[34px] rounded-full bg-white border border-slate-200/90 text-slate-800 shadow-[0_2px_8px_rgba(15,23,42,0.06)] hover:border-[#2563eb] hover:text-[#2563eb] text-[12px] font-extrabold flex items-center gap-1.5 shrink-0 transition-all">
+        <span class="w-5 h-5 rounded-full bg-blue-50 text-[#2563eb] flex items-center justify-center shrink-0">
+          <i data-lucide="users" class="w-3.5 h-3.5 text-[#2563eb]"></i>
+        </span>
+        <span>친구위치</span>
+      </button>
+
+      <!-- 🍁 약속추천 (중간 허브로 줌인) -->
+      <button type="button" onclick="window.zoomToHub(false)" class="press px-3 h-[34px] rounded-full bg-white border border-slate-200/90 text-slate-800 shadow-[0_2px_8px_rgba(15,23,42,0.06)] hover:border-rose-400 hover:text-rose-600 text-[12px] font-extrabold flex items-center gap-1.5 shrink-0 transition-all">
+        <span class="w-5 h-5 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center shrink-0">
+          <i data-lucide="sparkles" class="w-3.5 h-3.5 text-rose-500"></i>
+        </span>
+        <span>약속추천</span>
+      </button>
+
+      <!-- 🍴 음식점 (FD6) -->
+      <button type="button" onclick="window.switchPlaceCategory('FD6')" class="press px-3 h-[34px] rounded-full bg-white border border-slate-200/90 text-slate-800 shadow-[0_2px_8px_rgba(15,23,42,0.06)] hover:border-amber-400 hover:text-amber-600 text-[12px] font-extrabold flex items-center gap-1.5 shrink-0 transition-all">
+        <span class="w-5 h-5 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+          <i data-lucide="utensils" class="w-3.5 h-3.5 text-amber-600"></i>
+        </span>
+        <span>음식점</span>
+      </button>
+
+      <!-- ☕ 카페 (CE7) -->
+      <button type="button" onclick="window.switchPlaceCategory('CE7')" class="press px-3 h-[34px] rounded-full bg-white border border-slate-200/90 text-slate-800 shadow-[0_2px_8px_rgba(15,23,42,0.06)] hover:border-orange-500 hover:text-orange-600 text-[12px] font-extrabold flex items-center gap-1.5 shrink-0 transition-all">
+        <span class="w-5 h-5 rounded-full bg-orange-50 text-orange-600 flex items-center justify-center shrink-0">
+          <i data-lucide="coffee" class="w-3.5 h-3.5 text-orange-600"></i>
+        </span>
+        <span>카페</span>
+      </button>
+
+      <!-- 🏪 편의점 -->
+      <button type="button" onclick="window.searchPlaceKeywordDirect('편의점')" class="press px-3 h-[34px] rounded-full bg-white border border-slate-200/90 text-slate-800 shadow-[0_2px_8px_rgba(15,23,42,0.06)] hover:border-emerald-400 hover:text-emerald-600 text-[12px] font-extrabold flex items-center gap-1.5 shrink-0 transition-all">
+        <span class="w-5 h-5 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+          <i data-lucide="store" class="w-3.5 h-3.5 text-emerald-600"></i>
+        </span>
+        <span>편의점</span>
+      </button>
+
+      <!-- 🚇 지하철역 -->
+      <button type="button" onclick="window.searchPlaceKeywordDirect('지하철역')" class="press px-3 h-[34px] rounded-full bg-white border border-slate-200/90 text-slate-800 shadow-[0_2px_8px_rgba(15,23,42,0.06)] hover:border-sky-400 hover:text-sky-600 text-[12px] font-extrabold flex items-center gap-1.5 shrink-0 transition-all">
+        <span class="w-5 h-5 rounded-full bg-sky-50 text-sky-600 flex items-center justify-center shrink-0">
+          <i data-lucide="train" class="w-3.5 h-3.5 text-sky-600"></i>
+        </span>
+        <span>지하철역</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- 2. 상단 모임 경로 & 주소 플래너 바 (길찾기 클릭 시 노출, 왼쪽 레퍼런스 스타일) -->
+  <header id="topHeader" class="route-planner-header absolute top-3 left-3 right-3 z-30 rounded-2xl p-2.5 text-white flex flex-col gap-2 transition-all hidden">
+    
+    <!-- 2-1. 상단 뒤로가기 / 교통수단 선택 바 (자차 / 대중교통 / 도보 / 자전거) + 헤더 액션 -->
+    <div class="flex items-center justify-between">
+      <div class="inline-flex items-center gap-1.5">
+        <!-- 기본 검색창으로 돌아가기 (뒤로가기 버튼) -->
+        <button type="button" onclick="window.closeRoutePlanner()" class="press p-1 rounded-full text-white/90 hover:text-white hover:bg-white/20 transition-all mr-0.5" title="기본 지도로 돌아가기">
+          <i data-lucide="arrow-left" class="w-4 h-4"></i>
+        </button>
+
+        <!-- 교통수단 아이콘 탭 -->
+        <div class="inline-flex items-center gap-1" id="headerTransportGroup">
+          <button type="button" onclick="window.setHeaderTransport('car')" id="headerTabCar" class="press w-8 h-7 rounded-full flex items-center justify-center transition-all text-white/80 hover:text-white hover:bg-white/10" title="자차">
+            <i data-lucide="car" class="w-4 h-4"></i>
+          </button>
+          <button type="button" onclick="window.setHeaderTransport('transit')" id="headerTabTransit" class="press px-3.5 h-7 rounded-full bg-white text-[#4a80f0] font-bold shadow-xs flex items-center justify-center gap-1 transition-all" title="대중교통">
+            <i data-lucide="bus" class="w-4 h-4"></i>
+          </button>
+          <button type="button" onclick="window.setHeaderTransport('walk')" id="headerTabWalk" class="press w-8 h-7 rounded-full flex items-center justify-center transition-all text-white/80 hover:text-white hover:bg-white/10" title="도보">
+            <i data-lucide="footprints" class="w-4 h-4"></i>
+          </button>
+          <button type="button" onclick="window.setHeaderTransport('bike')" id="headerTabBike" class="press w-8 h-7 rounded-full flex items-center justify-center transition-all text-white/80 hover:text-white hover:bg-white/10" title="자전거">
+            <i data-lucide="bike" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- 우측 액션: 앱 로고/미니 타이틀 및 닫기 토글 -->
       <div class="flex items-center gap-1.5">
         <span id="statusBadge" class="hidden">단독 모드</span>
         <span id="participantCount" class="hidden">출발지: 1곳</span>
         <span class="text-[10.5px] font-bold tracking-tight text-white/90 bg-white/20 px-2 py-0.5 rounded-full">MidPoint</span>
-        <button type="button" onclick="window.toggleTopHeaderCompact()" id="headerCollapseBtn" class="press p-1 rounded-full text-white/80 hover:text-white hover:bg-white/20 transition-all" title="플래너 접기/펼치기">
+        <button type="button" onclick="window.closeRoutePlanner()" id="headerCollapseBtn" class="press p-1 rounded-full text-white/80 hover:text-white hover:bg-white/20 transition-all" title="기본 검색창으로 접기">
           <i id="headerCollapseIcon" data-lucide="chevron-up" class="w-4 h-4"></i>
         </button>
       </div>
@@ -1207,15 +1297,15 @@
 </div>
 
 <!-- 기능별 모듈 스크립트 분리 (Clean Modular Architecture) -->
-<script src="js/config.js?v=26"></script>
-<script src="js/state.js?v=26"></script>
-<script src="js/map.js?v=26"></script>
-<script src="js/mobility.js?v=26"></script>
-<script src="js/places.js?v=26"></script>
-<script src="js/weather.js?v=26"></script>
-<script src="js/care.js?v=26"></script>
-<script src="js/game.js?v=26"></script>
-<script src="js/chat.js?v=26"></script>
-<script src="js/ui.js?v=26"></script>
+<script src="js/config.js?v=27"></script>
+<script src="js/state.js?v=27"></script>
+<script src="js/map.js?v=27"></script>
+<script src="js/mobility.js?v=27"></script>
+<script src="js/places.js?v=27"></script>
+<script src="js/weather.js?v=27"></script>
+<script src="js/care.js?v=27"></script>
+<script src="js/game.js?v=27"></script>
+<script src="js/chat.js?v=27"></script>
+<script src="js/ui.js?v=27"></script>
 </body>
 </html>
