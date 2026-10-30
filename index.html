@@ -70,13 +70,10 @@
       <span id="tossStatusBadge" class="text-[10.5px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-[#2563eb]">약속 준비</span>
     </div>
 
-    <!-- 우측: 빠른 액션 버튼 (추억 앨범 바로가기, GPS 현위치 이동, 모임 맞춤 설정) -->
+    <!-- 우측: 빠른 액션 버튼 (추억 앨범 바로가기, 모임 맞춤 설정) -->
     <div class="pointer-events-auto flex items-center gap-1.5">
       <button type="button" onclick="window.focusLatestMemory()" class="press w-9 h-9 rounded-full glass border border-white/90 shadow-md shadow-slate-900/5 grid place-items-center text-slate-700 hover:text-amber-500 transition-colors" title="내 모임 추억 지도 보기">
         <i data-lucide="camera" class="w-4 h-4"></i>
-      </button>
-      <button type="button" onclick="window.locateMe(true)" class="press w-9 h-9 rounded-full glass border border-white/90 shadow-md shadow-slate-900/5 grid place-items-center text-slate-700 hover:text-[#2563eb] transition-colors" title="내 위치로 이동">
-        <i data-lucide="crosshair" class="w-4 h-4"></i>
       </button>
       <button type="button" onclick="window.openMeetFilterModal()" class="press w-9 h-9 rounded-full glass border border-white/90 shadow-md shadow-slate-900/5 grid place-items-center text-slate-700 hover:text-[#2563eb] transition-colors" title="모임 맞춤 필터">
         <i data-lucide="sliders-horizontal" class="w-4 h-4"></i>
