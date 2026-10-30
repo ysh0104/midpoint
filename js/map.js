@@ -230,21 +230,67 @@ function createTransitStopMarker(loc, title, badgeText, badgeColor) {
   return L.marker(loc, { icon: icon, zIndexOffset: 900 });
 }
 
+window.smoothFlyTo = function(targetCoord, targetZoom, onComplete) {
+  if (!map || !targetCoord) return;
+  targetZoom = (typeof targetZoom === 'number') ? targetZoom : 16.5;
+
+  var currentCenter = map.getCenter();
+  var currentZoom = map.getZoom();
+  var targetLatLng = L.latLng(targetCoord[0], targetCoord[1]);
+  var distMeters = currentCenter.distanceTo(targetLatLng);
+  var zoomDiff = Math.abs(currentZoom - targetZoom);
+
+  // 1. 이미 해당 위치 근처(80m 이내)에 있고 줌 레벨도 이미 근접해 있을 때:
+  // => 카메라 flyTo를 아예 실행하지 않아 진동/덜컹거림을 100% 방지!
+  if (distMeters < 80 && zoomDiff < 0.6) {
+    if (typeof onComplete === 'function') onComplete(false);
+    return;
+  }
+
+  // 2. 근거리(350m 이내) 이동일 때:
+  // 급격한 flyTo 대신 부드러운 panTo + setZoom으로 흔들림 없이 매끄럽게 중심 맞춤
+  if (distMeters < 350) {
+    if (zoomDiff < 0.8) {
+      map.panTo(targetLatLng, { animate: true, duration: 0.45 });
+    } else {
+      map.flyTo(targetLatLng, targetZoom, {
+        animate: true,
+        duration: 0.7,
+        easeLinearity: 0.2
+      });
+    }
+    if (typeof onComplete === 'function') {
+      setTimeout(function() { onComplete(true); }, 500);
+    }
+    return;
+  }
+
+  // 3. 원거리에서 해당 장소로 접근할 때:
+  // Leaflet 기본 flyTo의 덜컹거림을 방지하고 완만한 곡선과 1.1초의 균일한 트랜지션으로 우아하게 이동
+  map.flyTo(targetLatLng, targetZoom, {
+    animate: true,
+    duration: 1.15,
+    easeLinearity: 0.22,
+    noMoveStart: true
+  });
+
+  if (typeof onComplete === 'function') {
+    setTimeout(function() { onComplete(true); }, 1200);
+  }
+};
+
 window.zoomToHub = function(isSilent) {
   if (!state.currentHubCoord || !map) return;
 
-  map.flyTo(state.currentHubCoord, 16.5, {
-    duration: 1.4,
-    easeLinearity: 0.25
+  window.smoothFlyTo(state.currentHubCoord, 16.5, function(didFly) {
+    if (!isSilent && didFly) {
+      showToast(state.currentHubName + ' 중심으로 이동했습니다', 'zoom-in');
+    }
   });
-
-  if (!isSilent) {
-    showToast(state.currentHubName + ' 중심으로 확대! 주변 장소를 탐색합니다', 'zoom-in');
-  }
 
   setTimeout(function() {
     fetchKakaoPlaces(state.currentHubCoord, state.currentHubName);
-  }, 450);
+  }, 400);
 
   var sheet = document.getElementById('bottomSheet');
   if (sheet && !state.sheetExpanded) {
@@ -253,3 +299,4 @@ window.zoomToHub = function(isSilent) {
     sheet.classList.add('sheet-expanded');
   }
 };
+

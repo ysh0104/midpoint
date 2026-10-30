@@ -298,7 +298,11 @@ function updateLocationsAndMidpoint() {
         }).addTo(map);
 
         state.hubMarker.on('click', function() {
-          window.zoomToHub(false);
+          if (state.confirmedPlace) {
+            window.focusOrRecordConfirmedPlace();
+          } else {
+            window.zoomToHub(false);
+          }
         });
 
         if (state.confirmedPlace) {
@@ -774,6 +778,85 @@ window.confirmHubMeetingPlace = function() {
   window.confirmMeetingPlace(hubPlace.id);
 };
 
+// 약속 장소 전용 모던 미니멀 팝업 (사진/기록 남기기 및 길안내 제공)
+window.openConfirmedPlacePopup = function(place, coord) {
+  if (!map || !state.hubMarker || !place) return;
+  var pName = place.place_name || '약속 장소';
+  var pAddr = place.road_address_name || place.address_name || '중간 지점';
+  var escapedName = pName.replace(/'/g, "\\'");
+
+  var popupHtml = '<div class="p-3.5 flex flex-col gap-2.5 max-w-[230px] select-none">' +
+    '<div class="flex items-center justify-between">' +
+      '<div class="flex items-center gap-1.5">' +
+        '<span class="w-2 h-2 rounded-full bg-emerald-500"></span>' +
+        '<span class="text-[10.5px] font-bold text-slate-500">확정된 약속 장소</span>' +
+      '</div>' +
+      '<span class="text-[9.5px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">도착</span>' +
+    '</div>' +
+    '<div>' +
+      '<h4 class="text-[14px] font-black text-slate-900 leading-snug truncate">' + pName + '</h4>' +
+      '<p class="text-[11px] text-slate-500 truncate mt-0.5">' + pAddr + '</p>' +
+    '</div>' +
+    '<div class="pt-2 border-t border-slate-100 flex flex-col gap-1.5">' +
+      '<button type="button" onclick="state.hubMarker.closePopup(); window.openAddMemoryModal(\'' + escapedName + '\');" class="press w-full py-2 px-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-extrabold text-[11.5px] shadow-xs flex items-center justify-center gap-1.5 transition-all">' +
+        '<i data-lucide="camera" class="w-3.5 h-3.5"></i>' +
+        '<span>사진 & 모임 추억 남기기</span>' +
+      '</button>' +
+      '<button type="button" onclick="state.hubMarker.closePopup(); window.startNaviMode();" class="press w-full py-1.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[11px] flex items-center justify-center gap-1.5 transition-all">' +
+        '<i data-lucide="navigation" class="w-3 h-3 text-[#0284c7]"></i>' +
+        '<span>내비게이션 안내</span>' +
+      '</button>' +
+    '</div>' +
+  '</div>';
+
+  state.hubMarker.unbindPopup();
+  state.hubMarker.bindPopup(popupHtml, {
+    className: 'bandding-place-popup',
+    offset: [0, -68],
+    closeButton: true,
+    autoPan: false
+  }).openPopup();
+
+  if (window.lucide) {
+    setTimeout(function() { lucide.createIcons(); }, 30);
+  }
+};
+
+// 약속 장소 스마트 포커스: 멀리서는 부드럽게 줌인(진동 제거), 이미 확대되어 있을 때는 흔들림 없이 사진/기록 팝업 오픈!
+window.focusOrRecordConfirmedPlace = function() {
+  if (!state.confirmedPlace || !map) return;
+  var pCoord = [parseFloat(state.confirmedPlace.y), parseFloat(state.confirmedPlace.x)];
+  var currentCenter = map.getCenter();
+  var currentZoom = map.getZoom();
+  var targetLatLng = L.latLng(pCoord[0], pCoord[1]);
+  var distMeters = currentCenter.distanceTo(targetLatLng);
+
+  // 1. 이미 확대된 상태(15.5 이상)이고 해당 약속 장소 근처(120m 이내)인 경우:
+  // 진동/떨림/flyTo를 일절 발생시키지 않고 흔들림 없이 바로 사진/기록 팝업 또는 모달을 표시!
+  if (distMeters < 120 && currentZoom >= 15.5) {
+    if (state.hubMarker) {
+      window.openConfirmedPlacePopup(state.confirmedPlace, pCoord);
+    } else {
+      window.openAddMemoryFromConfirmed();
+    }
+    return;
+  }
+
+  // 2. 멀리 있을 때는 Leaflet 기본 바운스 없이 부드럽고 자연스럽게 스무스 줌인
+  if (window.smoothFlyTo) {
+    window.smoothFlyTo(pCoord, 16.5, function(didFly) {
+      if (state.hubMarker) {
+        window.openConfirmedPlacePopup(state.confirmedPlace, pCoord);
+      }
+    });
+  } else {
+    map.flyTo(pCoord, 16.5, { duration: 1.1, easeLinearity: 0.22, noMoveStart: true });
+    setTimeout(function() {
+      if (state.hubMarker) window.openConfirmedPlacePopup(state.confirmedPlace, pCoord);
+    }, 1150);
+  }
+};
+
 window.confirmMeetingPlace = function(idOrName, fallbackName) {
   if (!idOrName && !fallbackName) return;
 
@@ -830,12 +913,22 @@ window.confirmMeetingPlace = function(idOrName, fallbackName) {
   state.confirmedPlace = p;
   var pCoord = [parseFloat(p.y), parseFloat(p.x)];
 
-  map.flyTo(pCoord, 16.5, { duration: 0.9 });
+  // 부드러운 스무스 이동 (떨림/진동 없음)
+  if (window.smoothFlyTo) {
+    window.smoothFlyTo(pCoord, 16.5);
+  } else {
+    map.flyTo(pCoord, 16.5, { duration: 1.1, easeLinearity: 0.22, noMoveStart: true });
+  }
 
   if (state.hubMarker) {
     state.hubMarker.setLatLng(pCoord);
     state.hubMarker.setIcon(createMarkerHtml(p.place_name, '약속', false, false, true));
+    state.hubMarker.off('click');
+    state.hubMarker.on('click', function() {
+      window.focusOrRecordConfirmedPlace();
+    });
   }
+
 
   if (window.updateWeatherAndCongestion) {
     window.updateWeatherAndCongestion(p.place_name, pCoord);

@@ -256,9 +256,13 @@ window.saveNewMemory = function() {
     showToast('소중한 모임 추억이 지도에 저장되었습니다', 'camera');
   }
 
-  // 저장된 추억 위치로 이동하여 바로 폴라로이드 감상
+  // 저장된 추억 위치로 이동하여 바로 폴라로이드 감상 (떨림 없는 자연스러운 스무스 이동)
   if (window.map) {
-    map.flyTo(coord, 16.5, { duration: 0.8 });
+    if (window.smoothFlyTo) {
+      window.smoothFlyTo(coord, 16.5);
+    } else {
+      map.flyTo(coord, 16.5, { duration: 1.0, easeLinearity: 0.22 });
+    }
   }
 };
 
@@ -296,8 +300,14 @@ window.focusLatestMemory = function() {
   }
   var latest = memoryStore.memories[0];
   if (window.map && latest.coord) {
-    map.flyTo(latest.coord, 16.5, { duration: 1.0 });
-    if (window.showToast) showToast("'" + latest.placeName + "' 추억 위치로 이동", 'camera');
+    if (window.smoothFlyTo) {
+      window.smoothFlyTo(latest.coord, 16.5, function(didFly) {
+        if (window.showToast && didFly) showToast("'" + latest.placeName + "' 추억 위치로 이동", 'camera');
+      });
+    } else {
+      map.flyTo(latest.coord, 16.5, { duration: 1.0, easeLinearity: 0.22 });
+      if (window.showToast) showToast("'" + latest.placeName + "' 추억 위치로 이동", 'camera');
+    }
   }
 };
 

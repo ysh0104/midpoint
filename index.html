@@ -46,7 +46,7 @@
 <!-- Lucide Icons -->
 <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
 
-<link rel="stylesheet" href="css/style.css?v=34" />
+<link rel="stylesheet" href="css/style.css?v=35" />
 </head>
 <body class="bg-zinc-200 text-slate-900 antialiased h-screen w-screen flex justify-center items-center">
 
@@ -148,7 +148,7 @@
 
     <!-- 2-1. 상단 미니 턴 / 실시간 알림 캡슐 (전체 테마와 일치하는 화이트 & 스카이블루 글래스모피즘) -->
     <div id="naviTopMiniBanner" class="hidden absolute top-3.5 left-3.5 right-3.5 max-w-xl mx-auto z-40 p-2.5 px-3.5 rounded-2xl bg-white/95 backdrop-blur-xl border border-[#bae6fd] shadow-md shadow-slate-900/5 flex items-center justify-between gap-3 transition-all">
-      <div class="flex items-center gap-2.5 min-w-0 flex-1">
+      <div class="flex items-center gap-2.5 min-w-0 flex-1 cursor-pointer" onclick="window.focusOrRecordConfirmedPlace()" title="약속 위치 확인 및 추억 기록">
         <div id="miniBannerIconBox" class="w-8 h-8 rounded-xl bg-gradient-to-br from-[#66CCFF] to-[#0284c7] text-white grid place-items-center shrink-0 shadow-xs">
           <i id="miniBannerIcon" data-lucide="train-front" class="w-4 h-4"></i>
         </div>
@@ -179,9 +179,9 @@
 
       <!-- 상단 바: 내 기준 안내 헤더 & 교통수단 전환 & 액션 버튼 -->
       <div class="flex items-center justify-between gap-2 pb-2 border-b border-slate-100 shrink-0">
-        <div class="flex items-center gap-2 min-w-0 flex-1">
+        <div class="flex items-center gap-2 min-w-0 flex-1 cursor-pointer group" onclick="window.focusOrRecordConfirmedPlace()" title="약속 장소 확인 및 모임 사진/추억 기록">
           <span class="px-2 py-0.5 rounded-md text-[10px] font-black bg-[#0284c7] text-white shrink-0">내 기준 안내</span>
-          <h4 id="dockRouteSummary" class="text-[13px] font-black text-slate-900 truncate">나 (내 위치) → 약속 장소</h4>
+          <h4 id="dockRouteSummary" class="text-[13px] font-black text-slate-900 group-hover:text-[#0284c7] transition-colors truncate">나 (내 위치) → 약속 장소</h4>
         </div>
 
         <div class="flex items-center gap-1.5 shrink-0">
@@ -197,6 +197,10 @@
             </button>
           </div>
 
+          <!-- 추억 & 사진 바로 남기기 퀵버튼 -->
+          <button type="button" onclick="window.openAddMemoryFromConfirmed()" class="press p-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200/80 transition-all" title="이 장소에서 추억 남기기">
+            <i data-lucide="camera" class="w-4 h-4 text-amber-600"></i>
+          </button>
           <button type="button" onclick="window.openNaviModal()" class="press p-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-600 hover:text-[#0284c7] border border-slate-200/80 transition-all" title="전체 경로 보기">
             <i data-lucide="list" class="w-4 h-4"></i>
           </button>
@@ -396,8 +400,8 @@
         </div>
 
         <div class="flex items-center justify-between gap-2">
-          <div class="min-w-0 pr-1 flex-1">
-            <h3 id="confirmedNaviPlaceTitle" class="text-[17px] font-extrabold text-slate-900 tracking-tight leading-snug truncate">장소명</h3>
+          <div class="min-w-0 pr-1 flex-1 cursor-pointer group" onclick="window.focusOrRecordConfirmedPlace()" title="약속 위치 보기 및 모임 사진/추억 남기기">
+            <h3 id="confirmedNaviPlaceTitle" class="text-[17px] font-extrabold text-slate-900 tracking-tight leading-snug truncate group-hover:text-[#0284c7] transition-colors">장소명</h3>
             <p id="confirmedNaviPlaceAddr" class="text-[11.5px] text-slate-500 mt-0.5 truncate">상세 주소</p>
           </div>
           <div class="flex items-center gap-1.5 shrink-0">
@@ -1346,16 +1350,16 @@
 </div>
 
 <!-- 기능별 모듈 스크립트 분리 (Clean Modular Architecture) -->
-<script src="js/config.js?v=34"></script>
-<script src="js/state.js?v=34"></script>
-<script src="js/map.js?v=34"></script>
-<script src="js/mobility.js?v=34"></script>
-<script src="js/places.js?v=34"></script>
-<script src="js/weather.js?v=34"></script>
-<script src="js/care.js?v=34"></script>
-<script src="js/game.js?v=34"></script>
-<script src="js/chat.js?v=34"></script>
-<script src="js/ui.js?v=34"></script>
-<script src="js/memory.js?v=34"></script>
+<script src="js/config.js?v=35"></script>
+<script src="js/state.js?v=35"></script>
+<script src="js/map.js?v=35"></script>
+<script src="js/mobility.js?v=35"></script>
+<script src="js/places.js?v=35"></script>
+<script src="js/weather.js?v=35"></script>
+<script src="js/care.js?v=35"></script>
+<script src="js/game.js?v=35"></script>
+<script src="js/chat.js?v=35"></script>
+<script src="js/ui.js?v=35"></script>
+<script src="js/memory.js?v=35"></script>
 </body>
 </html>

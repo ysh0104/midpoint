@@ -1018,9 +1018,12 @@ window.openOriginAddressPicker = function() {
 
 window.focusOrSearchDestination = function() {
   if (state.confirmedPlace) {
-    var pCoord = [parseFloat(state.confirmedPlace.y), parseFloat(state.confirmedPlace.x)];
-    map.flyTo(pCoord, 16.5, { duration: 0.8 });
-    showToast(state.confirmedPlace.place_name + ' 위치로 이동', 'map-pin');
+    if (window.focusOrRecordConfirmedPlace) {
+      window.focusOrRecordConfirmedPlace();
+    } else {
+      var pCoord = [parseFloat(state.confirmedPlace.y), parseFloat(state.confirmedPlace.x)];
+      if (window.smoothFlyTo) window.smoothFlyTo(pCoord, 16.5);
+    }
   } else if (state.currentHubCoord) {
     window.zoomToHub(false);
   } else {

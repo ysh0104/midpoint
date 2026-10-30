@@ -166,8 +166,14 @@ function fetchKakaoPlaces(centerCoord, distanceText) {
         }).addTo(map);
 
         m.on('click', function() {
-          map.flyTo(pCoord, 16.5, { duration: 0.8 });
-          showToast(p.place_name + ' 위치로 이동', 'crosshair');
+          if (window.smoothFlyTo) {
+            window.smoothFlyTo(pCoord, 16.5, function(didFly) {
+              if (didFly) showToast(p.place_name + ' 위치로 이동', 'crosshair');
+            });
+          } else {
+            map.flyTo(pCoord, 16.5, { duration: 0.9, easeLinearity: 0.22 });
+            showToast(p.place_name + ' 위치로 이동', 'crosshair');
+          }
         });
         state.placeMarkers.push(m);
       });
@@ -235,8 +241,14 @@ window.focusKakaoPlace = function(id) {
   var p = kakaoPlacesCache[id];
   if (!p) return;
   var coord = [parseFloat(p.y), parseFloat(p.x)];
-  map.flyTo(coord, 16, { duration: 0.8 });
-  showToast(p.place_name + ' 위치로 포커스', 'crosshair');
+  if (window.smoothFlyTo) {
+    window.smoothFlyTo(coord, 16.5, function(didFly) {
+      if (didFly) showToast(p.place_name + ' 위치로 포커스', 'crosshair');
+    });
+  } else {
+    map.flyTo(coord, 16.5, { duration: 0.9, easeLinearity: 0.22 });
+    showToast(p.place_name + ' 위치로 포커스', 'crosshair');
+  }
 };
 
 window.switchPlaceCategory = function(catCode) {
@@ -408,8 +420,14 @@ window.searchPlaceKeywordDirect = function(keyword) {
           icon: L.divIcon({ html: iconHtml, className: '', iconSize: [80, 24], iconAnchor: [40, 12] })
         }).addTo(map);
         m.on('click', function() {
-          map.flyTo(pCoord, 16.5, { duration: 0.8 });
-          showToast(p.place_name + ' 위치로 이동', 'crosshair');
+          if (window.smoothFlyTo) {
+            window.smoothFlyTo(pCoord, 16.5, function(didFly) {
+              if (didFly) showToast(p.place_name + ' 위치로 이동', 'crosshair');
+            });
+          } else {
+            map.flyTo(pCoord, 16.5, { duration: 0.9, easeLinearity: 0.22 });
+            showToast(p.place_name + ' 위치로 이동', 'crosshair');
+          }
         });
         state.placeMarkers.push(m);
       });
