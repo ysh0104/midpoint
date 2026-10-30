@@ -46,7 +46,7 @@
 <!-- Lucide Icons -->
 <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
 
-<link rel="stylesheet" href="css/style.css?v=38" />
+<link rel="stylesheet" href="css/style.css?v=39" />
 </head>
 <body class="bg-zinc-200 text-slate-900 antialiased h-screen w-screen flex justify-center items-center">
 
@@ -1232,10 +1232,15 @@
       
       <!-- 폴라로이드 스타일 감성 사진 카드 헤더 -->
       <div class="relative bg-[#0f172a] p-4 flex flex-col items-center">
-        <!-- 닫기 버튼 -->
-        <button type="button" onclick="window.closeMemoryDetailModal()" class="press absolute top-3.5 right-3.5 z-20 w-8 h-8 rounded-full bg-black/40 hover:bg-black/60 text-white grid place-items-center backdrop-blur-md transition-colors">
-          <i data-lucide="x" class="w-4 h-4"></i>
-        </button>
+        <!-- 우상단 액션 (삭제 & 닫기) -->
+        <div class="absolute top-3.5 right-3.5 z-20 flex items-center gap-1.5">
+          <button type="button" onclick="window.deleteCurrentMemory()" class="press w-8 h-8 rounded-full bg-black/40 hover:bg-rose-600 text-white grid place-items-center backdrop-blur-md transition-colors" title="이 추억 삭제">
+            <i data-lucide="trash-2" class="w-4 h-4"></i>
+          </button>
+          <button type="button" onclick="window.closeMemoryDetailModal()" class="press w-8 h-8 rounded-full bg-black/40 hover:bg-black/60 text-white grid place-items-center backdrop-blur-md transition-colors" title="닫기">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        </div>
 
         <!-- 폴라로이드 사진 프레임 -->
         <div class="bg-white p-3 pb-6 rounded-md shadow-2xl w-full max-w-[270px] border border-slate-100 flex flex-col items-center transform -rotate-1 transition-transform">
@@ -1280,8 +1285,12 @@
       </div>
 
       <!-- 하단 버튼 -->
-      <div class="p-3 bg-slate-50 border-t border-slate-100 flex items-center justify-end">
-        <button type="button" onclick="window.closeMemoryDetailModal()" class="press w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-extrabold text-[12.5px] transition-colors">
+      <div class="p-3 bg-slate-50 border-t border-slate-100 flex items-center gap-2">
+        <button type="button" onclick="window.deleteCurrentMemory()" class="press py-2.5 px-3.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 font-extrabold text-[12px] border border-rose-200/80 flex items-center justify-center gap-1.5 transition-all" title="이 추억 삭제하기">
+          <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+          <span>추억 삭제</span>
+        </button>
+        <button type="button" onclick="window.closeMemoryDetailModal()" class="press flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-extrabold text-[12.5px] transition-colors">
           확인
         </button>
       </div>
@@ -1536,17 +1545,17 @@
 </div>
 
 <!-- 기능별 모듈 스크립트 분리 (Clean Modular Architecture) -->
-<script src="js/config.js?v=38"></script>
-<script src="js/state.js?v=38"></script>
-<script src="js/map.js?v=38"></script>
-<script src="js/mobility.js?v=38"></script>
-<script src="js/places.js?v=38"></script>
-<script src="js/weather.js?v=38"></script>
-<script src="js/care.js?v=38"></script>
-<script src="js/game.js?v=38"></script>
-<script src="js/chat.js?v=38"></script>
-<script src="js/ui.js?v=38"></script>
-<script src="js/memory.js?v=38"></script>
-<script src="js/life4cut.js?v=38"></script>
+<script src="js/config.js?v=39"></script>
+<script src="js/state.js?v=39"></script>
+<script src="js/map.js?v=39"></script>
+<script src="js/mobility.js?v=39"></script>
+<script src="js/places.js?v=39"></script>
+<script src="js/weather.js?v=39"></script>
+<script src="js/care.js?v=39"></script>
+<script src="js/game.js?v=39"></script>
+<script src="js/chat.js?v=39"></script>
+<script src="js/ui.js?v=39"></script>
+<script src="js/memory.js?v=39"></script>
+<script src="js/life4cut.js?v=39"></script>
 </body>
 </html>

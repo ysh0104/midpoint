@@ -179,18 +179,66 @@ window.openMemoryDetailModal = function(memId) {
     }).join('');
   }
 
+  memoryStore.activeMemoryId = mem.id;
+
   modal.classList.remove('hidden');
   if (window.lucide) lucide.createIcons();
 
-  // 지도 부드럽게 해당 장소로 살짝 센터 이동
+  // 지도 부드럽게 해당 장소로 살짝 센터 이동 (떨림 없이 스무스 이동)
   if (window.map && mem.coord) {
-    map.flyTo(mem.coord, 16.5, { duration: 0.8 });
+    if (window.smoothFlyTo) {
+      window.smoothFlyTo(mem.coord, 16.5);
+    } else {
+      map.flyTo(mem.coord, 16.5, { duration: 0.8, easeLinearity: 0.22 });
+    }
   }
 };
 
 window.closeMemoryDetailModal = function() {
   var modal = document.getElementById('memoryDetailModal');
   if (modal) modal.classList.add('hidden');
+};
+
+// 현재 상세 모달에 열려있는 추억 삭제
+window.deleteCurrentMemory = function() {
+  if (memoryStore.activeMemoryId) {
+    window.deleteMemoryItem(memoryStore.activeMemoryId);
+  }
+};
+
+// 특정 ID의 추억 삭제 (지도 핀 및 갤러리 공통)
+window.deleteMemoryItem = function(memId) {
+  if (!memId) return;
+  var target = (memoryStore.memories || []).find(function(m) { return m.id === memId; });
+  var title = target ? ("'" + target.placeName + "'") : "이";
+
+  if (!confirm(title + " 추억을 삭제하시겠습니까?")) {
+    return;
+  }
+
+  memoryStore.memories = (memoryStore.memories || []).filter(function(m) {
+    return m.id !== memId;
+  });
+
+  try {
+    localStorage.setItem(memoryStore.storageKey, JSON.stringify(memoryStore.memories));
+  } catch (e) {}
+
+  // 지도 위 마커 갱신
+  renderMemoryMarkersOnMap();
+
+  // 상세 모달 닫기
+  window.closeMemoryDetailModal();
+
+  // 갤러리 모달이 열려있다면 즉시 갱신
+  var galleryModal = document.getElementById('memoryGalleryModal');
+  if (galleryModal && !galleryModal.classList.contains('hidden')) {
+    window.openMemoryGalleryModal();
+  }
+
+  if (window.showToast) {
+    showToast('소중한 모임 추억이 삭제되었습니다', 'trash-2');
+  }
 };
 
 // 4. 모임 장소에서 새로운 추억 남기기 모달 열기
@@ -332,10 +380,13 @@ window.openMemoryGalleryModal = function() {
     } else {
       listEl.innerHTML = mems.map(function(mem) {
         var is4Cut = (mem.category === '인생네컷');
-        return '<div onclick="window.selectGalleryItem(\'' + mem.id + '\')" class="press group cursor-pointer bg-white rounded-2xl p-2.5 border border-slate-200/90 shadow-xs hover:border-[#2563eb] hover:shadow-md transition-all flex flex-col gap-2">' +
+        return '<div onclick="window.selectGalleryItem(\'' + mem.id + '\')" class="press group cursor-pointer bg-white rounded-2xl p-2.5 border border-slate-200/90 shadow-xs hover:border-[#2563eb] hover:shadow-md transition-all flex flex-col gap-2 relative">' +
           '<div class="relative w-full ' + (is4Cut ? 'aspect-[9/16]' : 'aspect-square') + ' rounded-xl overflow-hidden bg-slate-100">' +
             '<img src="' + mem.photo + '" alt="' + mem.placeName + '" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />' +
             '<span class="absolute top-2 left-2 px-1.5 py-0.5 rounded text-[9.5px] font-extrabold ' + (is4Cut ? 'bg-zinc-900 text-white' : 'bg-white/90 text-slate-800') + ' backdrop-blur-xs">' + mem.category + '</span>' +
+            '<button type="button" onclick="event.stopPropagation(); window.deleteMemoryItem(\'' + mem.id + '\')" class="press absolute top-2 right-2 z-10 w-6 h-6 rounded-full bg-black/50 hover:bg-rose-600 text-white grid place-items-center backdrop-blur-xs transition-colors" title="이 추억 삭제">' +
+              '<i data-lucide="trash-2" class="w-3.5 h-3.5"></i>' +
+            '</button>' +
             '<span class="absolute bottom-2 right-2 px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-black/60 text-white backdrop-blur-xs">' + mem.date + '</span>' +
           '</div>' +
           '<div class="px-0.5">' +
