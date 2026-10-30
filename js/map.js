@@ -173,22 +173,17 @@ function createMarkerHtml(label, iconText, isMe, isHub, isAppt) {
   }
 
   if (isAppt) {
-    var apptHtml = '<div class="modern-marker-wrap">' +
-      '<div class="modern-label appt-label">' +
-        '<span class="w-2 h-2 rounded-full bg-white"></span>' +
-        '<span>' + label + '</span>' +
-      '</div>' +
-      '<div class="modern-pin-body pin-theme-appt">' +
-        '<div class="modern-pin-content">' +
-          '<span style="font-size: 11px; font-weight: 900; color: #ffffff;">약속</span>' +
-        '</div>' +
+    var apptHtml = '<div class="appt-clean-capsule-wrap">' +
+      '<div class="modern-label appt-label shadow-md">' +
+        '<span class="w-2 h-2 rounded-full bg-white animate-pulse"></span>' +
+        '<span style="letter-spacing: -0.02em;">' + label + '</span>' +
       '</div>' +
     '</div>';
     return L.divIcon({
       html: apptHtml,
       className: '',
-      iconSize: [160, 76],
-      iconAnchor: [80, 76]
+      iconSize: [160, 32],
+      iconAnchor: [80, 16]
     });
   }
 

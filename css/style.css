@@ -184,7 +184,27 @@ body {
   color: #ffffff;
   border: 1.5px solid #34d399;
   box-shadow: 0 4px 14px rgba(5, 150, 105, 0.35);
+  margin-bottom: 0;
 }
+
+.appt-clean-capsule-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+  cursor: pointer;
+  filter: drop-shadow(0 4px 10px rgba(5, 150, 105, 0.35));
+  transition: transform 0.16s ease-out;
+}
+
+.appt-clean-capsule-wrap:hover {
+  transform: translateY(-2px);
+}
+
+.appt-clean-capsule-wrap:active {
+  transform: none !important;
+}
+
 
 /* 티어드롭 핀 본체 */
 .modern-pin-body {

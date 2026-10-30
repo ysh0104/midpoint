@@ -779,13 +779,18 @@ window.confirmHubMeetingPlace = function() {
 };
 
 // 약속 장소 전용 모던 미니멀 팝업 (사진/기록 남기기 및 길안내 제공)
+// 약속 장소 전용 모던 미니멀 팝업 (사진/기록 남기기 및 길안내 제공)
 window.openConfirmedPlacePopup = function(place, coord) {
+  if (window.openPlaceCardPopup) {
+    window.openPlaceCardPopup(place, coord);
+    return;
+  }
   if (!map || !state.hubMarker || !place) return;
   var pName = place.place_name || '약속 장소';
   var pAddr = place.road_address_name || place.address_name || '중간 지점';
   var escapedName = pName.replace(/'/g, "\\'");
 
-  var popupHtml = '<div class="p-3.5 flex flex-col gap-2.5 max-w-[230px] select-none">' +
+  var popupHtml = '<div class="p-3.5 flex flex-col gap-2.5 max-w-[240px] select-none">' +
     '<div class="flex items-center justify-between">' +
       '<div class="flex items-center gap-1.5">' +
         '<span class="w-2 h-2 rounded-full bg-emerald-500"></span>' +
@@ -798,24 +803,24 @@ window.openConfirmedPlacePopup = function(place, coord) {
       '<p class="text-[11px] text-slate-500 truncate mt-0.5">' + pAddr + '</p>' +
     '</div>' +
     '<div class="pt-2 border-t border-slate-100 flex flex-col gap-1.5">' +
-      '<button type="button" onclick="state.hubMarker.closePopup(); window.openAddMemoryModal(\'' + escapedName + '\');" class="press w-full py-2 px-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-extrabold text-[11.5px] shadow-xs flex items-center justify-center gap-1.5 transition-all">' +
+      '<button type="button" onclick="map.closePopup(); window.openAddMemoryModal(\'' + escapedName + '\');" class="press w-full py-2 px-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-extrabold text-[11.5px] shadow-xs flex items-center justify-center gap-1.5 transition-all">' +
         '<i data-lucide="camera" class="w-3.5 h-3.5"></i>' +
         '<span>사진 & 모임 추억 남기기</span>' +
       '</button>' +
-      '<button type="button" onclick="state.hubMarker.closePopup(); window.startNaviMode();" class="press w-full py-1.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[11px] flex items-center justify-center gap-1.5 transition-all">' +
+      '<button type="button" onclick="map.closePopup(); window.startNaviMode();" class="press w-full py-1.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[11px] flex items-center justify-center gap-1.5 transition-all">' +
         '<i data-lucide="navigation" class="w-3 h-3 text-[#0284c7]"></i>' +
         '<span>내비게이션 안내</span>' +
       '</button>' +
     '</div>' +
   '</div>';
 
-  state.hubMarker.unbindPopup();
-  state.hubMarker.bindPopup(popupHtml, {
+  var pCoord = coord || [parseFloat(place.y), parseFloat(place.x)];
+  L.popup({
     className: 'bandding-place-popup',
-    offset: [0, -68],
+    offset: [0, -18],
     closeButton: true,
     autoPan: false
-  }).openPopup();
+  }).setLatLng(pCoord).setContent(popupHtml).openOn(map);
 
   if (window.lucide) {
     setTimeout(function() { lucide.createIcons(); }, 30);

@@ -165,14 +165,82 @@ function fetchKakaoPlaces(centerCoord, distanceText) {
           })
         }).addTo(map);
 
+// 모든 장소 클릭 시 감성 모던 팝업 카드 오픈 (약속 확정, 사진/추억 남기기, 카카오맵 연동)
+window.openPlaceCardPopup = function(place, markerOrCoord) {
+  if (!map || !place) return;
+  var isConfirmed = state.confirmedPlace && (
+    String(state.confirmedPlace.id) === String(place.id) ||
+    state.confirmedPlace.place_name === place.place_name
+  );
+  var pName = place.place_name || '장소명';
+  var pAddr = place.road_address_name || place.address_name || '상세 주소 미제공';
+  var pCategory = place.category_name ? place.category_name.split(' > ').pop() : (state.selectedCategory === 'CE7' ? '카페' : '음식점');
+  var escapedName = pName.replace(/'/g, "\\'");
+  var escapedId = (place.id || '').replace(/'/g, "\\'");
+
+  var badgeHtml = isConfirmed
+    ? '<div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-500"></span><span class="text-[10.5px] font-bold text-slate-500">확정된 약속 장소</span></div><span class="text-[9.5px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">도착</span>'
+    : '<div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-[#0284c7]"></span><span class="text-[10.5px] font-bold text-slate-500">추천 장소</span></div><span class="text-[9.5px] font-bold text-[#0284c7] bg-sky-50 px-1.5 py-0.5 rounded border border-[#bae6fd]">' + pCategory + '</span>';
+
+  var actionButtonsHtml = isConfirmed
+    ? '<button type="button" onclick="map.closePopup(); window.openAddMemoryModal(\'' + escapedName + '\');" class="press w-full py-2 px-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-extrabold text-[11.5px] shadow-xs flex items-center justify-center gap-1.5 transition-all">' +
+        '<i data-lucide="camera" class="w-3.5 h-3.5"></i>' +
+        '<span>사진 & 모임 추억 남기기</span>' +
+      '</button>' +
+      '<button type="button" onclick="map.closePopup(); window.startNaviMode();" class="press w-full py-1.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[11px] flex items-center justify-center gap-1.5 transition-all">' +
+        '<i data-lucide="navigation" class="w-3 h-3 text-[#0284c7]"></i>' +
+        '<span>내비게이션 안내</span>' +
+      '</button>'
+    : '<button type="button" onclick="map.closePopup(); window.confirmMeetingPlace(\'' + escapedId + '\', \'' + escapedName + '\');" class="press w-full py-2 px-3 rounded-xl bg-gradient-to-r from-[#2563eb] to-[#0284c7] hover:from-[#1d4ed8] hover:to-[#0369a1] text-white font-extrabold text-[11.5px] shadow-xs flex items-center justify-center gap-1.5 transition-all">' +
+        '<i data-lucide="check" class="w-3.5 h-3.5"></i>' +
+        '<span>여기서 모이기 (약속 장소 확정)</span>' +
+      '</button>' +
+      '<div class="grid grid-cols-2 gap-1.5">' +
+        '<button type="button" onclick="map.closePopup(); window.openAddMemoryModal(\'' + escapedName + '\');" class="press py-1.5 px-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-700 font-bold text-[10.5px] border border-amber-200/80 flex items-center justify-center gap-1 transition-all">' +
+          '<i data-lucide="camera" class="w-3 h-3 text-amber-600"></i>' +
+          '<span>추억 남기기</span>' +
+        '</button>' +
+        (place.place_url ? ('<a href="' + place.place_url + '" target="_blank" rel="noopener noreferrer" class="press py-1.5 px-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[10.5px] flex items-center justify-center gap-1 transition-all">' +
+          '<span>카카오맵</span><i data-lucide="external-link" class="w-3 h-3"></i>' +
+        '</a>') : '<div class="py-1.5 px-2 rounded-xl bg-slate-50 text-slate-400 text-[10px] text-center font-medium">정보 준비중</div>') +
+      '</div>';
+
+  var popupHtml = '<div class="p-3.5 flex flex-col gap-2.5 max-w-[240px] select-none">' +
+    '<div class="flex items-center justify-between">' +
+      badgeHtml +
+    '</div>' +
+    '<div>' +
+      '<h4 class="text-[14px] font-black text-slate-900 leading-snug truncate">' + pName + '</h4>' +
+      '<p class="text-[11px] text-slate-500 truncate mt-0.5">' + pAddr + '</p>' +
+    '</div>' +
+    '<div class="pt-2 border-t border-slate-100 flex flex-col gap-1.5">' +
+      actionButtonsHtml +
+    '</div>' +
+  '</div>';
+
+  var coord = (markerOrCoord && markerOrCoord.getLatLng)
+    ? markerOrCoord.getLatLng()
+    : (Array.isArray(markerOrCoord) ? L.latLng(markerOrCoord[0], markerOrCoord[1]) : L.latLng(parseFloat(place.y), parseFloat(place.x)));
+
+  L.popup({
+    className: 'bandding-place-popup',
+    offset: [0, -18],
+    closeButton: true,
+    autoPan: false
+  }).setLatLng(coord).setContent(popupHtml).openOn(map);
+
+  if (window.lucide) {
+    setTimeout(function() { lucide.createIcons(); }, 30);
+  }
+};
+
         m.on('click', function() {
           if (window.smoothFlyTo) {
-            window.smoothFlyTo(pCoord, 16.5, function(didFly) {
-              if (didFly) showToast(p.place_name + ' 위치로 이동', 'crosshair');
+            window.smoothFlyTo(pCoord, 16.5, function() {
+              window.openPlaceCardPopup(p, m);
             });
           } else {
-            map.flyTo(pCoord, 16.5, { duration: 0.9, easeLinearity: 0.22 });
-            showToast(p.place_name + ' 위치로 이동', 'crosshair');
+            window.openPlaceCardPopup(p, m);
           }
         });
         state.placeMarkers.push(m);
@@ -242,12 +310,12 @@ window.focusKakaoPlace = function(id) {
   if (!p) return;
   var coord = [parseFloat(p.y), parseFloat(p.x)];
   if (window.smoothFlyTo) {
-    window.smoothFlyTo(coord, 16.5, function(didFly) {
-      if (didFly) showToast(p.place_name + ' 위치로 포커스', 'crosshair');
+    window.smoothFlyTo(coord, 16.5, function() {
+      window.openPlaceCardPopup(p, coord);
     });
   } else {
     map.flyTo(coord, 16.5, { duration: 0.9, easeLinearity: 0.22 });
-    showToast(p.place_name + ' 위치로 포커스', 'crosshair');
+    window.openPlaceCardPopup(p, coord);
   }
 };
 
@@ -421,12 +489,11 @@ window.searchPlaceKeywordDirect = function(keyword) {
         }).addTo(map);
         m.on('click', function() {
           if (window.smoothFlyTo) {
-            window.smoothFlyTo(pCoord, 16.5, function(didFly) {
-              if (didFly) showToast(p.place_name + ' 위치로 이동', 'crosshair');
+            window.smoothFlyTo(pCoord, 16.5, function() {
+              window.openPlaceCardPopup(p, m);
             });
           } else {
-            map.flyTo(pCoord, 16.5, { duration: 0.9, easeLinearity: 0.22 });
-            showToast(p.place_name + ' 위치로 이동', 'crosshair');
+            window.openPlaceCardPopup(p, m);
           }
         });
         state.placeMarkers.push(m);
