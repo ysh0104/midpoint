@@ -1244,25 +1244,26 @@
       
       <!-- 폴라로이드 스타일 감성 사진 카드 헤더 -->
       <div class="relative bg-[#0f172a] p-4 flex flex-col items-center">
-        <!-- 우상단 액션 (삭제 & 닫기) -->
+        <!-- 우상단 액션 (닫기) -->
         <div class="absolute top-3.5 right-3.5 z-20 flex items-center gap-1.5">
-          <button type="button" onclick="window.deleteCurrentMemory()" class="press w-8 h-8 rounded-full bg-black/40 hover:bg-rose-600 text-white grid place-items-center backdrop-blur-md transition-colors" title="이 추억 삭제">
-            <i data-lucide="trash-2" class="w-4 h-4"></i>
-          </button>
           <button type="button" onclick="window.closeMemoryDetailModal()" class="press w-8 h-8 rounded-full bg-black/40 hover:bg-black/60 text-white grid place-items-center backdrop-blur-md transition-colors" title="닫기">
             <i data-lucide="x" class="w-4 h-4"></i>
           </button>
         </div>
 
-        <!-- 폴라로이드 사진 프레임 -->
-        <div class="bg-white p-3 pb-6 rounded-md shadow-2xl w-full max-w-[270px] border border-slate-100 flex flex-col items-center transform -rotate-1 transition-transform">
-          <div id="memModalPhotoContainer" class="w-full h-48 rounded bg-slate-100 overflow-hidden relative">
-            <img id="memModalPhoto" src="" alt="추억 사진" class="w-full h-full object-cover" />
-            <span id="memModalCategoryBadge" class="absolute bottom-2 right-2 px-2 py-0.5 rounded-full bg-slate-900/75 backdrop-blur-sm text-white text-[10px] font-extrabold">맛집</span>
+        <!-- 폴라로이드 사진 프레임 (동적 비율 대응) -->
+        <div id="memModalPolaroidFrame" class="bg-white p-3 pb-5 rounded-2xl shadow-2xl w-full max-w-[280px] border border-slate-100 flex flex-col items-center transform -rotate-1 transition-all">
+          <div id="memModalPhotoContainer" class="w-full h-52 rounded-xl bg-slate-100 overflow-hidden relative flex items-center justify-center cursor-zoom-in group select-none" onclick="window.openPhotoZoomModalFromCurrentMemory()" title="사진을 터치하면 원본 비율로 크게 봅니다">
+            <img id="memModalPhoto" src="" alt="추억 사진" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+            <span id="memModalCategoryBadge" class="absolute bottom-2.5 left-2.5 px-2 py-0.5 rounded-full bg-slate-900/75 backdrop-blur-sm text-white text-[10px] font-extrabold z-10">맛집</span>
+            <div class="absolute bottom-2.5 right-2.5 px-2 py-1 rounded-full bg-black/60 hover:bg-black/80 text-white text-[10px] font-bold backdrop-blur-md flex items-center gap-1 z-10 transition-all shadow-sm">
+              <i data-lucide="maximize-2" class="w-3 h-3"></i>
+              <span>크게 보기</span>
+            </div>
           </div>
           <div class="w-full mt-2.5 flex items-center justify-between px-1">
             <span id="memModalDate" class="text-[11px] font-bold text-slate-500">2026. 10. 18</span>
-            <span id="memModalDday" class="text-[10px] font-extrabold px-1.5 py-0.2 rounded bg-amber-50 text-amber-600 border border-amber-200">12일 전 추억</span>
+            <span id="memModalDday" class="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-amber-50 text-amber-600 border border-amber-200">12일 전 추억</span>
           </div>
         </div>
       </div>
@@ -1667,20 +1668,56 @@
     </div>
   </div>
 
+  <!-- 15. 사진 원본 비율 고화질 확대 뷰어 (Full-Ratio Image Lightbox) -->
+  <div id="photoZoomModal" class="hidden fixed inset-0 z-[60] bg-black/92 backdrop-blur-md flex flex-col justify-between p-3 sm:p-5 transition-all animate-in fade-in duration-200" onclick="if(event.target === this) window.closePhotoZoomModal()">
+    
+    <!-- 상단 바: 장소 정보 & 액션 버튼 & 닫기 -->
+    <div class="w-full max-w-4xl mx-auto flex items-center justify-between z-10 shrink-0 py-1">
+      <div class="flex items-center gap-2 min-w-0 pr-2">
+        <span id="photoZoomCategory" class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-white/20 text-white backdrop-blur-xs shrink-0">인생네컷</span>
+        <h4 id="photoZoomTitle" class="text-[14px] font-black text-white truncate">장소명</h4>
+        <span id="photoZoomDate" class="text-[11px] text-white/60 font-semibold shrink-0 hidden sm:inline">2026. 10. 30</span>
+      </div>
+      <div class="flex items-center gap-2 shrink-0">
+        <button type="button" id="photoZoomDownloadBtn" onclick="window.downloadZoomedPhoto()" class="press px-3 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 text-white text-[11.5px] font-bold backdrop-blur-md flex items-center gap-1.5 transition-all" title="사진 저장">
+          <i data-lucide="download" class="w-3.5 h-3.5"></i>
+          <span class="hidden sm:inline">저장</span>
+        </button>
+        <button type="button" onclick="window.closePhotoZoomModal()" class="press w-9 h-9 rounded-full bg-white/15 hover:bg-white/30 text-white grid place-items-center backdrop-blur-md transition-colors" title="닫기 (ESC)">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- 중앙 메인 뷰어: 사진 고유의 종횡비에 맞게 100% 원본 비율로 확장 -->
+    <div class="flex-1 w-full max-w-5xl mx-auto flex items-center justify-center p-1 sm:p-3 relative overflow-hidden select-none" onclick="if(event.target === this) window.closePhotoZoomModal()">
+      <img id="photoZoomImg" src="" alt="확대 사진" class="max-h-[82vh] max-w-[94vw] w-auto h-auto object-contain rounded-2xl shadow-2xl transition-transform duration-300" />
+    </div>
+
+    <!-- 하단 바: 메모 / 친구 정보 (간결한 플로팅 필) -->
+    <div class="w-full max-w-md mx-auto text-center shrink-0 z-10 py-1">
+      <div id="photoZoomFooter" class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 backdrop-blur-md text-white/90 text-[11.5px] font-medium border border-white/10 max-w-full truncate">
+        <i data-lucide="sparkles" class="w-3 h-3 text-amber-300 shrink-0"></i>
+        <span id="photoZoomDesc" class="truncate">소중한 모임의 추억</span>
+      </div>
+    </div>
+
+  </div>
+
 </div>
 
 <!-- 기능별 모듈 스크립트 분리 (Clean Modular Architecture) -->
-<script src="js/config.js?v=44"></script>
-<script src="js/state.js?v=44"></script>
-<script src="js/map.js?v=44"></script>
-<script src="js/mobility.js?v=44"></script>
-<script src="js/places.js?v=44"></script>
-<script src="js/weather.js?v=44"></script>
-<script src="js/care.js?v=44"></script>
-<script src="js/game.js?v=44"></script>
-<script src="js/chat.js?v=44"></script>
-<script src="js/ui.js?v=44"></script>
-<script src="js/memory.js?v=44"></script>
-<script src="js/life4cut.js?v=44"></script>
+<script src="js/config.js?v=45"></script>
+<script src="js/state.js?v=45"></script>
+<script src="js/map.js?v=45"></script>
+<script src="js/mobility.js?v=45"></script>
+<script src="js/places.js?v=45"></script>
+<script src="js/weather.js?v=45"></script>
+<script src="js/care.js?v=45"></script>
+<script src="js/game.js?v=45"></script>
+<script src="js/chat.js?v=45"></script>
+<script src="js/ui.js?v=45"></script>
+<script src="js/memory.js?v=45"></script>
+<script src="js/life4cut.js?v=45"></script>
 </body>
 </html>

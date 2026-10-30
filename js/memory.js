@@ -167,19 +167,26 @@ window.openMemoryDetailModal = function(memId) {
   var catBadgeEl = document.getElementById('memModalCategoryBadge');
 
   var is4Cut = (mem.category === '인생네컷');
+  var polaroidFrame = document.getElementById('memModalPolaroidFrame');
 
   if (photoEl) {
     photoEl.src = mem.photo;
     if (is4Cut) {
-      if (photoContainer) {
-        photoContainer.className = 'w-full h-72 rounded bg-[#0f172a] overflow-hidden relative flex items-center justify-center p-2';
+      if (polaroidFrame) {
+        polaroidFrame.className = 'bg-white p-2.5 pb-4 rounded-2xl shadow-2xl w-auto max-w-[320px] border border-slate-100 flex flex-col items-center transform -rotate-0.5 transition-all';
       }
-      photoEl.className = 'h-full w-auto max-w-full object-contain rounded shadow-md';
+      if (photoContainer) {
+        photoContainer.className = 'w-auto max-h-[55vh] rounded-xl overflow-hidden relative flex items-center justify-center cursor-zoom-in group bg-transparent';
+      }
+      photoEl.className = 'h-auto max-h-[55vh] w-auto max-w-full object-contain rounded-xl shadow-md transition-transform duration-300 group-hover:scale-[1.02]';
     } else {
-      if (photoContainer) {
-        photoContainer.className = 'w-full h-48 rounded bg-slate-100 overflow-hidden relative';
+      if (polaroidFrame) {
+        polaroidFrame.className = 'bg-white p-3 pb-5 rounded-2xl shadow-2xl w-full max-w-[280px] border border-slate-100 flex flex-col items-center transform -rotate-1 transition-all';
       }
-      photoEl.className = 'w-full h-full object-cover';
+      if (photoContainer) {
+        photoContainer.className = 'w-full h-52 rounded-xl bg-slate-100 overflow-hidden relative flex items-center justify-center cursor-zoom-in group';
+      }
+      photoEl.className = 'w-full h-full object-cover transition-transform duration-300 group-hover:scale-105';
     }
   }
 
@@ -427,16 +434,19 @@ window.renderGalleryCards = function() {
   listEl.innerHTML = filteredMems.map(function(mem) {
     var is4Cut = (mem.category === '인생네컷');
     var photoHtml = is4Cut
-      ? '<div class="w-full h-full bg-[#0f172a] flex items-center justify-center p-2 rounded-xl">' +
-          '<img src="' + mem.photo + '" alt="' + mem.placeName + '" class="h-full w-auto max-w-full object-contain rounded shadow-md group-hover:scale-105 transition-transform duration-300" loading="lazy" />' +
+      ? '<div class="w-full h-full bg-slate-900 flex items-center justify-center p-1.5 rounded-xl">' +
+          '<img src="' + mem.photo + '" alt="' + mem.placeName + '" class="h-full w-auto max-w-full object-contain rounded-md shadow-md group-hover:scale-105 transition-transform duration-300" loading="lazy" />' +
         '</div>'
       : '<img src="' + mem.photo + '" alt="' + mem.placeName + '" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />';
 
     return '<div onclick="window.selectGalleryItem(\'' + mem.id + '\')" class="press group cursor-pointer bg-white rounded-2xl p-2.5 border border-slate-200/90 shadow-xs hover:border-[#2563eb] hover:shadow-md transition-all flex flex-col gap-2 relative">' +
       '<div class="relative w-full aspect-square rounded-xl overflow-hidden bg-slate-100 flex items-center justify-center">' +
         photoHtml +
-        '<span class="absolute top-2 left-2 px-1.5 py-0.5 rounded text-[9.5px] font-extrabold ' + (is4Cut ? 'bg-zinc-900/90 text-white' : 'bg-white/95 text-slate-800') + ' backdrop-blur-xs shadow-2xs">' + mem.category + '</span>' +
-        '<span class="absolute bottom-2 right-2 px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-black/60 text-white backdrop-blur-xs">' + mem.date + '</span>' +
+        '<span class="absolute top-2 left-2 px-1.5 py-0.5 rounded text-[9.5px] font-extrabold ' + (is4Cut ? 'bg-zinc-900/90 text-white' : 'bg-white/95 text-slate-800') + ' backdrop-blur-xs shadow-2xs z-10">' + mem.category + '</span>' +
+        '<button type="button" onclick="event.stopPropagation(); window.openPhotoZoomModal(\'' + mem.id + '\')" class="press absolute top-2 right-2 p-1.5 rounded-full bg-black/50 hover:bg-black/75 text-white backdrop-blur-md transition-all shadow-xs z-10" title="사진 원본비율 크게보기">' +
+          '<i data-lucide="maximize-2" class="w-3.5 h-3.5"></i>' +
+        '</button>' +
+        '<span class="absolute bottom-2 right-2 px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-black/60 text-white backdrop-blur-xs z-10">' + mem.date + '</span>' +
       '</div>' +
       '<div class="px-0.5 flex items-start justify-between gap-1">' +
         '<div class="min-w-0 flex-1">' +
@@ -493,6 +503,70 @@ window.selectGalleryItem = function(memId) {
     }
   }
 };
+
+window.currentZoomedMemory = null;
+
+// 15. 사진 원본 비율 고화질 확대 뷰어 (Full-Ratio Image Lightbox) 열기
+window.openPhotoZoomModal = function(memIdOrObj) {
+  var mem = null;
+  if (typeof memIdOrObj === 'string') {
+    mem = (memoryStore.memories || []).find(function(m) { return m.id === memIdOrObj; });
+  } else if (memIdOrObj && typeof memIdOrObj === 'object') {
+    mem = memIdOrObj;
+  }
+  if (!mem) return;
+
+  window.currentZoomedMemory = mem;
+
+  var modal = document.getElementById('photoZoomModal');
+  var imgEl = document.getElementById('photoZoomImg');
+  var titleEl = document.getElementById('photoZoomTitle');
+  var catEl = document.getElementById('photoZoomCategory');
+  var dateEl = document.getElementById('photoZoomDate');
+  var descEl = document.getElementById('photoZoomDesc');
+
+  if (imgEl) {
+    imgEl.src = mem.photo;
+    imgEl.alt = mem.placeName || '추억 사진';
+  }
+  if (titleEl) titleEl.textContent = mem.placeName || '추억 사진';
+  if (catEl) catEl.textContent = mem.category || '기록';
+  if (dateEl) dateEl.textContent = mem.date || '';
+  if (descEl) descEl.textContent = mem.memo || mem.menu || (mem.placeName + '에서의 소중한 기록');
+
+  if (modal) modal.classList.remove('hidden');
+  if (window.lucide) lucide.createIcons();
+};
+
+window.openPhotoZoomModalFromCurrentMemory = function() {
+  if (memoryStore.activeMemoryId) {
+    window.openPhotoZoomModal(memoryStore.activeMemoryId);
+  }
+};
+
+window.closePhotoZoomModal = function() {
+  var modal = document.getElementById('photoZoomModal');
+  if (modal) modal.classList.add('hidden');
+};
+
+window.downloadZoomedPhoto = function() {
+  var mem = window.currentZoomedMemory;
+  if (!mem || !mem.photo) return;
+  var link = document.createElement('a');
+  link.download = (mem.placeName || 'bandding_photo').replace(/\s+/g, '_') + '_' + Date.now() + '.png';
+  link.href = mem.photo;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  if (window.showToast) showToast('고화질 원본 사진이 저장되었습니다!', 'download');
+};
+
+// ESC 키로 확대 모달 닫기 지원
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    window.closePhotoZoomModal();
+  }
+});
 
 // DOM 로드 완료 시 자동 초기화
 document.addEventListener('DOMContentLoaded', function() {
