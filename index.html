@@ -70,8 +70,11 @@
       <span id="tossStatusBadge" class="text-[10.5px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-[#2563eb]">약속 준비</span>
     </div>
 
-    <!-- 우측: 빠른 액션 버튼 (GPS 현위치 이동, 모임 맞춤 설정) -->
+    <!-- 우측: 빠른 액션 버튼 (추억 앨범 바로가기, GPS 현위치 이동, 모임 맞춤 설정) -->
     <div class="pointer-events-auto flex items-center gap-1.5">
+      <button type="button" onclick="window.focusLatestMemory()" class="press w-9 h-9 rounded-full glass border border-white/90 shadow-md shadow-slate-900/5 grid place-items-center text-slate-700 hover:text-amber-500 transition-colors" title="내 모임 추억 지도 보기">
+        <i data-lucide="camera" class="w-4 h-4"></i>
+      </button>
       <button type="button" onclick="window.locateMe(true)" class="press w-9 h-9 rounded-full glass border border-white/90 shadow-md shadow-slate-900/5 grid place-items-center text-slate-700 hover:text-[#2563eb] transition-colors" title="내 위치로 이동">
         <i data-lucide="crosshair" class="w-4 h-4"></i>
       </button>
@@ -392,15 +395,21 @@
           </button>
         </div>
 
-        <div class="flex items-center justify-between gap-3">
-          <div class="min-w-0 pr-1">
+        <div class="flex items-center justify-between gap-2">
+          <div class="min-w-0 pr-1 flex-1">
             <h3 id="confirmedNaviPlaceTitle" class="text-[17px] font-extrabold text-slate-900 tracking-tight leading-snug truncate">장소명</h3>
             <p id="confirmedNaviPlaceAddr" class="text-[11.5px] text-slate-500 mt-0.5 truncate">상세 주소</p>
           </div>
-          <button type="button" onclick="window.startNaviMode()" class="press px-3.5 py-2 rounded-xl bg-[#0284c7] hover:bg-[#0369a1] text-white font-bold text-[12px] shadow-xs flex items-center gap-1.5 shrink-0 transition-all">
-            <i data-lucide="navigation" class="w-3.5 h-3.5 fill-white"></i>
-            <span>실시간 내비 시작</span>
-          </button>
+          <div class="flex items-center gap-1.5 shrink-0">
+            <button type="button" onclick="window.openAddMemoryFromConfirmed()" class="press px-3 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-700 font-bold text-[11.5px] border border-amber-200/80 shadow-2xs flex items-center gap-1 transition-all" title="이 장소에서 모임 추억 남기기">
+              <i data-lucide="camera" class="w-3.5 h-3.5 text-amber-600"></i>
+              <span>추억 남기기</span>
+            </button>
+            <button type="button" onclick="window.startNaviMode()" class="press px-3 py-2 rounded-xl bg-[#2563eb] hover:bg-[#1d4ed8] text-white font-bold text-[11.5px] shadow-xs flex items-center gap-1 transition-all">
+              <i data-lucide="navigation" class="w-3.5 h-3.5 fill-white"></i>
+              <span>내비 시작</span>
+            </button>
+          </div>
         </div>
 
         <!-- 각 참가자별 교통수단(자차/대중교통) 및 도착 예정 시각 -->
@@ -1337,16 +1346,16 @@
 </div>
 
 <!-- 기능별 모듈 스크립트 분리 (Clean Modular Architecture) -->
-<script src="js/config.js?v=32"></script>
-<script src="js/state.js?v=32"></script>
-<script src="js/map.js?v=32"></script>
-<script src="js/mobility.js?v=32"></script>
-<script src="js/places.js?v=32"></script>
-<script src="js/weather.js?v=32"></script>
-<script src="js/care.js?v=32"></script>
-<script src="js/game.js?v=32"></script>
-<script src="js/chat.js?v=32"></script>
-<script src="js/ui.js?v=32"></script>
-<script src="js/memory.js?v=32"></script>
+<script src="js/config.js?v=33"></script>
+<script src="js/state.js?v=33"></script>
+<script src="js/map.js?v=33"></script>
+<script src="js/mobility.js?v=33"></script>
+<script src="js/places.js?v=33"></script>
+<script src="js/weather.js?v=33"></script>
+<script src="js/care.js?v=33"></script>
+<script src="js/game.js?v=33"></script>
+<script src="js/chat.js?v=33"></script>
+<script src="js/ui.js?v=33"></script>
+<script src="js/memory.js?v=33"></script>
 </body>
 </html>

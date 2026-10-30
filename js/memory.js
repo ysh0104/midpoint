@@ -260,6 +260,25 @@ window.handleMemoryPhotoUpload = function(event) {
   reader.readAsDataURL(file);
 };
 
+// 확정된 장소에서 추억 남기기 버튼을 눌렀을 때 연결
+window.openAddMemoryFromConfirmed = function() {
+  var pName = (state.confirmedPlace && state.confirmedPlace.place_name) ? state.confirmedPlace.place_name : '오늘의 모임 장소';
+  window.openAddMemoryModal(pName);
+};
+
+// 상단 카메라 버튼 클릭 시: 가장 최근 추억 위치로 이동하며 폴라로이드 감상
+window.focusLatestMemory = function() {
+  if (!memoryStore.memories || memoryStore.memories.length === 0) {
+    if (window.showToast) showToast('아직 등록된 모임 추억이 없습니다', 'camera');
+    return;
+  }
+  var latest = memoryStore.memories[0];
+  if (window.map && latest.coord) {
+    map.flyTo(latest.coord, 16.5, { duration: 1.0 });
+    if (window.showToast) showToast("'" + latest.placeName + "' 추억 위치로 이동", 'camera');
+  }
+};
+
 // DOM 로드 완료 시 자동 초기화
 document.addEventListener('DOMContentLoaded', function() {
   setTimeout(initMemories, 500);
