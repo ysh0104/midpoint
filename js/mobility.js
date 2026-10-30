@@ -1756,7 +1756,10 @@ window.startNaviMode = function(participantId, transport) {
 
   state.isNaviMode = true;
 
-  // 상단 플로팅 헤더(#topHeader)와 바텀 시트는 내비 모드 중 감추고, 하단 내비 독과 상단 미니 캡슐 배너 노출
+  // 상단 플로팅 헤더(#tossTopBar)와 바텀 시트는 내비 모드 중 감추고, 하단 내비 독과 상단 미니 캡슐 배너 노출
+  var tossTopBar = document.getElementById('tossTopBar');
+  if (tossTopBar) tossTopBar.classList.add('hidden');
+
   var topHeader = document.getElementById('topHeader');
   if (topHeader) topHeader.classList.add('hidden');
 
@@ -1802,7 +1805,10 @@ window.stopNaviMode = function() {
   var miniBanner = document.getElementById('naviTopMiniBanner');
   if (miniBanner) miniBanner.classList.add('hidden');
 
-  // 상단 플로팅 헤더와 바텀 시트 복원
+  // 상단 플로팅 헤더(#tossTopBar)와 바텀 시트 복원
+  var tossTopBar = document.getElementById('tossTopBar');
+  if (tossTopBar) tossTopBar.classList.remove('hidden');
+
   var topHeader = document.getElementById('topHeader');
   if (topHeader) topHeader.classList.remove('hidden');
 
