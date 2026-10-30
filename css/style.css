@@ -658,11 +658,11 @@ body {
 /* 2. 가까이서 볼 때: 정교하고 아기자기한 클래식 폴라로이드 (Zoom >= 15.5) */
 .polaroid-marker {
   position: relative;
-  width: 76px;
+  width: 80px;
   background: #ffffff;
   padding: 5px 5px 8px 5px;
-  border-radius: 5px;
-  box-shadow: 0 10px 24px -4px rgba(15, 23, 42, 0.25), 0 4px 8px -2px rgba(15, 23, 42, 0.12);
+  border-radius: 6px;
+  box-shadow: 0 12px 28px -4px rgba(15, 23, 42, 0.28), 0 4px 10px -2px rgba(15, 23, 42, 0.12);
   border: 1px solid rgba(226, 232, 240, 0.95);
   transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
   user-select: none;
@@ -701,18 +701,23 @@ body {
 
 .polaroid-photo-frame {
   position: relative;
-  width: 66px;
-  height: 58px;
-  border-radius: 3px;
+  width: 70px;
+  height: 62px;
+  border-radius: 4px;
   overflow: hidden;
-  background: #0f172a;
+  background: #18181b;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 
 .polaroid-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.3s ease;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  object-position: center 15% !important;
+  display: block !important;
+  transition: transform 0.25s ease;
 }
 
 .polaroid-marker:hover .polaroid-img {

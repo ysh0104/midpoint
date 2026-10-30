@@ -66,7 +66,25 @@ function initMemories() {
       if (ondal) {
         ondal.photo = 'images/ondaljib.png';
       }
-      localStorage.setItem(memoryStore.storageKey, JSON.stringify(memoryStore.memories));
+
+      // 기존 저장된 메모리 중 내 위치 좌표와 겹치는 항목이 있다면 우측 상단으로 이격 보정
+      var myLoc = (window.state && state.myLocation) ? state.myLocation : DEFAULT_LOC;
+      if (myLoc && memoryStore.memories) {
+        var needsSave = false;
+        memoryStore.memories.forEach(function(m, idx) {
+          if (m && m.coord) {
+            var dLat = Math.abs(m.coord[0] - myLoc[0]);
+            var dLng = Math.abs(m.coord[1] - myLoc[1]);
+            if (dLat < 0.0003 && dLng < 0.0003) {
+              m.coord = [myLoc[0] + 0.00038, myLoc[1] + 0.00048];
+              needsSave = true;
+            }
+          }
+        });
+        if (needsSave) {
+          localStorage.setItem(memoryStore.storageKey, JSON.stringify(memoryStore.memories));
+        }
+      }
     } else {
       memoryStore.memories = DEFAULT_MEMORIES.slice();
       localStorage.setItem(memoryStore.storageKey, JSON.stringify(memoryStore.memories));
@@ -97,9 +115,23 @@ function renderMemoryMarkersOnMap() {
   if (currentZoom < 12.5) return;
 
   var isCloseUp = currentZoom >= 15.5; // 확대 많이 했을 때 폴라로이드 모드 전환 기준
+  var myLoc = (window.state && state.myLocation) ? state.myLocation : ((window.state && state.locations && state.locations[0]) ? state.locations[0].loc : null);
 
-  memoryStore.memories.forEach(function(mem) {
+  memoryStore.memories.forEach(function(mem, memIdx) {
     var markerIcon;
+    var markerCoord = [mem.coord[0], mem.coord[1]];
+
+    // 내 위치(GPS) 마커와 추억 폴라로이드가 겹치지 않도록 북동쪽(우측 상단)으로 40~50m 깔끔하게 분리
+    if (myLoc) {
+      var dLat = Math.abs(markerCoord[0] - myLoc[0]);
+      var dLng = Math.abs(markerCoord[1] - myLoc[1]);
+      if (dLat < 0.00055 && dLng < 0.00055) {
+        markerCoord = [
+          markerCoord[0] + 0.00038 + (memIdx * 0.00008),
+          markerCoord[1] + 0.00048 + (memIdx * 0.00008)
+        ];
+      }
+    }
 
     if (isCloseUp) {
       // [근접 확대 뷰 (Zoom >= 15.5)]: 감성적이고 아기자기한 폴라로이드 사진 프레임
@@ -120,8 +152,8 @@ function renderMemoryMarkersOnMap() {
       markerIcon = L.divIcon({
         html: polaroidHtml,
         className: 'polaroid-leaflet-icon',
-        iconSize: [76, 96],
-        iconAnchor: [38, 92]
+        iconSize: [80, 102],
+        iconAnchor: [40, 98]
       });
     } else {
       // [원거리 뷰 (Zoom 12.5 ~ 15.4)]: 지도를 가리지 않는 예쁘고 미니멀한 핀포인트 뱃지 마커
@@ -142,7 +174,7 @@ function renderMemoryMarkersOnMap() {
       });
     }
 
-    var marker = L.marker(mem.coord, { icon: markerIcon, zIndexOffset: isCloseUp ? 800 : 700 }).addTo(map);
+    var marker = L.marker(markerCoord, { icon: markerIcon, zIndexOffset: isCloseUp ? 860 : 700 }).addTo(map);
     if (window.bindInstantMarkerTap) {
       window.bindInstantMarkerTap(marker, function() {
         window.openMemoryDetailModal(mem.id);

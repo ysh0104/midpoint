@@ -543,7 +543,9 @@ window.saveLife4CutToMapMemory = function() {
 
     var coord = (window.state && state.confirmedPlace && state.confirmedPlace.y)
       ? [parseFloat(state.confirmedPlace.y), parseFloat(state.confirmedPlace.x)]
-      : ((window.state && state.myLocation) ? state.myLocation : DEFAULT_LOC);
+      : ((window.state && state.currentHubCoord)
+          ? state.currentHubCoord
+          : ((window.state && state.myLocation) ? [state.myLocation[0] + 0.00038, state.myLocation[1] + 0.00048] : DEFAULT_LOC));
 
     var now = new Date();
     var dateStr = now.getFullYear() + '. ' + (now.getMonth() + 1) + '. ' + now.getDate();
