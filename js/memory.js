@@ -292,21 +292,76 @@ window.openAddMemoryFromConfirmed = function() {
   window.openAddMemoryModal(pName);
 };
 
-// 상단 카메라 버튼 클릭 시: 가장 최근 추억 위치로 이동하며 폴라로이드 감상
+// 상단 카메라 버튼 또는 갤러리 버튼 클릭 시: 가장 최근 추억 위치로 이동하며 폴라로이드 감상
 window.focusLatestMemory = function() {
   if (!memoryStore.memories || memoryStore.memories.length === 0) {
-    if (window.showToast) showToast('아직 등록된 모임 추억이 없습니다', 'camera');
+    if (window.showToast) showToast('아직 등록된 모임 추억이 없습니다', 'image');
     return;
   }
   var latest = memoryStore.memories[0];
   if (window.map && latest.coord) {
     if (window.smoothFlyTo) {
       window.smoothFlyTo(latest.coord, 16.5, function(didFly) {
-        if (window.showToast && didFly) showToast("'" + latest.placeName + "' 추억 위치로 이동", 'camera');
+        if (window.showToast && didFly) showToast("'" + latest.placeName + "' 추억 위치로 이동", 'image');
       });
     } else {
       map.flyTo(latest.coord, 16.5, { duration: 1.0, easeLinearity: 0.22 });
-      if (window.showToast) showToast("'" + latest.placeName + "' 추억 위치로 이동", 'camera');
+      if (window.showToast) showToast("'" + latest.placeName + "' 추억 위치로 이동", 'image');
+    }
+  }
+};
+
+// 모임 추억 갤러리 모달 열기
+window.openMemoryGalleryModal = function() {
+  var modal = document.getElementById('memoryGalleryModal');
+  var listEl = document.getElementById('memoryGalleryGrid');
+  var countEl = document.getElementById('memoryGalleryCount');
+  if (!modal) return;
+
+  var mems = memoryStore.memories || [];
+  if (countEl) countEl.textContent = mems.length + '개의 모임 기억';
+
+  if (listEl) {
+    if (mems.length === 0) {
+      listEl.innerHTML = '<div class="col-span-2 py-12 text-center text-slate-400 text-[12px]">아직 등록된 모임 추억이 없습니다.<br>약속 장소에서 새로운 추억을 남겨보세요!</div>';
+    } else {
+      listEl.innerHTML = mems.map(function(mem) {
+        var is4Cut = (mem.category === '인생네컷');
+        return '<div onclick="window.selectGalleryItem(\'' + mem.id + '\')" class="press group cursor-pointer bg-white rounded-2xl p-2.5 border border-slate-200/90 shadow-xs hover:border-[#2563eb] hover:shadow-md transition-all flex flex-col gap-2">' +
+          '<div class="relative w-full ' + (is4Cut ? 'aspect-[9/16]' : 'aspect-square') + ' rounded-xl overflow-hidden bg-slate-100">' +
+            '<img src="' + mem.photo + '" alt="' + mem.placeName + '" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />' +
+            '<span class="absolute top-2 left-2 px-1.5 py-0.5 rounded text-[9.5px] font-extrabold ' + (is4Cut ? 'bg-zinc-900 text-white' : 'bg-white/90 text-slate-800') + ' backdrop-blur-xs">' + mem.category + '</span>' +
+            '<span class="absolute bottom-2 right-2 px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-black/60 text-white backdrop-blur-xs">' + mem.date + '</span>' +
+          '</div>' +
+          '<div class="px-0.5">' +
+            '<h4 class="text-[13px] font-black text-slate-900 truncate group-hover:text-[#2563eb] transition-colors">' + mem.placeName + '</h4>' +
+            '<p class="text-[11px] text-slate-500 truncate mt-0.5">' + (mem.menu || mem.memo) + '</p>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+    }
+  }
+
+  modal.classList.remove('hidden');
+  if (window.lucide) lucide.createIcons();
+};
+
+window.closeMemoryGalleryModal = function() {
+  var modal = document.getElementById('memoryGalleryModal');
+  if (modal) modal.classList.add('hidden');
+};
+
+window.selectGalleryItem = function(memId) {
+  window.closeMemoryGalleryModal();
+  var target = (memoryStore.memories || []).find(function(m) { return m.id === memId; });
+  if (target && target.coord) {
+    if (window.smoothFlyTo) {
+      window.smoothFlyTo(target.coord, 16.5, function() {
+        window.openMemoryDetailModal(target.id);
+      });
+    } else {
+      map.flyTo(target.coord, 16.5, { duration: 0.9 });
+      setTimeout(function() { window.openMemoryDetailModal(target.id); }, 900);
     }
   }
 };
@@ -315,3 +370,4 @@ window.focusLatestMemory = function() {
 document.addEventListener('DOMContentLoaded', function() {
   setTimeout(initMemories, 500);
 });
+

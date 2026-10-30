@@ -731,4 +731,105 @@ body {
   background: #f1f5f9;
 }
 
+/* 5. 반띵 인생네컷 (Life 4-Cut Studio) 전용 프레임 스타일 */
+.life4cut-strip {
+  width: 190px;
+  min-height: 520px;
+  border-radius: 16px;
+  padding: 12px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: 0 16px 36px -10px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.1);
+  user-select: none;
+}
+
+.life4cut-slot {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+  background: #27272a;
+}
+
+.theme-strip-black {
+  background: #18181b;
+  color: #ffffff;
+}
+.theme-strip-black .life4cut-slot {
+  background: #27272a;
+}
+.theme-strip-black .strip-sub {
+  color: #a1a1aa;
+}
+.theme-strip-black .strip-badge {
+  background: #ffffff;
+  color: #09090b;
+}
+
+.theme-strip-blue {
+  background: #0284c7;
+  color: #ffffff;
+}
+.theme-strip-blue .life4cut-slot {
+  background: #0369a1;
+}
+.theme-strip-blue .strip-sub {
+  color: #bae6fd;
+}
+.theme-strip-blue .strip-badge {
+  background: #ffffff;
+  color: #0284c7;
+}
+
+.theme-strip-white {
+  background: #ffffff;
+  color: #09090b;
+  box-shadow: 0 16px 36px -10px rgba(15, 23, 42, 0.18), 0 0 0 1px rgba(226, 232, 240, 0.9);
+}
+.theme-strip-white .life4cut-slot {
+  background: #f1f5f9;
+}
+.theme-strip-white .strip-sub {
+  color: #64748b;
+}
+.theme-strip-white .strip-badge {
+  background: #09090b;
+  color: #ffffff;
+}
+
+.theme-strip-cream {
+  background: #fefce8;
+  color: #451a03;
+  box-shadow: 0 16px 36px -10px rgba(69, 26, 3, 0.16), 0 0 0 1px rgba(254, 240, 138, 0.8);
+}
+.theme-strip-cream .life4cut-slot {
+  background: #fef9c3;
+}
+.theme-strip-cream .strip-sub {
+  color: #92400e;
+}
+.theme-strip-cream .strip-badge {
+  background: #451a03;
+  color: #fefce8;
+}
+
+.theme-strip-pink {
+  background: #fdf2f8;
+  color: #831843;
+  box-shadow: 0 16px 36px -10px rgba(131, 24, 67, 0.16), 0 0 0 1px rgba(251, 207, 232, 0.8);
+}
+.theme-strip-pink .life4cut-slot {
+  background: #fce7f3;
+}
+.theme-strip-pink .strip-sub {
+  color: #db2777;
+}
+.theme-strip-pink .strip-badge {
+  background: #831843;
+  color: #fdf2f8;
+}
+
+
 

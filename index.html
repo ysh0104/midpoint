@@ -46,7 +46,7 @@
 <!-- Lucide Icons -->
 <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
 
-<link rel="stylesheet" href="css/style.css?v=35" />
+<link rel="stylesheet" href="css/style.css?v=36" />
 </head>
 <body class="bg-zinc-200 text-slate-900 antialiased h-screen w-screen flex justify-center items-center">
 
@@ -70,10 +70,13 @@
       <span id="tossStatusBadge" class="text-[10.5px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-[#2563eb]">약속 준비</span>
     </div>
 
-    <!-- 우측: 빠른 액션 버튼 (추억 앨범 바로가기, 모임 맞춤 설정) -->
+    <!-- 우측: 빠른 액션 버튼 (인생네컷 촬영, 모임 갤러리, 모임 맞춤 설정) -->
     <div class="pointer-events-auto flex items-center gap-1.5">
-      <button type="button" onclick="window.focusLatestMemory()" class="press w-9 h-9 rounded-full glass border border-white/90 shadow-md shadow-slate-900/5 grid place-items-center text-slate-700 hover:text-amber-500 transition-colors" title="내 모임 추억 지도 보기">
+      <button type="button" onclick="window.openLife4CutStudio()" class="press w-9 h-9 rounded-full glass border border-white/90 shadow-md shadow-slate-900/5 grid place-items-center text-slate-700 hover:text-rose-500 transition-colors" title="반띵 인생네컷 포토부스">
         <i data-lucide="camera" class="w-4 h-4"></i>
+      </button>
+      <button type="button" onclick="window.openMemoryGalleryModal()" class="press w-9 h-9 rounded-full glass border border-white/90 shadow-md shadow-slate-900/5 grid place-items-center text-slate-700 hover:text-amber-500 transition-colors" title="모임 추억 갤러리">
+        <i data-lucide="image" class="w-4 h-4"></i>
       </button>
       <button type="button" onclick="window.openMeetFilterModal()" class="press w-9 h-9 rounded-full glass border border-white/90 shadow-md shadow-slate-900/5 grid place-items-center text-slate-700 hover:text-[#2563eb] transition-colors" title="모임 맞춤 필터">
         <i data-lucide="sliders-horizontal" class="w-4 h-4"></i>
@@ -1344,19 +1347,206 @@
     </div>
   </div>
 
+  <!-- 12. 모임 추억 갤러리 모달 (전체 아카이브 모아보기) -->
+  <div id="memoryGalleryModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 transition-all">
+    <div class="w-full max-w-md bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[88vh] animate-in fade-in slide-in-from-bottom-6 duration-200">
+      
+      <!-- 갤러리 헤더 -->
+      <div class="p-4 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-amber-50/60 to-white">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-xl bg-amber-100 text-amber-600 grid place-items-center">
+            <i data-lucide="image" class="w-4 h-4"></i>
+          </div>
+          <div>
+            <h3 class="text-[15px] font-black text-slate-900">모임 추억 갤러리</h3>
+            <p id="memoryGalleryCount" class="text-[11px] text-slate-500 font-medium">소중한 모임의 기록</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-1.5">
+          <button type="button" onclick="window.focusLatestMemory(); window.closeMemoryGalleryModal();" class="press px-2.5 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-700 text-[11px] font-bold border border-amber-200/80 flex items-center gap-1 transition-all">
+            <i data-lucide="map-pin" class="w-3 h-3"></i>
+            <span>지도에서 보기</span>
+          </button>
+          <button type="button" onclick="window.closeMemoryGalleryModal()" class="press p-1.5 text-slate-400 hover:text-slate-600">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- 갤러리 그리드 리스트 -->
+      <div class="p-4 flex-1 overflow-y-auto no-scrollbar">
+        <div id="memoryGalleryGrid" class="grid grid-cols-2 gap-3">
+          <!-- JS 동적 렌더링 -->
+        </div>
+      </div>
+
+      <!-- 하단 액션 바 -->
+      <div class="p-3 bg-slate-50 border-t border-slate-100 flex items-center gap-2">
+        <button type="button" onclick="window.closeMemoryGalleryModal(); window.openLife4CutStudio();" class="press flex-1 py-2.5 rounded-xl bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white font-extrabold text-[12px] shadow-xs flex items-center justify-center gap-1.5 transition-all">
+          <i data-lucide="camera" class="w-3.5 h-3.5"></i>
+          <span>반띵 인생네컷 찍기</span>
+        </button>
+        <button type="button" onclick="window.closeMemoryGalleryModal()" class="press px-4 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-700 font-bold text-[12px]">
+          닫기
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 13. 반띵 인생네컷 (Life 4-Cut Studio) 전용 모달 -->
+  <div id="life4CutModal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4 transition-all">
+    <div class="w-full max-w-xl bg-zinc-900 text-white rounded-t-3xl sm:rounded-3xl shadow-2xl border border-zinc-800 overflow-hidden flex flex-col max-h-[92vh] animate-in fade-in zoom-in-95 duration-200">
+      
+      <!-- 스튜디오 헤더 -->
+      <div class="px-5 py-3.5 border-b border-zinc-800 flex items-center justify-between bg-zinc-900/90 shrink-0">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-xl bg-rose-500 text-white grid place-items-center shadow-xs">
+            <i data-lucide="camera" class="w-4 h-4"></i>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h3 class="text-[15px] font-black tracking-tight text-white">반띵 4-CUT STUDIO</h3>
+              <span class="px-1.5 py-0.5 rounded text-[9px] font-black bg-rose-500/20 text-rose-400 border border-rose-500/30">PHOTO BOOTH</span>
+            </div>
+            <p class="text-[11px] text-zinc-400 font-medium">모임의 순간을 네 컷에 담아 인스타에 공유해보세요</p>
+          </div>
+        </div>
+        <button type="button" onclick="window.closeLife4CutStudio()" class="press p-1.5 rounded-lg bg-zinc-800 text-zinc-400 hover:text-white transition-colors">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <!-- 본문 스튜디오 영역 (뷰파인더 & 프레임 스트립) -->
+      <div class="flex-1 overflow-y-auto no-scrollbar p-4 flex flex-col sm:flex-row gap-4 items-center justify-center">
+        
+        <!-- 좌측: 촬영 및 컨트롤 패널 -->
+        <div class="w-full sm:w-1/2 flex flex-col gap-3">
+          
+          <!-- 실시간 카메라 뷰파인더 -->
+          <div class="relative w-full aspect-[4/3] rounded-2xl overflow-hidden bg-black border border-zinc-800 shadow-inner flex items-center justify-center">
+            <video id="life4CutVideo" autoplay playsinline muted class="w-full h-full object-cover"></video>
+            
+            <!-- 카메라 미지원 시 플레이스홀더 -->
+            <div id="life4CutVideoPlaceholder" class="hidden absolute inset-0 flex flex-col items-center justify-center gap-2 bg-zinc-900 text-zinc-400 p-4 text-center">
+              <i data-lucide="camera-off" class="w-8 h-8 text-zinc-500"></i>
+              <p class="text-[11.5px] font-bold">카메라를 켤 수 없습니다</p>
+              <p class="text-[10px] text-zinc-500">아래의 사진 업로드 또는 감성 샘플 컷으로 인생네컷을 완성해보세요!</p>
+            </div>
+
+            <!-- 찰칵 플래시 효과 -->
+            <div id="life4CutFlash" class="pointer-events-none absolute inset-0 bg-white opacity-0 transition-opacity duration-150"></div>
+
+            <!-- 카운트다운 오버레이 -->
+            <div id="life4CutCountdownOverlay" class="hidden pointer-events-none absolute inset-0 bg-black/40 backdrop-blur-2xs flex items-center justify-center transition-transform">
+              <span id="life4CutCountdownNumber" class="text-6xl font-black text-white drop-shadow-lg">3</span>
+            </div>
+          </div>
+
+          <!-- 촬영 컨트롤 버튼군 -->
+          <div class="flex flex-col gap-1.5">
+            <button type="button" onclick="window.startLife4CutAutoCapture()" class="press w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-rose-500 via-pink-500 to-rose-600 hover:from-rose-600 hover:to-pink-700 text-white font-extrabold text-[12.5px] shadow-sm flex items-center justify-center gap-2 transition-all">
+              <i data-lucide="sparkles" class="w-4 h-4"></i>
+              <span>4컷 자동 연속 촬영 (3초 타이머)</span>
+            </button>
+            <div class="grid grid-cols-2 gap-1.5">
+              <button type="button" onclick="document.getElementById('life4CutFileInput').click()" class="press py-2 px-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-bold text-[11px] flex items-center justify-center gap-1 border border-zinc-700">
+                <i data-lucide="upload" class="w-3.5 h-3.5 text-sky-400"></i>
+                <span>앨범 사진 4장 선택</span>
+              </button>
+              <button type="button" onclick="window.loadLife4CutSamples()" class="press py-2 px-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-bold text-[11px] flex items-center justify-center gap-1 border border-zinc-700">
+                <i data-lucide="wand-2" class="w-3.5 h-3.5 text-amber-400"></i>
+                <span>감성 샘플 채우기</span>
+              </button>
+            </div>
+            <input type="file" id="life4CutFileInput" multiple accept="image/*" class="hidden" onchange="window.handleLife4CutFileUpload(event)" />
+          </div>
+
+          <!-- 프레임 테마 선택 -->
+          <div class="pt-2 border-t border-zinc-800 flex flex-col gap-1.5">
+            <label class="text-[11px] font-bold text-zinc-400">프레임 색상 선택</label>
+            <div class="flex items-center gap-2">
+              <button type="button" onclick="window.setLife4CutTheme('black')" data-theme="black" class="theme-btn w-6 h-6 rounded-full bg-zinc-900 border border-zinc-600 ring-2 ring-offset-2 ring-[#0284c7]" title="딥 블랙"></button>
+              <button type="button" onclick="window.setLife4CutTheme('blue')" data-theme="blue" class="theme-btn w-6 h-6 rounded-full bg-[#0284c7] border border-sky-400" title="반띵 블루"></button>
+              <button type="button" onclick="window.setLife4CutTheme('white')" data-theme="white" class="theme-btn w-6 h-6 rounded-full bg-white border border-slate-300" title="클래식 화이트"></button>
+              <button type="button" onclick="window.setLife4CutTheme('cream')" data-theme="cream" class="theme-btn w-6 h-6 rounded-full bg-[#fefce8] border border-amber-300" title="버터 크림"></button>
+              <button type="button" onclick="window.setLife4CutTheme('pink')" data-theme="pink" class="theme-btn w-6 h-6 rounded-full bg-[#fdf2f8] border border-pink-300" title="로맨틱 핑크"></button>
+            </div>
+          </div>
+
+          <!-- 하단 인쇄 장소명 커스텀 입력 -->
+          <div class="flex flex-col gap-1">
+            <label class="text-[10.5px] font-bold text-zinc-400">인쇄 장소 문구</label>
+            <input type="text" id="life4CutPlaceInput" oninput="window.updateLife4CutPlace(this.value)" placeholder="예: 온달집 강남역점" class="w-full px-2.5 py-1.5 rounded-lg bg-zinc-800 border border-zinc-700 text-[11.5px] font-bold text-white focus:outline-none focus:border-rose-500" />
+          </div>
+
+        </div>
+
+        <!-- 우측: 세로형 인생네컷 스트립 실시간 프리뷰 -->
+        <div class="flex flex-col items-center shrink-0">
+          <div id="life4CutStrip" class="life4cut-strip theme-strip-black">
+            <!-- 4개 사진 슬롯 -->
+            <div id="life4CutSlot_0" class="life4cut-slot">
+              <img id="life4CutImg_0" src="" alt="1번 컷" class="hidden w-full h-full object-cover" />
+              <div id="life4CutPlaceholder_0" class="w-full h-full flex flex-col items-center justify-center text-zinc-500 text-[10px] font-bold">1 CUT</div>
+            </div>
+            <div id="life4CutSlot_1" class="life4cut-slot">
+              <img id="life4CutImg_1" src="" alt="2번 컷" class="hidden w-full h-full object-cover" />
+              <div id="life4CutPlaceholder_1" class="w-full h-full flex flex-col items-center justify-center text-zinc-500 text-[10px] font-bold">2 CUT</div>
+            </div>
+            <div id="life4CutSlot_2" class="life4cut-slot">
+              <img id="life4CutImg_2" src="" alt="3번 컷" class="hidden w-full h-full object-cover" />
+              <div id="life4CutPlaceholder_2" class="w-full h-full flex flex-col items-center justify-center text-zinc-500 text-[10px] font-bold">3 CUT</div>
+            </div>
+            <div id="life4CutSlot_3" class="life4cut-slot">
+              <img id="life4CutImg_3" src="" alt="4번 컷" class="hidden w-full h-full object-cover" />
+              <div id="life4CutPlaceholder_3" class="w-full h-full flex flex-col items-center justify-center text-zinc-500 text-[10px] font-bold">4 CUT</div>
+            </div>
+
+            <!-- 하단 브랜딩 푸터 -->
+            <div class="pt-2 pb-1 border-t border-white/10 flex flex-col items-center gap-0.5 text-center">
+              <span id="life4CutPlaceText" class="text-[11px] font-black tracking-tight truncate max-w-[170px]">반띵 모임</span>
+              <span id="life4CutDateDisplay" class="text-[8.5px] font-bold strip-sub tracking-widest">2026.10.30 FRI</span>
+              <div class="mt-1 px-2.5 py-0.5 rounded-full strip-badge text-[8.5px] font-black tracking-tighter">BAN-DDING 4-CUT</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- 하단 액션 버튼 바 (저장, 인스타그램 공유, 지도 추억 등록) -->
+      <div class="p-3.5 bg-zinc-950 border-t border-zinc-800 flex items-center gap-2 shrink-0">
+        <button type="button" onclick="window.downloadLife4CutImage()" class="press flex-1 py-2.5 px-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white font-extrabold text-[12px] flex items-center justify-center gap-1.5 transition-all" title="기기에 사진 저장">
+          <i data-lucide="download" class="w-3.5 h-3.5"></i>
+          <span>이미지 저장</span>
+        </button>
+        <button type="button" onclick="window.shareLife4CutInstagram()" class="press flex-1 py-2.5 px-3 rounded-xl bg-gradient-to-r from-pink-500 via-rose-500 to-amber-500 hover:opacity-90 text-white font-extrabold text-[12px] shadow-sm flex items-center justify-center gap-1.5 transition-all" title="인스타그램 스토리 / 피드 공유">
+          <i data-lucide="instagram" class="w-3.5 h-3.5"></i>
+          <span>인스타 올리기</span>
+        </button>
+        <button type="button" onclick="window.saveLife4CutToMapMemory()" class="press px-3.5 py-2.5 rounded-xl bg-[#0284c7] hover:bg-[#0369a1] text-white font-extrabold text-[12px] flex items-center justify-center gap-1.5 transition-all" title="현재 장소의 지도 추억으로 꽂기">
+          <i data-lucide="map-pin" class="w-3.5 h-3.5"></i>
+          <span>지도 등록</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
 </div>
 
 <!-- 기능별 모듈 스크립트 분리 (Clean Modular Architecture) -->
-<script src="js/config.js?v=35"></script>
-<script src="js/state.js?v=35"></script>
-<script src="js/map.js?v=35"></script>
-<script src="js/mobility.js?v=35"></script>
-<script src="js/places.js?v=35"></script>
-<script src="js/weather.js?v=35"></script>
-<script src="js/care.js?v=35"></script>
-<script src="js/game.js?v=35"></script>
-<script src="js/chat.js?v=35"></script>
-<script src="js/ui.js?v=35"></script>
-<script src="js/memory.js?v=35"></script>
+<script src="js/config.js?v=36"></script>
+<script src="js/state.js?v=36"></script>
+<script src="js/map.js?v=36"></script>
+<script src="js/mobility.js?v=36"></script>
+<script src="js/places.js?v=36"></script>
+<script src="js/weather.js?v=36"></script>
+<script src="js/care.js?v=36"></script>
+<script src="js/game.js?v=36"></script>
+<script src="js/chat.js?v=36"></script>
+<script src="js/ui.js?v=36"></script>
+<script src="js/memory.js?v=36"></script>
+<script src="js/life4cut.js?v=36"></script>
 </body>
 </html>
