@@ -1244,7 +1244,7 @@
 
         <!-- 폴라로이드 사진 프레임 -->
         <div class="bg-white p-3 pb-6 rounded-md shadow-2xl w-full max-w-[270px] border border-slate-100 flex flex-col items-center transform -rotate-1 transition-transform">
-          <div class="w-full h-48 rounded bg-slate-100 overflow-hidden relative">
+          <div id="memModalPhotoContainer" class="w-full h-48 rounded bg-slate-100 overflow-hidden relative">
             <img id="memModalPhoto" src="" alt="추억 사진" class="w-full h-full object-cover" />
             <span id="memModalCategoryBadge" class="absolute bottom-2 right-2 px-2 py-0.5 rounded-full bg-slate-900/75 backdrop-blur-sm text-white text-[10px] font-extrabold">맛집</span>
           </div>
@@ -1380,6 +1380,19 @@
             <i data-lucide="x" class="w-4 h-4"></i>
           </button>
         </div>
+      </div>
+
+      <!-- 갤러리 카테고리 필터 탭 -->
+      <div class="px-4 py-2 border-b border-slate-100 flex items-center gap-1.5 bg-slate-50/70">
+        <button type="button" data-tab="all" onclick="window.filterGalleryCategory('all')" class="gallery-filter-tab press px-3 py-1 rounded-full text-[11px] font-extrabold bg-[#2563eb] text-white shadow-2xs transition-all">
+          전체
+        </button>
+        <button type="button" data-tab="place" onclick="window.filterGalleryCategory('place')" class="gallery-filter-tab press px-3 py-1 rounded-full text-[11px] font-semibold bg-white text-slate-600 hover:bg-slate-100 border border-slate-200/80 transition-all">
+          맛집 & 카페
+        </button>
+        <button type="button" data-tab="4cut" onclick="window.filterGalleryCategory('4cut')" class="gallery-filter-tab press px-3 py-1 rounded-full text-[11px] font-semibold bg-white text-slate-600 hover:bg-slate-100 border border-slate-200/80 transition-all">
+          인생네컷
+        </button>
       </div>
 
       <!-- 갤러리 그리드 리스트 -->
@@ -1545,17 +1558,17 @@
 </div>
 
 <!-- 기능별 모듈 스크립트 분리 (Clean Modular Architecture) -->
-<script src="js/config.js?v=39"></script>
-<script src="js/state.js?v=39"></script>
-<script src="js/map.js?v=39"></script>
-<script src="js/mobility.js?v=39"></script>
-<script src="js/places.js?v=39"></script>
-<script src="js/weather.js?v=39"></script>
-<script src="js/care.js?v=39"></script>
-<script src="js/game.js?v=39"></script>
-<script src="js/chat.js?v=39"></script>
-<script src="js/ui.js?v=39"></script>
-<script src="js/memory.js?v=39"></script>
-<script src="js/life4cut.js?v=39"></script>
+<script src="js/config.js?v=40"></script>
+<script src="js/state.js?v=40"></script>
+<script src="js/map.js?v=40"></script>
+<script src="js/mobility.js?v=40"></script>
+<script src="js/places.js?v=40"></script>
+<script src="js/weather.js?v=40"></script>
+<script src="js/care.js?v=40"></script>
+<script src="js/game.js?v=40"></script>
+<script src="js/chat.js?v=40"></script>
+<script src="js/ui.js?v=40"></script>
+<script src="js/memory.js?v=40"></script>
+<script src="js/life4cut.js?v=40"></script>
 </body>
 </html>

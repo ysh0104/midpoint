@@ -157,6 +157,7 @@ window.openMemoryDetailModal = function(memId) {
 
   // 내용 채우기
   var photoEl = document.getElementById('memModalPhoto');
+  var photoContainer = document.getElementById('memModalPhotoContainer') || (photoEl ? photoEl.parentElement : null);
   var titleEl = document.getElementById('memModalTitle');
   var dateEl = document.getElementById('memModalDate');
   var ddayEl = document.getElementById('memModalDday');
@@ -165,7 +166,23 @@ window.openMemoryDetailModal = function(memId) {
   var memoEl = document.getElementById('memModalMemo');
   var catBadgeEl = document.getElementById('memModalCategoryBadge');
 
-  if (photoEl) photoEl.src = mem.photo;
+  var is4Cut = (mem.category === '인생네컷');
+
+  if (photoEl) {
+    photoEl.src = mem.photo;
+    if (is4Cut) {
+      if (photoContainer) {
+        photoContainer.className = 'w-full h-72 rounded bg-[#0f172a] overflow-hidden relative flex items-center justify-center p-2';
+      }
+      photoEl.className = 'h-full w-auto max-w-full object-contain rounded shadow-md';
+    } else {
+      if (photoContainer) {
+        photoContainer.className = 'w-full h-48 rounded bg-slate-100 overflow-hidden relative';
+      }
+      photoEl.className = 'w-full h-full object-cover';
+    }
+  }
+
   if (titleEl) titleEl.textContent = mem.placeName;
   if (dateEl) dateEl.textContent = mem.date;
   if (ddayEl) ddayEl.textContent = mem.ddayText || '우리의 추억';
@@ -233,7 +250,7 @@ window.deleteMemoryItem = function(memId) {
   // 갤러리 모달이 열려있다면 즉시 갱신
   var galleryModal = document.getElementById('memoryGalleryModal');
   if (galleryModal && !galleryModal.classList.contains('hidden')) {
-    window.openMemoryGalleryModal();
+    window.renderGalleryCards();
   }
 
   if (window.showToast) {
@@ -364,40 +381,93 @@ window.focusLatestMemory = function() {
   }
 };
 
+// 모임 추억 갤러리 카테고리 필터링
+window.filterGalleryCategory = function(filter) {
+  memoryStore.galleryFilter = filter || 'all';
+  var tabs = document.querySelectorAll('.gallery-filter-tab');
+  tabs.forEach(function(btn) {
+    var tabType = btn.getAttribute('data-tab');
+    if (tabType === memoryStore.galleryFilter) {
+      btn.className = 'gallery-filter-tab press px-3 py-1 rounded-full text-[11px] font-extrabold bg-[#2563eb] text-white shadow-2xs transition-all';
+    } else {
+      btn.className = 'gallery-filter-tab press px-3 py-1 rounded-full text-[11px] font-semibold bg-white text-slate-600 hover:bg-slate-100 border border-slate-200/80 transition-all';
+    }
+  });
+  window.renderGalleryCards();
+};
+
+// 갤러리 카드 렌더링 (모든 카드 1:1 정방형 균일 비율 통일 & 인생네컷 스마트 액자 피팅)
+window.renderGalleryCards = function() {
+  var listEl = document.getElementById('memoryGalleryGrid');
+  var countEl = document.getElementById('memoryGalleryCount');
+  if (!listEl) return;
+
+  var allMems = memoryStore.memories || [];
+  var filter = memoryStore.galleryFilter || 'all';
+  var filteredMems = allMems;
+
+  if (filter === 'place') {
+    filteredMems = allMems.filter(function(m) { return m.category !== '인생네컷'; });
+  } else if (filter === '4cut') {
+    filteredMems = allMems.filter(function(m) { return m.category === '인생네컷'; });
+  }
+
+  if (countEl) {
+    countEl.textContent = (filter === 'all' ? allMems.length + '개의 모임 기억' : filteredMems.length + '개의 기록');
+  }
+
+  if (filteredMems.length === 0) {
+    var emptyText = filter === '4cut'
+      ? '아직 촬영된 인생네컷이 없습니다.<br>하단 버튼을 눌러 첫 네컷 사진을 남겨보세요!'
+      : (filter === 'place' ? '등록된 맛집 & 카페 추억이 없습니다.' : '아직 등록된 모임 추억이 없습니다.<br>약속 장소에서 새로운 추억을 남겨보세요!');
+    listEl.innerHTML = '<div class="col-span-2 py-12 text-center text-slate-400 text-[12px] leading-relaxed">' + emptyText + '</div>';
+    return;
+  }
+
+  listEl.innerHTML = filteredMems.map(function(mem) {
+    var is4Cut = (mem.category === '인생네컷');
+    var photoHtml = is4Cut
+      ? '<div class="w-full h-full bg-[#0f172a] flex items-center justify-center p-2 rounded-xl">' +
+          '<img src="' + mem.photo + '" alt="' + mem.placeName + '" class="h-full w-auto max-w-full object-contain rounded shadow-md group-hover:scale-105 transition-transform duration-300" loading="lazy" />' +
+        '</div>'
+      : '<img src="' + mem.photo + '" alt="' + mem.placeName + '" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />';
+
+    return '<div onclick="window.selectGalleryItem(\'' + mem.id + '\')" class="press group cursor-pointer bg-white rounded-2xl p-2.5 border border-slate-200/90 shadow-xs hover:border-[#2563eb] hover:shadow-md transition-all flex flex-col gap-2 relative">' +
+      '<div class="relative w-full aspect-square rounded-xl overflow-hidden bg-slate-100 flex items-center justify-center">' +
+        photoHtml +
+        '<span class="absolute top-2 left-2 px-1.5 py-0.5 rounded text-[9.5px] font-extrabold ' + (is4Cut ? 'bg-zinc-900/90 text-white' : 'bg-white/95 text-slate-800') + ' backdrop-blur-xs shadow-2xs">' + mem.category + '</span>' +
+        '<button type="button" onclick="event.stopPropagation(); window.deleteMemoryItem(\'' + mem.id + '\')" class="press absolute top-2 right-2 z-10 w-6 h-6 rounded-full bg-black/50 hover:bg-rose-600 text-white grid place-items-center backdrop-blur-xs transition-colors" title="이 추억 삭제">' +
+          '<i data-lucide="trash-2" class="w-3.5 h-3.5"></i>' +
+        '</button>' +
+        '<span class="absolute bottom-2 right-2 px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-black/60 text-white backdrop-blur-xs">' + mem.date + '</span>' +
+      '</div>' +
+      '<div class="px-0.5">' +
+        '<h4 class="text-[13px] font-black text-slate-900 truncate group-hover:text-[#2563eb] transition-colors">' + mem.placeName + '</h4>' +
+        '<p class="text-[11px] text-slate-500 truncate mt-0.5">' + (mem.menu || mem.memo) + '</p>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+
+  if (window.lucide) lucide.createIcons();
+};
+
 // 모임 추억 갤러리 모달 열기
 window.openMemoryGalleryModal = function() {
   var modal = document.getElementById('memoryGalleryModal');
-  var listEl = document.getElementById('memoryGalleryGrid');
-  var countEl = document.getElementById('memoryGalleryCount');
   if (!modal) return;
 
-  var mems = memoryStore.memories || [];
-  if (countEl) countEl.textContent = mems.length + '개의 모임 기억';
-
-  if (listEl) {
-    if (mems.length === 0) {
-      listEl.innerHTML = '<div class="col-span-2 py-12 text-center text-slate-400 text-[12px]">아직 등록된 모임 추억이 없습니다.<br>약속 장소에서 새로운 추억을 남겨보세요!</div>';
+  memoryStore.galleryFilter = 'all';
+  var tabs = document.querySelectorAll('.gallery-filter-tab');
+  tabs.forEach(function(btn) {
+    var tabType = btn.getAttribute('data-tab');
+    if (tabType === 'all') {
+      btn.className = 'gallery-filter-tab press px-3 py-1 rounded-full text-[11px] font-extrabold bg-[#2563eb] text-white shadow-2xs transition-all';
     } else {
-      listEl.innerHTML = mems.map(function(mem) {
-        var is4Cut = (mem.category === '인생네컷');
-        return '<div onclick="window.selectGalleryItem(\'' + mem.id + '\')" class="press group cursor-pointer bg-white rounded-2xl p-2.5 border border-slate-200/90 shadow-xs hover:border-[#2563eb] hover:shadow-md transition-all flex flex-col gap-2 relative">' +
-          '<div class="relative w-full ' + (is4Cut ? 'aspect-[9/16]' : 'aspect-square') + ' rounded-xl overflow-hidden bg-slate-100">' +
-            '<img src="' + mem.photo + '" alt="' + mem.placeName + '" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />' +
-            '<span class="absolute top-2 left-2 px-1.5 py-0.5 rounded text-[9.5px] font-extrabold ' + (is4Cut ? 'bg-zinc-900 text-white' : 'bg-white/90 text-slate-800') + ' backdrop-blur-xs">' + mem.category + '</span>' +
-            '<button type="button" onclick="event.stopPropagation(); window.deleteMemoryItem(\'' + mem.id + '\')" class="press absolute top-2 right-2 z-10 w-6 h-6 rounded-full bg-black/50 hover:bg-rose-600 text-white grid place-items-center backdrop-blur-xs transition-colors" title="이 추억 삭제">' +
-              '<i data-lucide="trash-2" class="w-3.5 h-3.5"></i>' +
-            '</button>' +
-            '<span class="absolute bottom-2 right-2 px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-black/60 text-white backdrop-blur-xs">' + mem.date + '</span>' +
-          '</div>' +
-          '<div class="px-0.5">' +
-            '<h4 class="text-[13px] font-black text-slate-900 truncate group-hover:text-[#2563eb] transition-colors">' + mem.placeName + '</h4>' +
-            '<p class="text-[11px] text-slate-500 truncate mt-0.5">' + (mem.menu || mem.memo) + '</p>' +
-          '</div>' +
-        '</div>';
-      }).join('');
+      btn.className = 'gallery-filter-tab press px-3 py-1 rounded-full text-[11px] font-semibold bg-white text-slate-600 hover:bg-slate-100 border border-slate-200/80 transition-all';
     }
-  }
+  });
 
+  window.renderGalleryCards();
   modal.classList.remove('hidden');
   if (window.lucide) lucide.createIcons();
 };
