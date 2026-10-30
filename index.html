@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>MidPoint - 스마트 중간 장소 탐색</title>
+<title>반띵 - 스마트 중간 장소 탐색</title>
 <meta name="description" content="내 위치와 가고 싶은 주소들을 직접 입력해 실시간으로 최적의 중간 장소를 도출하는 스마트 지도 뷰어." />
 <meta name="theme-color" content="#ffffff" />
 <meta name="referrer" content="no-referrer" />
@@ -46,7 +46,7 @@
 <!-- Lucide Icons -->
 <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
 
-<link rel="stylesheet" href="css/style.css?v=28" />
+<link rel="stylesheet" href="css/style.css?v=29" />
 </head>
 <body class="bg-zinc-200 text-slate-900 antialiased h-screen w-screen flex justify-center items-center">
 
@@ -63,10 +63,10 @@
 
   <!-- 1. 상단 미니멀 토스 스타일 브랜드 캡슐 바 (지도 공간 80% 확보) -->
   <header id="tossTopBar" class="absolute top-3.5 left-3.5 right-3.5 z-30 flex items-center justify-between pointer-events-none select-none">
-    <!-- 좌측: MidPoint 로고 & 상태 뱃지 -->
+    <!-- 좌측: 반띵 로고 & 상태 뱃지 -->
     <div class="pointer-events-auto glass px-3.5 py-1.5 rounded-full border border-white/90 shadow-md shadow-slate-900/5 flex items-center gap-2">
       <div class="w-2.5 h-2.5 rounded-full bg-[#2563eb] animate-pulse"></div>
-      <span class="text-[13px] font-black text-slate-900 tracking-tight">MidPoint</span>
+      <span class="text-[13px] font-black text-slate-900 tracking-tight">반띵</span>
       <span id="tossStatusBadge" class="text-[10.5px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-[#2563eb]">약속 준비</span>
     </div>
 
@@ -344,8 +344,8 @@
             <span id="tossPlaceCountBadge" class="text-[10px] font-bold px-1.5 py-0.2 rounded-full bg-slate-100 text-slate-600">추천 10선</span>
           </h4>
           <div class="inline-flex items-center gap-1 bg-slate-100 p-0.5 rounded-lg text-[11.5px] font-bold">
-            <button type="button" id="tabCafeBtn" onclick="window.switchPlaceCategory('CE7')" class="px-2.5 py-1 rounded-md bg-white text-[#2563eb] shadow-2xs transition-all">☕ 카페</button>
-            <button type="button" id="tabFoodBtn" onclick="window.switchPlaceCategory('FD6')" class="px-2.5 py-1 rounded-md text-slate-600 hover:text-slate-900 transition-all">🍴 맛집</button>
+            <button type="button" id="tabCafeBtn" onclick="window.switchPlaceCategory('CE7')" class="px-2.5 py-1 rounded-md bg-white text-[#2563eb] shadow-2xs transition-all">카페</button>
+            <button type="button" id="tabFoodBtn" onclick="window.switchPlaceCategory('FD6')" class="px-2.5 py-1 rounded-md text-slate-600 hover:text-slate-900 transition-all">맛집</button>
           </div>
         </div>
 
@@ -1217,15 +1217,15 @@
 </div>
 
 <!-- 기능별 모듈 스크립트 분리 (Clean Modular Architecture) -->
-<script src="js/config.js?v=28"></script>
-<script src="js/state.js?v=28"></script>
-<script src="js/map.js?v=28"></script>
-<script src="js/mobility.js?v=28"></script>
-<script src="js/places.js?v=28"></script>
-<script src="js/weather.js?v=28"></script>
-<script src="js/care.js?v=28"></script>
-<script src="js/game.js?v=28"></script>
-<script src="js/chat.js?v=28"></script>
-<script src="js/ui.js?v=28"></script>
+<script src="js/config.js?v=29"></script>
+<script src="js/state.js?v=29"></script>
+<script src="js/map.js?v=29"></script>
+<script src="js/mobility.js?v=29"></script>
+<script src="js/places.js?v=29"></script>
+<script src="js/weather.js?v=29"></script>
+<script src="js/care.js?v=29"></script>
+<script src="js/game.js?v=29"></script>
+<script src="js/chat.js?v=29"></script>
+<script src="js/ui.js?v=29"></script>
 </body>
 </html>

@@ -245,11 +245,19 @@ window.switchPlaceCategory = function(catCode) {
   var foodBtn = document.getElementById('tabFoodBtn');
 
   if (catCode === 'CE7') {
-    if (cafeBtn) cafeBtn.className = 'press h-8 px-3 rounded-lg text-[12px] font-bold bg-white text-[#0284c7] shadow-xs border border-[#bae6fd] transition-all whitespace-nowrap flex items-center justify-center';
-    if (foodBtn) foodBtn.className = 'press h-8 px-3 rounded-lg text-[12px] font-semibold text-slate-600 hover:text-slate-900 transition-all whitespace-nowrap flex items-center justify-center';
+    if (cafeBtn) {
+      cafeBtn.className = 'px-2.5 py-1 rounded-md bg-white text-[#2563eb] shadow-2xs transition-all font-bold';
+    }
+    if (foodBtn) {
+      foodBtn.className = 'px-2.5 py-1 rounded-md text-slate-600 hover:text-slate-900 transition-all font-bold';
+    }
   } else {
-    if (foodBtn) foodBtn.className = 'press h-8 px-3 rounded-lg text-[12px] font-bold bg-white text-[#0284c7] shadow-xs border border-[#bae6fd] transition-all whitespace-nowrap flex items-center justify-center';
-    if (cafeBtn) cafeBtn.className = 'press h-8 px-3 rounded-lg text-[12px] font-semibold text-slate-600 hover:text-slate-900 transition-all whitespace-nowrap flex items-center justify-center';
+    if (foodBtn) {
+      foodBtn.className = 'px-2.5 py-1 rounded-md bg-white text-[#2563eb] shadow-2xs transition-all font-bold';
+    }
+    if (cafeBtn) {
+      cafeBtn.className = 'px-2.5 py-1 rounded-md text-slate-600 hover:text-slate-900 transition-all font-bold';
+    }
   }
 
   if (state.currentHubCoord) {
