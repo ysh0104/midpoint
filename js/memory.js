@@ -77,7 +77,7 @@ function initMemories() {
   }
 }
 
-// 2. 지도 위 폴라로이드 마커 렌더링
+// 2. 지도 위 추억 마커 렌더링 (멀리서: 예쁜 핀포인트 마커 / 확대 시: 아기자기한 폴라로이드)
 function renderMemoryMarkersOnMap() {
   if (!window.map) return;
   var currentZoom = map.getZoom();
@@ -88,34 +88,56 @@ function renderMemoryMarkersOnMap() {
   });
   memoryStore.markers = [];
 
-  // Zoom 14.5 이상일 때만 폴라로이드 감성 사진 마커 띄움
-  if (currentZoom < 14.5) return;
+  // 너무 멀리서 볼 때(Zoom < 12.5)는 지도 깔끔함을 위해 마커 숨김
+  if (currentZoom < 12.5) return;
+
+  var isCloseUp = currentZoom >= 15.5; // 확대 많이 했을 때 폴라로이드 모드 전환 기준
 
   memoryStore.memories.forEach(function(mem) {
-    var tilt = mem.tiltDeg || 0;
-    
-    // 클래식 폴라로이드 프레임 HTML 구조
-    var polaroidHtml = 
-      '<div class="polaroid-marker group cursor-pointer" onclick="window.openMemoryDetailModal(\'' + mem.id + '\')" style="transform: rotate(' + tilt + 'deg);">' +
-        '<div class="polaroid-pin"></div>' +
-        '<div class="polaroid-photo-frame">' +
-          '<img src="' + mem.photo + '" alt="' + mem.placeName + '" class="polaroid-img" />' +
-          '<div class="polaroid-category-badge">' + mem.category + '</div>' +
-        '</div>' +
-        '<div class="polaroid-caption">' +
-          '<div class="polaroid-title">' + mem.placeName + '</div>' +
-          '<div class="polaroid-date">' + mem.date + '</div>' +
-        '</div>' +
-      '</div>';
+    var markerIcon;
 
-    var pIcon = L.divIcon({
-      html: polaroidHtml,
-      className: 'polaroid-leaflet-icon',
-      iconSize: [84, 106],
-      iconAnchor: [42, 102]
-    });
+    if (isCloseUp) {
+      // [근접 확대 뷰 (Zoom >= 15.5)]: 감성적이고 아기자기한 폴라로이드 사진 프레임
+      var tilt = mem.tiltDeg || 0;
+      var polaroidHtml = 
+        '<div class="polaroid-marker group cursor-pointer" onclick="window.openMemoryDetailModal(\'' + mem.id + '\')" style="transform: rotate(' + tilt + 'deg);">' +
+          '<div class="polaroid-pin"></div>' +
+          '<div class="polaroid-photo-frame">' +
+            '<img src="' + mem.photo + '" alt="' + mem.placeName + '" class="polaroid-img" />' +
+            '<div class="polaroid-category-badge">' + mem.category + '</div>' +
+          '</div>' +
+          '<div class="polaroid-caption">' +
+            '<div class="polaroid-title">' + mem.placeName + '</div>' +
+            '<div class="polaroid-date">' + mem.date + '</div>' +
+          '</div>' +
+        '</div>';
 
-    var marker = L.marker(mem.coord, { icon: pIcon, zIndexOffset: 800 }).addTo(map);
+      markerIcon = L.divIcon({
+        html: polaroidHtml,
+        className: 'polaroid-leaflet-icon',
+        iconSize: [76, 96],
+        iconAnchor: [38, 92]
+      });
+    } else {
+      // [원거리 뷰 (Zoom 12.5 ~ 15.4)]: 지도를 가리지 않는 예쁘고 미니멀한 핀포인트 뱃지 마커
+      var pinHtml = 
+        '<div class="memory-pin-marker group" onclick="window.openMemoryDetailModal(\'' + mem.id + '\')">' +
+          '<div class="memory-pin-badge">' +
+            '<img src="' + mem.photo + '" alt="" class="memory-pin-thumb" />' +
+            '<span class="memory-pin-name">' + mem.placeName + '</span>' +
+          '</div>' +
+          '<div class="memory-pin-point"></div>' +
+        '</div>';
+
+      markerIcon = L.divIcon({
+        html: pinHtml,
+        className: 'polaroid-leaflet-icon',
+        iconSize: [120, 36],
+        iconAnchor: [60, 34]
+      });
+    }
+
+    var marker = L.marker(mem.coord, { icon: markerIcon, zIndexOffset: isCloseUp ? 800 : 700 }).addTo(map);
     memoryStore.markers.push(marker);
   });
 }

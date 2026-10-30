@@ -518,52 +518,107 @@ body {
 }
 
 /* ==========================================================================
-   폴라로이드 감성 사진 마커 & 추억 스토리 카드 스타일링
+   폴라로이드 감성 사진 마커 & 핀포인트 마커 스타일링 (줌 단계별 반응형)
    ========================================================================== */
 .polaroid-leaflet-icon {
   background: transparent !important;
   border: none !important;
 }
 
+/* 1. 멀리서 볼 때: 아기자기하고 예쁜 미니 핀포인트 마커 (Zoom < 15.5) */
+.memory-pin-marker {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  animation: pinBounceIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: transform 0.2s ease;
+}
+
+.memory-pin-marker:hover {
+  transform: translateY(-4px) scale(1.1);
+  z-index: 9999 !important;
+}
+
+.memory-pin-badge {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: #ffffff;
+  padding: 4px 8px 4px 5px;
+  border-radius: 9999px;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.16), 0 2px 4px rgba(15, 23, 42, 0.08);
+  border: 1.5px solid #ffffff;
+  white-space: nowrap;
+}
+
+.memory-pin-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.memory-pin-name {
+  font-size: 11px;
+  font-weight: 800;
+  color: #1e293b;
+  letter-spacing: -0.02em;
+}
+
+.memory-pin-point {
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 6px solid #ffffff;
+  filter: drop-shadow(0 2px 1.5px rgba(0, 0, 0, 0.12));
+  margin-top: -1px;
+}
+
+/* 2. 가까이서 볼 때: 정교하고 아기자기한 클래식 폴라로이드 (Zoom >= 15.5) */
 .polaroid-marker {
   position: relative;
-  width: 82px;
+  width: 76px;
   background: #ffffff;
-  padding: 5px 5px 9px 5px;
-  border-radius: 4px;
-  box-shadow: 0 10px 25px -4px rgba(15, 23, 42, 0.28), 0 4px 10px -2px rgba(15, 23, 42, 0.16);
-  border: 1px solid rgba(226, 232, 240, 0.9);
+  padding: 5px 5px 8px 5px;
+  border-radius: 5px;
+  box-shadow: 0 10px 24px -4px rgba(15, 23, 42, 0.25), 0 4px 8px -2px rgba(15, 23, 42, 0.12);
+  border: 1px solid rgba(226, 232, 240, 0.95);
   transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
   user-select: none;
+  animation: polaroidPop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .polaroid-marker:hover {
-  transform: scale(1.15) rotate(0deg) !important;
+  transform: scale(1.16) rotate(0deg) !important;
   z-index: 9999 !important;
-  box-shadow: 0 18px 36px -6px rgba(37, 99, 235, 0.35), 0 6px 14px rgba(15, 23, 42, 0.18);
+  box-shadow: 0 18px 36px -6px rgba(37, 99, 235, 0.32), 0 6px 14px rgba(15, 23, 42, 0.18);
 }
 
-/* 상단 메탈 압정 핀 */
+/* 상단 큐트 메탈 압정 핀 */
 .polaroid-pin {
   position: absolute;
   top: -5px;
   left: 50%;
   transform: translateX(-50%);
-  width: 11px;
-  height: 11px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   background: radial-gradient(circle at 35% 35%, #94a3b8, #475569);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3), inset 0 1px 2px rgba(255, 255, 255, 0.6);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25), inset 0 1px 2px rgba(255, 255, 255, 0.6);
   z-index: 10;
 }
 
 .polaroid-photo-frame {
   position: relative;
-  width: 72px;
-  height: 64px;
-  border-radius: 2px;
+  width: 66px;
+  height: 58px;
+  border-radius: 3px;
   overflow: hidden;
-  background: #1e293b;
+  background: #0f172a;
 }
 
 .polaroid-img {
@@ -579,11 +634,11 @@ body {
 
 .polaroid-category-badge {
   position: absolute;
-  bottom: 3px;
-  right: 3px;
+  bottom: 2.5px;
+  right: 2.5px;
   padding: 1px 4px;
-  border-radius: 4px;
-  background: rgba(15, 23, 42, 0.75);
+  border-radius: 3px;
+  background: rgba(15, 23, 42, 0.8);
   backdrop-filter: blur(4px);
   color: #ffffff;
   font-size: 8px;
@@ -592,7 +647,7 @@ body {
 }
 
 .polaroid-caption {
-  margin-top: 5px;
+  margin-top: 4px;
   display: flex;
   flex-direction: column;
   gap: 1px;
@@ -600,7 +655,7 @@ body {
 }
 
 .polaroid-title {
-  font-size: 9.5px;
+  font-size: 9px;
   font-weight: 900;
   color: #1e293b;
   line-height: 1.15;
@@ -611,9 +666,20 @@ body {
 }
 
 .polaroid-date {
-  font-size: 8px;
+  font-size: 7.5px;
   font-weight: 600;
   color: #64748b;
   letter-spacing: -0.02em;
+}
+
+/* 3. 줌인/아웃 팝 애니메이션 */
+@keyframes pinBounceIn {
+  from { opacity: 0; transform: scale(0.6) translateY(6px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes polaroidPop {
+  from { opacity: 0; transform: scale(0.7) translateY(8px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
 }
 
