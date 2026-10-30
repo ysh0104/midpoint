@@ -801,8 +801,115 @@ window.updateHeaderRouteCardUI = function() {
   if (btnBike) btnBike.className = (currentTrans === 'bike') ? activeClass : inactiveClass;
 
   window.renderQuickPlacesBar();
+  if (window.renderTossCardUI) window.renderTossCardUI();
 
   if (window.lucide) lucide.createIcons();
+};
+
+// --------------------------------------------------------------------
+// 토스 스타일 단일 포커스 모임 카드 렌더러 (Toss Meeting Card Engine)
+// --------------------------------------------------------------------
+window.renderTossCardUI = function() {
+  var count = (state.locations && state.locations.length) || 1;
+  var myLoc = state.locations[0];
+  var planPhase = document.getElementById('tossPlanPhase');
+  var resultPhase = document.getElementById('tossResultPhase');
+  var myAddrText = document.getElementById('tossMyAddrText');
+  var friendsList = document.getElementById('tossFriendsList');
+  var topBadge = document.getElementById('tossStatusBadge');
+
+  if (myAddrText && myLoc) {
+    var addr = myLoc.addr || myLoc.name || state.myAddress || '내 위치 확인 중...';
+    myAddrText.textContent = addr;
+  }
+
+  // 1명일 때: 약속 준비 모드
+  if (count <= 1) {
+    if (planPhase) planPhase.classList.remove('hidden');
+    if (resultPhase) resultPhase.classList.add('hidden');
+    if (topBadge) {
+      topBadge.textContent = '약속 준비';
+      topBadge.className = 'text-[10.5px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-[#2563eb]';
+    }
+
+    if (friendsList) {
+      friendsList.innerHTML = '<div onclick="window.openAddModal()" class="press cursor-pointer border border-dashed border-slate-300 hover:border-[#2563eb] bg-white/70 hover:bg-blue-50/40 rounded-xl p-2.5 flex items-center justify-between gap-2 transition-all group">' +
+        '<div class="flex items-center gap-2 min-w-0">' +
+          '<span class="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0"></span>' +
+          '<span class="text-[10.5px] font-black px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 shrink-0">친구</span>' +
+          '<span class="text-[12px] font-semibold text-slate-400 group-hover:text-[#2563eb] truncate transition-colors">터치하여 친구의 출발지를 입력하세요</span>' +
+        '</div>' +
+        '<div class="w-6 h-6 rounded-full bg-slate-100 group-hover:bg-[#2563eb] text-slate-400 group-hover:text-white flex items-center justify-center transition-all shrink-0">' +
+          '<i data-lucide="plus" class="w-3.5 h-3.5"></i>' +
+        '</div>' +
+      '</div>';
+    }
+  } else {
+    // 2명 이상: 황금 밸런스 중간 장소 도출 완료 모드
+    if (planPhase) planPhase.classList.add('hidden');
+    if (resultPhase) resultPhase.classList.remove('hidden');
+    if (topBadge) {
+      topBadge.textContent = count + '곳 모임 (' + (state.currentHubName || '중간 지점') + ')';
+      topBadge.className = 'text-[10.5px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700';
+    }
+
+    var hubNameEl = document.getElementById('tossHubName');
+    if (hubNameEl && state.currentHubName) {
+      hubNameEl.textContent = state.currentHubName;
+    }
+
+    var diffEl = document.getElementById('travelTimeDiff');
+    var diffBadge = document.getElementById('tossDiffBadge');
+    if (diffBadge) {
+      var diffText = (diffEl && diffEl.textContent && diffEl.textContent.trim()) ? diffEl.textContent.trim() : '공평한 이동시간';
+      diffBadge.textContent = (diffText.indexOf('차이') !== -1 || diffText.indexOf('공평') !== -1) ? diffText : (diffText + ' 차이');
+    }
+
+    // 참가자별 소요시간 게이지 바 렌더링
+    var gaugeArea = document.getElementById('tossTimeGaugeArea');
+    if (gaugeArea && state.locations) {
+      var maxDur = 1;
+      state.locations.forEach(function(loc) {
+        var d = participantRouteDetails[loc.id] ? participantRouteDetails[loc.id].durationMin : 25;
+        if (d > maxDur) maxDur = d;
+      });
+
+      gaugeArea.innerHTML = state.locations.map(function(loc, idx) {
+        var isMe = idx === 0;
+        var rDet = participantRouteDetails[loc.id];
+        var dur = rDet ? rDet.durationMin : (isMe ? 19 : 18);
+        var pct = Math.max(25, Math.min(100, Math.round((dur / maxDur) * 100)));
+        var barColor = isMe ? 'bg-[#2563eb]' : 'bg-emerald-500';
+        var badgeColor = isMe ? 'bg-blue-100 text-[#2563eb]' : 'bg-emerald-100 text-emerald-700';
+        var transName = (loc.transport === 'car') ? '자차' : ((loc.transport === 'walk') ? '도보' : '대중교통');
+
+        return '<div class="flex flex-col gap-1">' +
+          '<div class="flex items-center justify-between text-[11.5px] font-bold">' +
+            '<div class="flex items-center gap-1.5 min-w-0">' +
+              '<span class="px-1.5 py-0.2 rounded text-[10px] font-extrabold ' + badgeColor + '">' + (isMe ? '나' : loc.name) + '</span>' +
+              '<span class="text-slate-600 truncate text-[11px]">' + (loc.addr || loc.name) + ' (' + transName + ')</span>' +
+            '</div>' +
+            '<span class="font-black text-slate-900 shrink-0 ml-2">' + dur + '분</span>' +
+          '</div>' +
+          '<div class="w-full h-2 rounded-full bg-slate-100 overflow-hidden">' +
+            '<div class="h-full rounded-full ' + barColor + ' transition-all duration-500" style="width: ' + pct + '%"></div>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+    }
+  }
+
+  if (window.lucide) lucide.createIcons();
+};
+
+window.handleTossFindMidpoint = function() {
+  var count = (state.locations && state.locations.length) || 1;
+  if (count <= 1) {
+    showToast('함께 만날 친구의 출발지를 추가해 주세요!', 'user-plus');
+    window.openAddModal();
+  } else {
+    window.zoomToHub(false);
+  }
 };
 
 window.setHeaderTransport = function(mode) {
@@ -1063,6 +1170,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   syncMeetFilterUI();
   if (window.renderQuickPlacesBar) window.renderQuickPlacesBar();
+  if (window.renderTossCardUI) window.renderTossCardUI();
   locateMe(true);
   if (window.lucide) lucide.createIcons();
 });

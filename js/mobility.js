@@ -66,6 +66,7 @@ function recalcFairness(realDurations) {
       diffLabel.textContent = bInfo.text;
       diffLabel.className = 'text-[14px] font-black ' + bInfo.color;
     }
+    if (window.renderTossCardUI) window.renderTossCardUI();
   }
 }
 
@@ -145,6 +146,7 @@ function updateLocationsAndMidpoint() {
       window.updateWeatherAndCongestion(state.myAddress || '내 위치', state.myLocation);
     }
     if (window.updateHeaderRouteCardUI) window.updateHeaderRouteCardUI();
+    if (window.renderTossCardUI) window.renderTossCardUI();
   } else {
     if (transitCard && !state.confirmedPlace) transitCard.classList.remove('hidden');
 
@@ -323,6 +325,7 @@ function updateLocationsAndMidpoint() {
 
   renderOriginChips();
   if (window.updateHeaderRouteCardUI) window.updateHeaderRouteCardUI();
+  if (window.renderTossCardUI) window.renderTossCardUI();
   if (window.lucide) lucide.createIcons();
 }
 
