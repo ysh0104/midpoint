@@ -436,14 +436,16 @@ window.renderGalleryCards = function() {
       '<div class="relative w-full aspect-square rounded-xl overflow-hidden bg-slate-100 flex items-center justify-center">' +
         photoHtml +
         '<span class="absolute top-2 left-2 px-1.5 py-0.5 rounded text-[9.5px] font-extrabold ' + (is4Cut ? 'bg-zinc-900/90 text-white' : 'bg-white/95 text-slate-800') + ' backdrop-blur-xs shadow-2xs">' + mem.category + '</span>' +
-        '<button type="button" onclick="event.stopPropagation(); window.deleteMemoryItem(\'' + mem.id + '\')" class="press absolute top-2 right-2 z-10 w-6 h-6 rounded-full bg-black/50 hover:bg-rose-600 text-white grid place-items-center backdrop-blur-xs transition-colors" title="이 추억 삭제">' +
-          '<i data-lucide="trash-2" class="w-3.5 h-3.5"></i>' +
-        '</button>' +
         '<span class="absolute bottom-2 right-2 px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-black/60 text-white backdrop-blur-xs">' + mem.date + '</span>' +
       '</div>' +
-      '<div class="px-0.5">' +
-        '<h4 class="text-[13px] font-black text-slate-900 truncate group-hover:text-[#2563eb] transition-colors">' + mem.placeName + '</h4>' +
-        '<p class="text-[11px] text-slate-500 truncate mt-0.5">' + (mem.menu || mem.memo) + '</p>' +
+      '<div class="px-0.5 flex items-start justify-between gap-1">' +
+        '<div class="min-w-0 flex-1">' +
+          '<h4 class="text-[13px] font-black text-slate-900 truncate group-hover:text-[#2563eb] transition-colors">' + mem.placeName + '</h4>' +
+          '<p class="text-[11px] text-slate-500 truncate mt-0.5">' + (mem.menu || mem.memo) + '</p>' +
+        '</div>' +
+        '<button type="button" onclick="event.stopPropagation(); window.deleteMemoryItem(\'' + mem.id + '\')" class="press p-1 -mr-0.5 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all shrink-0" title="이 추억 삭제">' +
+          '<i data-lucide="trash-2" class="w-3.5 h-3.5"></i>' +
+        '</button>' +
       '</div>' +
     '</div>';
   }).join('');
