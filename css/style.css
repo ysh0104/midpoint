@@ -260,27 +260,39 @@ body {
   display: none;
 }
 
-/* 주변 카페/맛집 단정하고 깔끔한 미니멀 칩 */
+/* 주변 카페/맛집 단정하고 깔끔한 미니멀 칩 & 마커 래퍼 */
+.place-marker-icon-wrapper {
+  overflow: visible !important;
+  pointer-events: auto !important;
+  cursor: pointer !important;
+}
+
 .place-pop-marker {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 3px 8px;
-  border-radius: 6px;
+  padding: 4px 10px;
+  border-radius: 9999px;
   background: #ffffff;
-  border: 1px solid #cbd5e1;
+  border: 1px solid #bae6fd;
   color: #1e293b;
   font-size: 11px;
-  font-weight: 600;
-  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.08);
+  font-weight: 800;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.12);
   white-space: nowrap;
   transition: all 0.15s ease;
+  cursor: pointer !important;
+  pointer-events: auto !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  touch-action: manipulation !important;
 }
 
 .place-pop-marker:hover {
-  border-color: #66CCFF;
-  color: #0284c7;
-  box-shadow: 0 2px 8px rgba(102, 204, 255, 0.35);
+  border-color: #2563eb;
+  color: #2563eb;
+  transform: scale(1.08);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
 }
 
 /* 내 위치 GPS 마커 (애플맵 스타일의 정갈한 블루 인디케이터) */

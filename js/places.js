@@ -144,120 +144,33 @@ function fetchKakaoPlaces(centerCoord, distanceText) {
 
       var topDocs = validDocs.slice(0, 8);
 
-      // 4. 지도 위에 깔끔한 마커 팝업 생성
+      // 4. 지도 위에 깔끔한 마커 생성 (즉각적인 터치/클릭 반응)
       topDocs.forEach(function(p, i) {
         var pCoord = [parseFloat(p.y), parseFloat(p.x)];
         var dotColor = state.selectedCategory === 'CE7' ? 'bg-[#0284c7]' : 'bg-[#66CCFF]';
         var delaySec = (0.08 + (i * 0.05)).toFixed(2);
         var shortName = p.place_name.split(' ')[0];
+        kakaoPlacesCache[p.id] = p;
+        kakaoPlacesCache[p.place_name] = p;
 
-        var iconHtml = '<div class="place-pop-marker press px-2.5 py-1 rounded-full text-[11px] font-extrabold bg-white border border-[#bae6fd] text-slate-800 shadow-md whitespace-nowrap hover:scale-105 hover:border-[#66CCFF] hover:text-[#0284c7] transition-all flex items-center gap-1.5 cursor-pointer backdrop-blur-sm" style="animation-delay: ' + delaySec + 's">' +
-          '<span class="w-2 h-2 rounded-full ' + dotColor + '"></span>' +
+        var iconHtml = '<div onclick="event.stopPropagation(); window.openPlaceCardPopupDirect(\'' + p.id + '\')" class="place-pop-marker press px-3 py-1.5 rounded-full text-[11px] font-extrabold bg-white border border-[#bae6fd] text-slate-800 shadow-md whitespace-nowrap hover:scale-110 hover:border-[#2563eb] hover:text-[#2563eb] transition-all flex items-center gap-1.5 cursor-pointer backdrop-blur-sm" style="animation-delay: ' + delaySec + 's; pointer-events: auto;">' +
+          '<span class="w-2.5 h-2.5 rounded-full ' + dotColor + ' shrink-0"></span>' +
           '<span>' + shortName + '</span>' +
         '</div>';
 
         var m = L.marker(pCoord, {
           icon: L.divIcon({
             html: iconHtml,
-            className: '',
-            iconSize: [80, 24],
-            iconAnchor: [40, 12]
-          })
+            className: 'place-marker-icon-wrapper',
+            iconSize: [110, 32],
+            iconAnchor: [55, 16]
+          }),
+          zIndexOffset: 600
         }).addTo(map);
 
-// 모든 장소 클릭 시 감성 모던 팝업 카드 오픈 (약속 확정, 사진/추억 남기기, 카카오맵 연동)
-window.openPlaceCardPopup = function(place, markerOrCoord) {
-  if (!map || !place) return;
-  var isConfirmed = state.confirmedPlace && (
-    String(state.confirmedPlace.id) === String(place.id) ||
-    state.confirmedPlace.place_name === place.place_name
-  );
-  var pName = place.place_name || '장소명';
-  var pAddr = place.road_address_name || place.address_name || '상세 주소 미제공';
-  var pCategory = place.category_name ? place.category_name.split(' > ').pop() : (state.selectedCategory === 'CE7' ? '카페' : '음식점');
-  var escapedName = pName.replace(/'/g, "\\'");
-  var escapedId = (place.id || '').replace(/'/g, "\\'");
-
-  var badgeHtml = isConfirmed
-    ? '<div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-500"></span><span class="text-[10.5px] font-bold text-slate-500">확정된 약속 장소</span></div><span class="text-[9.5px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">도착</span>'
-    : '<div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-[#0284c7]"></span><span class="text-[10.5px] font-bold text-slate-500">추천 장소</span></div><span class="text-[9.5px] font-bold text-[#0284c7] bg-sky-50 px-1.5 py-0.5 rounded border border-[#bae6fd]">' + pCategory + '</span>';
-
-  var actionButtonsHtml = isConfirmed
-    ? '<button type="button" onclick="map.closePopup(); window.openAddMemoryModal(\'' + escapedName + '\');" class="press w-full py-2 px-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-extrabold text-[11.5px] shadow-xs flex items-center justify-center gap-1.5 transition-all">' +
-        '<i data-lucide="camera" class="w-3.5 h-3.5"></i>' +
-        '<span>사진 & 모임 추억 남기기</span>' +
-      '</button>' +
-      '<button type="button" onclick="map.closePopup(); window.startNaviMode();" class="press w-full py-1.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[11px] flex items-center justify-center gap-1.5 transition-all">' +
-        '<i data-lucide="navigation" class="w-3 h-3 text-[#0284c7]"></i>' +
-        '<span>내비게이션 안내</span>' +
-      '</button>'
-    : '<button type="button" onclick="map.closePopup(); window.confirmMeetingPlace(\'' + escapedId + '\', \'' + escapedName + '\');" class="press w-full py-2 px-3 rounded-xl bg-gradient-to-r from-[#2563eb] to-[#0284c7] hover:from-[#1d4ed8] hover:to-[#0369a1] text-white font-extrabold text-[11.5px] shadow-xs flex items-center justify-center gap-1.5 transition-all">' +
-        '<i data-lucide="check" class="w-3.5 h-3.5"></i>' +
-        '<span>여기서 모이기 (약속 장소 확정)</span>' +
-      '</button>' +
-      '<div class="grid grid-cols-2 gap-1.5">' +
-        '<button type="button" onclick="map.closePopup(); window.openAddMemoryModal(\'' + escapedName + '\');" class="press py-1.5 px-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-700 font-bold text-[10.5px] border border-amber-200/80 flex items-center justify-center gap-1 transition-all">' +
-          '<i data-lucide="camera" class="w-3 h-3 text-amber-600"></i>' +
-          '<span>추억 남기기</span>' +
-        '</button>' +
-        (place.place_url ? ('<a href="' + place.place_url + '" target="_blank" rel="noopener noreferrer" class="press py-1.5 px-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[10.5px] flex items-center justify-center gap-1 transition-all">' +
-          '<span>카카오맵</span><i data-lucide="external-link" class="w-3 h-3"></i>' +
-        '</a>') : '<div class="py-1.5 px-2 rounded-xl bg-slate-50 text-slate-400 text-[10px] text-center font-medium">정보 준비중</div>') +
-      '</div>';
-
-  var catchtableUrl = 'https://app.catchtable.co.kr/ct/search/total?query=' + encodeURIComponent(pName);
-  var naverBookingUrl = 'https://search.naver.com/search.naver?query=' + encodeURIComponent(pName + ' 예약');
-
-  var bookingButtonsHtml = 
-    '<div class="grid grid-cols-2 gap-1.5 pt-2 border-t border-slate-100">' +
-      '<a href="' + catchtableUrl + '" target="_blank" rel="noopener noreferrer" class="press py-1.5 px-2 rounded-xl bg-gradient-to-r from-[#ff3d00] to-[#ff5722] hover:from-[#e53600] hover:to-[#f4511e] text-white font-extrabold text-[10.5px] shadow-2xs flex items-center justify-center gap-1 transition-all" title="캐치테이블 실시간 예약 / 웨이팅">' +
-        '<i data-lucide="utensils" class="w-3 h-3"></i>' +
-        '<span>캐치테이블</span>' +
-      '</a>' +
-      '<a href="' + naverBookingUrl + '" target="_blank" rel="noopener noreferrer" class="press py-1.5 px-2 rounded-xl bg-[#03c75a] hover:bg-[#02b351] text-white font-extrabold text-[10.5px] shadow-2xs flex items-center justify-center gap-1 transition-all" title="네이버 스마트플레이스 예약">' +
-        '<i data-lucide="calendar-check" class="w-3 h-3"></i>' +
-        '<span>네이버 예약</span>' +
-      '</a>' +
-    '</div>';
-
-  var popupHtml = '<div class="p-3.5 flex flex-col gap-2 max-w-[250px] select-none">' +
-    '<div class="flex items-center justify-between">' +
-      badgeHtml +
-    '</div>' +
-    '<div>' +
-      '<h4 class="text-[14px] font-black text-slate-900 leading-snug truncate">' + pName + '</h4>' +
-      '<p class="text-[11px] text-slate-500 truncate mt-0.5">' + pAddr + '</p>' +
-    '</div>' +
-    bookingButtonsHtml +
-    '<div class="flex flex-col gap-1.5">' +
-      actionButtonsHtml +
-    '</div>' +
-  '</div>';
-
-  var coord = (markerOrCoord && markerOrCoord.getLatLng)
-    ? markerOrCoord.getLatLng()
-    : (Array.isArray(markerOrCoord) ? L.latLng(markerOrCoord[0], markerOrCoord[1]) : L.latLng(parseFloat(place.y), parseFloat(place.x)));
-
-  L.popup({
-    className: 'bandding-place-popup',
-    offset: [0, -18],
-    closeButton: true,
-    autoPan: false
-  }).setLatLng(coord).setContent(popupHtml).openOn(map);
-
-  if (window.lucide) {
-    setTimeout(function() { lucide.createIcons(); }, 30);
-  }
-};
-
-        m.on('click', function() {
-          if (window.smoothFlyTo) {
-            window.smoothFlyTo(pCoord, 16.5, function() {
-              window.openPlaceCardPopup(p, m);
-            });
-          } else {
-            window.openPlaceCardPopup(p, m);
-          }
+        m.on('click', function(e) {
+          if (e && e.originalEvent) e.originalEvent.stopPropagation();
+          window.openPlaceCardPopupDirect(p.id);
         });
         state.placeMarkers.push(m);
       });
@@ -334,18 +247,211 @@ window.openPlaceCardPopup = function(place, markerOrCoord) {
     });
 }
 
-window.focusKakaoPlace = function(id) {
-  var p = kakaoPlacesCache[id];
-  if (!p) return;
-  var coord = [parseFloat(p.y), parseFloat(p.x)];
-  if (window.smoothFlyTo) {
-    window.smoothFlyTo(coord, 16.5, function() {
-      window.openPlaceCardPopup(p, coord);
+// 장소/음식 대표 사진 매핑 (유명 플레이스 맞춤 + 업종별 고화질 사진 + 기존 등록 사진 연동)
+window.getPlacePhoto = function(p) {
+  if (!p) return 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80';
+
+  // 1. 이미 사용자가 해당 장소에 등록한 추억 사진이 있다면 최우선 적용
+  if (state.memories && state.memories.length > 0) {
+    var matchMem = state.memories.find(function(m) {
+      return m.placeName && p.place_name && (m.placeName.includes(p.place_name) || p.place_name.includes(m.placeName));
     });
-  } else {
-    map.flyTo(coord, 16.5, { duration: 0.9, easeLinearity: 0.22 });
-    window.openPlaceCardPopup(p, coord);
+    if (matchMem && matchMem.photoUrl) {
+      return matchMem.photoUrl;
+    }
   }
+
+  var name = (p.place_name || '').toLowerCase();
+  var cat = (p.category_name || '').toLowerCase();
+
+  // 특정 유명 프랜차이즈 및 대표 장소 맞춤 사진
+  if (name.includes('레드버튼')) {
+    return 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?auto=format&fit=crop&w=800&q=80'; // 보드게임 라운지 & 음료
+  }
+  if (name.includes('온달집')) {
+    return 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=800&q=80'; // 숯불구이/포차
+  }
+  if (name.includes('디피스트') || name.includes('딥')) {
+    return 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=800&q=80'; // 감성 스페셜티 카페 & 디저트
+  }
+  if (name.includes('스타벅스') || name.includes('투썸') || name.includes('할리스') || name.includes('이디야') || name.includes('폴바셋')) {
+    return 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=800&q=80';
+  }
+
+  // 음식 카테고리별 테마 사진
+  if (cat.includes('카페') || cat.includes('커피') || cat.includes('디저트') || cat.includes('베이커리') || name.includes('카페') || name.includes('커피')) {
+    return 'https://images.unsplash.com/photo-1559925393-8be0ec4767c8?auto=format&fit=crop&w=800&q=80'; // 감성 카페 & 라떼
+  }
+  if (cat.includes('고기') || cat.includes('삼겹살') || cat.includes('갈비') || cat.includes('구이') || name.includes('고기') || name.includes('갈비')) {
+    return 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=800&q=80'; // 삼겹살/갈비/BBQ
+  }
+  if (cat.includes('치킨') || name.includes('치킨') || name.includes('통닭')) {
+    return 'https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?auto=format&fit=crop&w=800&q=80'; // 바삭한 치킨
+  }
+  if (cat.includes('일식') || cat.includes('초밥') || cat.includes('스시') || cat.includes('이자카야') || name.includes('스시') || name.includes('초밥')) {
+    return 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?auto=format&fit=crop&w=800&q=80'; // 신선한 스시 & 일식
+  }
+  if (cat.includes('양식') || cat.includes('이탈리안') || cat.includes('파스타') || cat.includes('피자') || name.includes('파스타') || name.includes('피자')) {
+    return 'https://images.unsplash.com/photo-1551183053-bf91a1d81141?auto=format&fit=crop&w=800&q=80'; // 파스타 & 이탈리안
+  }
+  if (cat.includes('중식') || cat.includes('중화') || name.includes('짬뽕') || name.includes('짜장') || name.includes('마라')) {
+    return 'https://images.unsplash.com/photo-1585032226651-759b368d7246?auto=format&fit=crop&w=800&q=80'; // 중식 요리
+  }
+  if (cat.includes('술집') || cat.includes('호프') || cat.includes('요리주점') || cat.includes('바') || cat.includes('와인') || name.includes('주점') || name.includes('펍')) {
+    return 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?auto=format&fit=crop&w=800&q=80'; // 감성 펍 & 다이닝 바
+  }
+  if (cat.includes('보드게임') || name.includes('보드게임') || name.includes('방탈출') || name.includes('오락') || name.includes('엔터테인먼트')) {
+    return 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?auto=format&fit=crop&w=800&q=80'; // 보드게임 라운지
+  }
+  if (cat.includes('한식') || name.includes('식당') || name.includes('밥집')) {
+    return 'https://images.unsplash.com/photo-1498654896293-37aacf113fd9?auto=format&fit=crop&w=800&q=80'; // 정갈한 한식 식사
+  }
+
+  // 기본 고화질 다이닝 인테리어
+  return 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80';
+};
+
+window.selectedModalPlace = null;
+
+// 장소 상세 모달 열기 (가게 사진, 캐치테이블/네이버 예약, 사진 등록, 모임 확정)
+window.openPlaceDetailModal = function(place) {
+  if (!place) return;
+  window.selectedModalPlace = place;
+
+  var modal = document.getElementById('placeDetailModal');
+  if (!modal) return;
+
+  var imgEl = document.getElementById('placeModalImg');
+  var catEl = document.getElementById('placeModalCategory');
+  var distEl = document.getElementById('placeModalDist');
+  var titleEl = document.getElementById('placeModalTitle');
+  var addrEl = document.getElementById('placeModalAddr');
+  var phoneEl = document.getElementById('placeModalPhone');
+  var ctBtn = document.getElementById('placeModalCatchtableBtn');
+  var nvBtn = document.getElementById('placeModalNaverBtn');
+  var kakaoUrl = document.getElementById('placeModalKakaoUrl');
+  var confirmBtn = document.getElementById('placeModalConfirmBtn');
+
+  // 사진 적용
+  if (imgEl) {
+    imgEl.src = window.getPlacePhoto(place);
+    imgEl.alt = place.place_name || '장소 사진';
+  }
+
+  // 카테고리 태그
+  var subCat = place.category_name ? place.category_name.split(' > ').pop() : (state.selectedCategory === 'CE7' ? '카페' : '음식점');
+  if (catEl) catEl.textContent = subCat;
+
+  // 거리 계산
+  if (distEl) {
+    var distMeter = parseInt(place.distance, 10);
+    var distStr = isNaN(distMeter) ? '주변' : (distMeter < 1000 ? (distMeter + 'm') : ((distMeter / 1000).toFixed(1) + 'km'));
+    distEl.textContent = distStr;
+  }
+
+  // 타이틀 & 주소
+  if (titleEl) titleEl.textContent = place.place_name || '장소명';
+  if (addrEl) addrEl.textContent = place.road_address_name || place.address_name || '주소 정보 없음';
+
+  // 전화번호
+  if (phoneEl) {
+    phoneEl.textContent = place.phone ? place.phone : '전화번호 미등록';
+  }
+
+  // 캐치테이블 & 네이버 예약 링크
+  var pName = place.place_name || '';
+  if (ctBtn) {
+    ctBtn.href = 'https://app.catchtable.co.kr/ct/search/total?query=' + encodeURIComponent(pName);
+  }
+  if (nvBtn) {
+    nvBtn.href = 'https://search.naver.com/search.naver?query=' + encodeURIComponent(pName + ' 예약');
+  }
+
+  // 카카오맵 링크
+  if (kakaoUrl) {
+    kakaoUrl.href = place.place_url || ('https://map.kakao.com/link/search/' + encodeURIComponent(pName));
+  }
+
+  // 확정 여부 UI
+  var isConfirmed = state.confirmedPlace && (state.confirmedPlace.id === place.id || state.confirmedPlace.place_name === place.place_name);
+  if (confirmBtn) {
+    if (isConfirmed) {
+      confirmBtn.className = 'press flex-1 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-[13px] shadow-sm flex items-center justify-center gap-1.5 transition-all';
+      confirmBtn.innerHTML = '<i data-lucide="check-circle" class="w-4 h-4"></i><span>약속 장소로 확정됨</span>';
+    } else {
+      confirmBtn.className = 'press flex-1 py-3 rounded-2xl bg-gradient-to-r from-[#2563eb] to-[#0284c7] hover:from-[#1d4ed8] hover:to-[#0369a1] text-white font-black text-[13px] shadow-sm flex items-center justify-center gap-1.5 transition-all';
+      confirmBtn.innerHTML = '<i data-lucide="check" class="w-4 h-4"></i><span>여기서 모이기 (약속 장소 확정)</span>';
+    }
+  }
+
+  modal.classList.remove('hidden');
+  if (window.lucide) lucide.createIcons();
+};
+
+window.closePlaceDetailModal = function() {
+  var modal = document.getElementById('placeDetailModal');
+  if (modal) modal.classList.add('hidden');
+};
+
+window.addMemoryForCurrentPlace = function() {
+  var p = window.selectedModalPlace;
+  window.closePlaceDetailModal();
+  if (p && window.openAddMemoryModal) {
+    window.openAddMemoryModal(p.place_name);
+  }
+};
+
+window.confirmCurrentModalPlace = function() {
+  var p = window.selectedModalPlace;
+  window.closePlaceDetailModal();
+  if (p && window.confirmMeetingPlace) {
+    window.confirmMeetingPlace(p.id, p.place_name);
+  }
+};
+
+window.shareCurrentPlaceToChat = function() {
+  var p = window.selectedModalPlace;
+  window.closePlaceDetailModal();
+  if (p && window.sharePlaceToChat) {
+    window.sharePlaceToChat(p.id);
+  }
+};
+
+// 지도 마커 클릭 시 즉시 0ms 반응으로 상세 모달 오픈!
+window.openPlaceCardPopupDirect = function(idOrName) {
+  var p = kakaoPlacesCache[idOrName];
+  if (!p) {
+    for (var k in kakaoPlacesCache) {
+      if (kakaoPlacesCache[k] && (kakaoPlacesCache[k].id === idOrName || kakaoPlacesCache[k].place_name === idOrName)) {
+        p = kakaoPlacesCache[k];
+        break;
+      }
+    }
+  }
+  if (!p) return;
+
+  // 1. 즉시 상세 모달 오픈 (0ms 반응속도)
+  window.openPlaceDetailModal(p);
+
+  // 2. 지도 중심을 부드럽게 부가적으로 살짝 패닝
+  if (map && p.y && p.x) {
+    var pCoord = [parseFloat(p.y), parseFloat(p.x)];
+    map.panTo(pCoord, { animate: true, duration: 0.35 });
+  }
+};
+
+// 기존 openPlaceCardPopup 호환성 지원
+window.openPlaceCardPopup = function(place, markerOrCoord) {
+  if (place) {
+    window.openPlaceDetailModal(place);
+    if (map && place.y && place.x) {
+      map.panTo([parseFloat(place.y), parseFloat(place.x)], { animate: true, duration: 0.35 });
+    }
+  }
+};
+
+window.focusKakaoPlace = function(id) {
+  window.openPlaceCardPopupDirect(id);
 };
 
 window.switchPlaceCategory = function(catCode) {
@@ -509,21 +615,19 @@ window.searchPlaceKeywordDirect = function(keyword) {
       docs.slice(0, 10).forEach(function(p, idx) {
         var pCoord = [parseFloat(p.y), parseFloat(p.x)];
         var shortName = p.place_name.length > 7 ? p.place_name.slice(0, 6) + '…' : p.place_name;
-        var iconHtml = '<div class="place-pop-marker press px-2.5 py-1 rounded-full text-[11px] font-extrabold bg-white border border-[#bae6fd] text-slate-800 shadow-md whitespace-nowrap hover:scale-105 hover:border-[#66CCFF] hover:text-[#0284c7] transition-all flex items-center gap-1.5 cursor-pointer backdrop-blur-sm">' +
-          '<span class="w-2 h-2 rounded-full bg-[#0284c7]"></span>' +
+        kakaoPlacesCache[p.id] = p;
+        kakaoPlacesCache[p.place_name] = p;
+        var iconHtml = '<div onclick="event.stopPropagation(); window.openPlaceCardPopupDirect(\'' + p.id + '\')" class="place-pop-marker press px-3 py-1.5 rounded-full text-[11px] font-extrabold bg-white border border-[#bae6fd] text-slate-800 shadow-md whitespace-nowrap hover:scale-110 hover:border-[#2563eb] hover:text-[#2563eb] transition-all flex items-center gap-1.5 cursor-pointer backdrop-blur-sm" style="pointer-events: auto;">' +
+          '<span class="w-2.5 h-2.5 rounded-full bg-[#0284c7] shrink-0"></span>' +
           '<span>' + shortName + '</span>' +
         '</div>';
         var m = L.marker(pCoord, {
-          icon: L.divIcon({ html: iconHtml, className: '', iconSize: [80, 24], iconAnchor: [40, 12] })
+          icon: L.divIcon({ html: iconHtml, className: 'place-marker-icon-wrapper', iconSize: [110, 32], iconAnchor: [55, 16] }),
+          zIndexOffset: 600
         }).addTo(map);
-        m.on('click', function() {
-          if (window.smoothFlyTo) {
-            window.smoothFlyTo(pCoord, 16.5, function() {
-              window.openPlaceCardPopup(p, m);
-            });
-          } else {
-            window.openPlaceCardPopup(p, m);
-          }
+        m.on('click', function(e) {
+          if (e && e.originalEvent) e.originalEvent.stopPropagation();
+          window.openPlaceCardPopupDirect(p.id);
         });
         state.placeMarkers.push(m);
       });

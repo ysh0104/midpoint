@@ -1428,7 +1428,107 @@
     </div>
   </div>
 
-  <!-- 13. 반띵 인생네컷 (Life 4-Cut Studio) 전용 모달 -->
+  <!-- 13. 장소 상세 모달 (가게/음식 대표 사진, 캐치테이블 & 네이버 예약, 사진/추억 등록, 약속 확정) -->
+  <div id="placeDetailModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 transition-all" onclick="if(event.target === this) window.closePlaceDetailModal()">
+    <div class="w-full max-w-sm bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[88vh] animate-in fade-in slide-in-from-bottom-6 duration-200">
+      
+      <!-- 상단 가게/음식 대표 사진 배너 -->
+      <div class="relative w-full h-44 bg-slate-900 overflow-hidden shrink-0">
+        <img id="placeModalImg" src="" alt="장소 사진" class="w-full h-full object-cover transition-transform duration-500 hover:scale-105" />
+        <div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-black/30 pointer-events-none"></div>
+        
+        <!-- 우상단 닫기 버튼 -->
+        <button type="button" onclick="window.closePlaceDetailModal()" class="press absolute top-3 right-3 w-8 h-8 rounded-full bg-black/40 hover:bg-black/60 text-white grid place-items-center backdrop-blur-md transition-colors z-10" title="닫기">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+
+        <!-- 좌상단 카테고리 태그 & 거리 -->
+        <div class="absolute top-3 left-3 z-10 flex items-center gap-1.5">
+          <span id="placeModalCategory" class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-white/95 text-slate-900 backdrop-blur-xs shadow-xs">추천 맛집</span>
+          <span id="placeModalDist" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-black/60 text-white backdrop-blur-xs">150m</span>
+        </div>
+
+        <!-- 사진 하단 장소명 & 주소 오버레이 -->
+        <div class="absolute bottom-3 left-3 right-3 z-10 text-white">
+          <h3 id="placeModalTitle" class="text-[18px] font-black tracking-tight leading-snug drop-shadow-md truncate">장소명</h3>
+          <p id="placeModalAddr" class="text-[11.5px] text-slate-200 font-medium truncate mt-0.5 drop-shadow-sm">상세 주소</p>
+        </div>
+      </div>
+
+      <!-- 본문 내용: 예약, 사진 등록, 장소 정보 -->
+      <div class="p-4 flex-1 overflow-y-auto no-scrollbar flex flex-col gap-3.5 bg-white">
+        
+        <!-- 1. 캐치테이블 & 네이버 예약 다이렉트 버튼 -->
+        <div>
+          <div class="flex items-center justify-between mb-1.5">
+            <span class="text-[11px] font-extrabold text-slate-500 flex items-center gap-1">
+              <i data-lucide="calendar" class="w-3.5 h-3.5 text-[#2563eb]"></i>
+              <span>실시간 예약 & 웨이팅</span>
+            </span>
+            <span class="text-[10px] text-slate-400 font-medium">원클릭 바로가기</span>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <a id="placeModalCatchtableBtn" href="#" target="_blank" rel="noopener noreferrer" class="press py-2.5 px-3 rounded-xl bg-gradient-to-r from-[#ff3d00] to-[#ff5722] hover:from-[#e53600] hover:to-[#f4511e] text-white font-black text-[12px] shadow-2xs flex items-center justify-center gap-1.5 transition-all" title="캐치테이블 실시간 예약 / 웨이팅">
+              <i data-lucide="utensils" class="w-4 h-4"></i>
+              <span>캐치테이블</span>
+            </a>
+            <a id="placeModalNaverBtn" href="#" target="_blank" rel="noopener noreferrer" class="press py-2.5 px-3 rounded-xl bg-[#03c75a] hover:bg-[#02b351] text-white font-black text-[12px] shadow-2xs flex items-center justify-center gap-1.5 transition-all" title="네이버 스마트플레이스 예약">
+              <i data-lucide="calendar-check" class="w-4 h-4"></i>
+              <span>네이버 예약</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- 2. 모임 사진 & 추억 남기기 (원클릭 사진 등록) -->
+        <div class="p-3 rounded-2xl bg-gradient-to-r from-amber-50 to-orange-50/60 border border-amber-200/80 flex items-center justify-between gap-3 shadow-2xs">
+          <div class="min-w-0 flex-1">
+            <div class="flex items-center gap-1 text-amber-700 font-bold text-[11px]">
+              <i data-lucide="camera" class="w-3.5 h-3.5 text-amber-600"></i>
+              <span>여기 다녀오셨나요?</span>
+            </div>
+            <p class="text-[11px] text-slate-600 font-medium mt-0.5 truncate">모임 사진을 등록하고 지도에 남겨보세요</p>
+          </div>
+          <button type="button" id="placeModalAddMemoryBtn" onclick="window.addMemoryForCurrentPlace()" class="press px-3 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-[11px] shadow-xs shrink-0 flex items-center gap-1 transition-all">
+            <span>사진 등록</span>
+          </button>
+        </div>
+
+        <!-- 3. 상세 정보 (전화번호, 카카오맵 상세 정보, 채팅방 공유) -->
+        <div class="pt-1 flex flex-col gap-2">
+          <div class="flex items-center justify-between text-[11.5px] text-slate-600">
+            <span class="flex items-center gap-1.5 font-bold text-slate-500">
+              <i data-lucide="phone" class="w-3.5 h-3.5 text-slate-400"></i>
+              <span>전화번호</span>
+            </span>
+            <span id="placeModalPhone" class="font-extrabold text-slate-800">미등록</span>
+          </div>
+          
+          <div class="grid grid-cols-2 gap-1.5 pt-1">
+            <a id="placeModalKakaoUrl" href="#" target="_blank" rel="noopener noreferrer" class="press py-2 px-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[11px] flex items-center justify-center gap-1 transition-all">
+              <span>카카오맵 상세</span>
+              <i data-lucide="external-link" class="w-3 h-3"></i>
+            </a>
+            <button type="button" id="placeModalShareChatBtn" onclick="window.shareCurrentPlaceToChat()" class="press py-2 px-2.5 rounded-xl bg-[#f0f9ff] hover:bg-sky-100 text-[#0284c7] font-bold text-[11px] border border-[#bae6fd] flex items-center justify-center gap-1 transition-all">
+              <i data-lucide="share-2" class="w-3 h-3"></i>
+              <span>채팅방 공유</span>
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- 하단 메인 액션 바: 여기서 모이기 (약속 확정) -->
+      <div class="p-3 bg-slate-50 border-t border-slate-100 flex items-center gap-2">
+        <button type="button" id="placeModalConfirmBtn" onclick="window.confirmCurrentModalPlace()" class="press flex-1 py-3 rounded-2xl bg-gradient-to-r from-[#2563eb] to-[#0284c7] hover:from-[#1d4ed8] hover:to-[#0369a1] text-white font-black text-[13px] shadow-sm flex items-center justify-center gap-1.5 transition-all">
+          <i data-lucide="check" class="w-4 h-4"></i>
+          <span>여기서 모이기 (약속 장소 확정)</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 14. 반띵 인생네컷 (Life 4-Cut Studio) 전용 모달 -->
   <div id="life4CutModal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4 transition-all">
     <div class="w-full max-w-xl bg-zinc-900 text-white rounded-t-3xl sm:rounded-3xl shadow-2xl border border-zinc-800 overflow-hidden flex flex-col max-h-[92vh] animate-in fade-in zoom-in-95 duration-200">
       
@@ -1570,17 +1670,17 @@
 </div>
 
 <!-- 기능별 모듈 스크립트 분리 (Clean Modular Architecture) -->
-<script src="js/config.js?v=42"></script>
-<script src="js/state.js?v=42"></script>
-<script src="js/map.js?v=42"></script>
-<script src="js/mobility.js?v=42"></script>
-<script src="js/places.js?v=42"></script>
-<script src="js/weather.js?v=42"></script>
-<script src="js/care.js?v=42"></script>
-<script src="js/game.js?v=42"></script>
-<script src="js/chat.js?v=42"></script>
-<script src="js/ui.js?v=42"></script>
-<script src="js/memory.js?v=42"></script>
-<script src="js/life4cut.js?v=42"></script>
+<script src="js/config.js?v=44"></script>
+<script src="js/state.js?v=44"></script>
+<script src="js/map.js?v=44"></script>
+<script src="js/mobility.js?v=44"></script>
+<script src="js/places.js?v=44"></script>
+<script src="js/weather.js?v=44"></script>
+<script src="js/care.js?v=44"></script>
+<script src="js/game.js?v=44"></script>
+<script src="js/chat.js?v=44"></script>
+<script src="js/ui.js?v=44"></script>
+<script src="js/memory.js?v=44"></script>
+<script src="js/life4cut.js?v=44"></script>
 </body>
 </html>
