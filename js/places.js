@@ -190,7 +190,7 @@ function fetchKakaoPlaces(centerCoord, distanceText) {
         var isConfirmed = state.confirmedPlace && state.confirmedPlace.id === p.id;
         var confirmBtnClass = isConfirmed
           ? 'bg-emerald-600 text-white'
-          : 'bg-[#f0f9ff] hover:bg-sky-100 text-[#0284c7] border border-[#bae6fd] shadow-2xs';
+          : 'bg-gradient-to-r from-[#2563eb] to-[#0284c7] hover:from-[#1d4ed8] hover:to-[#0369a1] text-white shadow-2xs';
         var confirmBtnText = isConfirmed ? '확정된 장소' : '여기서 모이기';
 
         var ctUrl = 'https://app.catchtable.co.kr/ct/search/total?query=' + encodeURIComponent(p.place_name);
@@ -211,28 +211,39 @@ function fetchKakaoPlaces(centerCoord, distanceText) {
               '<i data-lucide="crosshair" class="w-4 h-4"></i>' +
             '</button>' +
           '</div>' +
-          '<div class="flex items-center gap-1.5 pt-1.5 border-t border-slate-100">' +
-            '<a href="' + ctUrl + '" target="_blank" rel="noopener noreferrer" class="press flex-1 py-1.5 px-2 rounded-xl bg-gradient-to-r from-[#ff3d00] to-[#ff5722] hover:from-[#e53600] hover:to-[#f4511e] text-white font-extrabold text-[10.5px] shadow-2xs flex items-center justify-center gap-1 transition-all" title="캐치테이블 실시간 예약 / 웨이팅">' +
-              '<i data-lucide="utensils" class="w-3 h-3"></i>' +
-              '<span>캐치테이블</span>' +
+          '<div class="flex items-center gap-2 pt-1 border-t border-slate-100">' +
+            '<a href="' + ctUrl + '" target="_blank" rel="noopener noreferrer" class="press flex-1 py-1.5 px-2.5 rounded-xl bg-slate-50 hover:bg-orange-50/70 border border-slate-200/90 hover:border-orange-300 text-slate-800 font-extrabold text-[11px] shadow-2xs flex items-center justify-between transition-all" title="캐치테이블 실시간 예약 / 웨이팅">' +
+              '<div class="flex items-center gap-1.5 min-w-0">' +
+                '<span class="w-4.5 h-4.5 rounded-md bg-orange-500/10 text-[#ff3d00] grid place-items-center shrink-0">' +
+                  '<i data-lucide="utensils" class="w-2.5 h-2.5"></i>' +
+                '</span>' +
+                '<span class="truncate">캐치테이블</span>' +
+              '</div>' +
+              '<span class="text-[9.5px] font-bold text-orange-600/80 shrink-0">예약</span>' +
             '</a>' +
-            '<a href="' + nvUrl + '" target="_blank" rel="noopener noreferrer" class="press flex-1 py-1.5 px-2 rounded-xl bg-[#03c75a] hover:bg-[#02b351] text-white font-extrabold text-[10.5px] shadow-2xs flex items-center justify-center gap-1 transition-all" title="네이버 스마트플레이스 예약">' +
-              '<i data-lucide="calendar-check" class="w-3 h-3"></i>' +
-              '<span>네이버 예약</span>' +
+            '<a href="' + nvUrl + '" target="_blank" rel="noopener noreferrer" class="press flex-1 py-1.5 px-2.5 rounded-xl bg-slate-50 hover:bg-emerald-50/70 border border-slate-200/90 hover:border-emerald-300 text-slate-800 font-extrabold text-[11px] shadow-2xs flex items-center justify-between transition-all" title="네이버 스마트플레이스 예약">' +
+              '<div class="flex items-center gap-1.5 min-w-0">' +
+                '<span class="w-4.5 h-4.5 rounded-md bg-emerald-500/10 text-[#03c75a] grid place-items-center shrink-0">' +
+                  '<i data-lucide="calendar-check" class="w-2.5 h-2.5"></i>' +
+                '</span>' +
+                '<span class="truncate">네이버 예약</span>' +
+              '</div>' +
+              '<span class="text-[9.5px] font-bold text-emerald-600/80 shrink-0">예약</span>' +
             '</a>' +
           '</div>' +
           '<div class="flex items-center justify-between pt-0.5 text-[11px]">' +
-            (p.phone ? ('<span class="text-slate-400 font-medium truncate max-w-[100px]">' + p.phone + '</span>') : '<span class="text-slate-300">전화번호 미등록</span>') +
+            (p.phone ? ('<span class="text-slate-400 font-medium truncate max-w-[95px]">' + p.phone + '</span>') : '<span class="text-slate-300">전화번호 미등록</span>') +
             '<div class="flex items-center gap-1.5">' +
-              '<button type="button" onclick="window.sharePlaceToChat(\'' + id + '\')" class="press px-2 py-1 rounded-lg bg-[#f0f9ff] hover:bg-sky-100 text-[#0284c7] font-bold text-[10.5px] border border-[#bae6fd] flex items-center gap-1 transition-all" title="모임 채팅방에 장소 공유">' +
-                '<i data-lucide="share-2" class="w-3 h-3"></i>' +
-                '<span>채팅 공유</span>' +
+              '<button type="button" onclick="window.sharePlaceToChat(\'' + id + '\')" class="press px-2 py-1 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold text-[10.5px] border border-slate-200/80 flex items-center gap-1 transition-all" title="모임 채팅방에 장소 공유">' +
+                '<i data-lucide="share-2" class="w-3 h-3 text-[#0284c7]"></i>' +
+                '<span>공유</span>' +
               '</button>' +
-              '<a href="' + p.place_url + '" target="_blank" rel="noopener noreferrer" class="px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-[10.5px] flex items-center gap-1">' +
-                '<span>카카오맵</span><i data-lucide="external-link" class="w-3 h-3"></i>' +
+              '<a href="' + p.place_url + '" target="_blank" rel="noopener noreferrer" class="px-2 py-1 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold text-[10.5px] border border-slate-200/80 flex items-center gap-1 transition-all">' +
+                '<span>지도</span><i data-lucide="external-link" class="w-3 h-3 text-slate-400"></i>' +
               '</a>' +
-              '<button type="button" onclick="window.confirmMeetingPlace(\'' + id + '\')" class="press px-2.5 py-1 rounded-lg font-bold text-[10.5px] transition-all ' + confirmBtnClass + '">' +
-                confirmBtnText +
+              '<button type="button" onclick="window.confirmMeetingPlace(\'' + id + '\')" class="press px-2.5 py-1 rounded-lg font-black text-[10.5px] transition-all flex items-center gap-1 ' + confirmBtnClass + '">' +
+                '<i data-lucide="' + (isConfirmed ? 'check-circle' : 'check') + '" class="w-3 h-3"></i>' +
+                '<span>' + confirmBtnText + '</span>' +
               '</button>' +
             '</div>' +
           '</div>' +
@@ -657,14 +668,24 @@ window.searchPlaceKeywordDirect = function(keyword) {
                 '<i data-lucide="crosshair" class="w-4 h-4"></i>' +
               '</button>' +
             '</div>' +
-            '<div class="flex items-center gap-1.5 pt-1.5 border-t border-slate-100">' +
-              '<a href="' + ctUrl + '" target="_blank" rel="noopener noreferrer" class="press flex-1 py-1.5 px-2 rounded-xl bg-gradient-to-r from-[#ff3d00] to-[#ff5722] hover:from-[#e53600] hover:to-[#f4511e] text-white font-extrabold text-[10.5px] shadow-2xs flex items-center justify-center gap-1 transition-all" title="캐치테이블 실시간 예약 / 웨이팅">' +
-                '<i data-lucide="utensils" class="w-3 h-3"></i>' +
-                '<span>캐치테이블</span>' +
+            '<div class="flex items-center gap-2 pt-1 border-t border-slate-100">' +
+              '<a href="' + ctUrl + '" target="_blank" rel="noopener noreferrer" class="press flex-1 py-1.5 px-2.5 rounded-xl bg-slate-50 hover:bg-orange-50/70 border border-slate-200/90 hover:border-orange-300 text-slate-800 font-extrabold text-[11px] shadow-2xs flex items-center justify-between transition-all" title="캐치테이블 실시간 예약 / 웨이팅">' +
+                '<div class="flex items-center gap-1.5 min-w-0">' +
+                  '<span class="w-4.5 h-4.5 rounded-md bg-orange-500/10 text-[#ff3d00] grid place-items-center shrink-0">' +
+                    '<i data-lucide="utensils" class="w-2.5 h-2.5"></i>' +
+                  '</span>' +
+                  '<span class="truncate">캐치테이블</span>' +
+                '</div>' +
+                '<span class="text-[9.5px] font-bold text-orange-600/80 shrink-0">예약</span>' +
               '</a>' +
-              '<a href="' + nvUrl + '" target="_blank" rel="noopener noreferrer" class="press flex-1 py-1.5 px-2 rounded-xl bg-[#03c75a] hover:bg-[#02b351] text-white font-extrabold text-[10.5px] shadow-2xs flex items-center justify-center gap-1 transition-all" title="네이버 스마트플레이스 예약">' +
-                '<i data-lucide="calendar-check" class="w-3 h-3"></i>' +
-                '<span>네이버 예약</span>' +
+              '<a href="' + nvUrl + '" target="_blank" rel="noopener noreferrer" class="press flex-1 py-1.5 px-2.5 rounded-xl bg-slate-50 hover:bg-emerald-50/70 border border-slate-200/90 hover:border-emerald-300 text-slate-800 font-extrabold text-[11px] shadow-2xs flex items-center justify-between transition-all" title="네이버 스마트플레이스 예약">' +
+                '<div class="flex items-center gap-1.5 min-w-0">' +
+                  '<span class="w-4.5 h-4.5 rounded-md bg-emerald-500/10 text-[#03c75a] grid place-items-center shrink-0">' +
+                    '<i data-lucide="calendar-check" class="w-2.5 h-2.5"></i>' +
+                  '</span>' +
+                  '<span class="truncate">네이버 예약</span>' +
+                '</div>' +
+                '<span class="text-[9.5px] font-bold text-emerald-600/80 shrink-0">예약</span>' +
               '</a>' +
             '</div>' +
           '</div>';
