@@ -143,6 +143,11 @@ function renderMemoryMarkersOnMap() {
     }
 
     var marker = L.marker(mem.coord, { icon: markerIcon, zIndexOffset: isCloseUp ? 800 : 700 }).addTo(map);
+    if (window.bindInstantMarkerTap) {
+      window.bindInstantMarkerTap(marker, function() {
+        window.openMemoryDetailModal(mem.id);
+      });
+    }
     memoryStore.markers.push(marker);
   });
 }

@@ -153,7 +153,7 @@ function fetchKakaoPlaces(centerCoord, distanceText) {
         kakaoPlacesCache[p.id] = p;
         kakaoPlacesCache[p.place_name] = p;
 
-        var iconHtml = '<div onclick="event.stopPropagation(); window.openPlaceCardPopupDirect(\'' + p.id + '\')" class="place-pop-marker press px-3 py-1.5 rounded-full text-[11px] font-extrabold bg-white border border-[#bae6fd] text-slate-800 shadow-md whitespace-nowrap hover:scale-110 hover:border-[#2563eb] hover:text-[#2563eb] transition-all flex items-center gap-1.5 cursor-pointer backdrop-blur-sm" style="animation-delay: ' + delaySec + 's; pointer-events: auto;">' +
+        var iconHtml = '<div class="place-pop-marker" style="animation-delay: ' + delaySec + 's;">' +
           '<span class="w-2.5 h-2.5 rounded-full ' + dotColor + ' shrink-0"></span>' +
           '<span>' + shortName + '</span>' +
         '</div>';
@@ -162,16 +162,22 @@ function fetchKakaoPlaces(centerCoord, distanceText) {
           icon: L.divIcon({
             html: iconHtml,
             className: 'place-marker-icon-wrapper',
-            iconSize: [110, 32],
-            iconAnchor: [55, 16]
+            iconSize: [0, 0],
+            iconAnchor: [0, 0]
           }),
-          zIndexOffset: 600
+          zIndexOffset: 650
         }).addTo(map);
 
-        m.on('click', function(e) {
-          if (e && e.originalEvent) e.originalEvent.stopPropagation();
-          window.openPlaceCardPopupDirect(p.id);
-        });
+        if (window.bindInstantMarkerTap) {
+          window.bindInstantMarkerTap(m, function() {
+            window.openPlaceCardPopupDirect(p.id);
+          });
+        } else {
+          m.on('click', function(e) {
+            if (e && e.originalEvent) e.originalEvent.stopPropagation();
+            window.openPlaceCardPopupDirect(p.id);
+          });
+        }
         state.placeMarkers.push(m);
       });
 
@@ -628,18 +634,25 @@ window.searchPlaceKeywordDirect = function(keyword) {
         var shortName = p.place_name.length > 7 ? p.place_name.slice(0, 6) + '…' : p.place_name;
         kakaoPlacesCache[p.id] = p;
         kakaoPlacesCache[p.place_name] = p;
-        var iconHtml = '<div onclick="event.stopPropagation(); window.openPlaceCardPopupDirect(\'' + p.id + '\')" class="place-pop-marker press px-3 py-1.5 rounded-full text-[11px] font-extrabold bg-white border border-[#bae6fd] text-slate-800 shadow-md whitespace-nowrap hover:scale-110 hover:border-[#2563eb] hover:text-[#2563eb] transition-all flex items-center gap-1.5 cursor-pointer backdrop-blur-sm" style="pointer-events: auto;">' +
+        var iconHtml = '<div class="place-pop-marker">' +
           '<span class="w-2.5 h-2.5 rounded-full bg-[#0284c7] shrink-0"></span>' +
           '<span>' + shortName + '</span>' +
         '</div>';
         var m = L.marker(pCoord, {
-          icon: L.divIcon({ html: iconHtml, className: 'place-marker-icon-wrapper', iconSize: [110, 32], iconAnchor: [55, 16] }),
-          zIndexOffset: 600
+          icon: L.divIcon({ html: iconHtml, className: 'place-marker-icon-wrapper', iconSize: [0, 0], iconAnchor: [0, 0] }),
+          zIndexOffset: 650
         }).addTo(map);
-        m.on('click', function(e) {
-          if (e && e.originalEvent) e.originalEvent.stopPropagation();
-          window.openPlaceCardPopupDirect(p.id);
-        });
+
+        if (window.bindInstantMarkerTap) {
+          window.bindInstantMarkerTap(m, function() {
+            window.openPlaceCardPopupDirect(p.id);
+          });
+        } else {
+          m.on('click', function(e) {
+            if (e && e.originalEvent) e.originalEvent.stopPropagation();
+            window.openPlaceCardPopupDirect(p.id);
+          });
+        }
         state.placeMarkers.push(m);
       });
 

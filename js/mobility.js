@@ -297,13 +297,35 @@ function updateLocationsAndMidpoint() {
           zIndexOffset: 1000
         }).addTo(map);
 
-        state.hubMarker.on('click', function() {
-          if (state.confirmedPlace) {
-            window.focusOrRecordConfirmedPlace();
-          } else {
-            window.zoomToHub(false);
-          }
-        });
+        var hubPlaceObj = {
+          id: 'hub_center_spot',
+          place_name: hubDisplayName,
+          category_name: '스마트 중간 장소 > 대중교통 중심지',
+          address_name: bestHub.desc || '모든 출발지에서의 최적 중간 지점',
+          road_address_name: bestHub.lines ? (hubDisplayName + ' (' + bestHub.lines + ')') : '최적 중간 장소',
+          phone: '',
+          y: finalHubCoord[0],
+          x: finalHubCoord[1],
+          place_url: 'https://map.kakao.com/link/search/' + encodeURIComponent(hubDisplayName)
+        };
+
+        if (window.bindInstantMarkerTap) {
+          window.bindInstantMarkerTap(state.hubMarker, function() {
+            if (state.confirmedPlace) {
+              window.openPlaceDetailModal(state.confirmedPlace);
+            } else {
+              window.openPlaceDetailModal(hubPlaceObj);
+            }
+          });
+        } else {
+          state.hubMarker.on('click', function() {
+            if (state.confirmedPlace) {
+              window.openPlaceDetailModal(state.confirmedPlace);
+            } else {
+              window.openPlaceDetailModal(hubPlaceObj);
+            }
+          });
+        }
 
         if (state.confirmedPlace) {
           var cpCoord = [parseFloat(state.confirmedPlace.y), parseFloat(state.confirmedPlace.x)];
@@ -929,9 +951,15 @@ window.confirmMeetingPlace = function(idOrName, fallbackName) {
     state.hubMarker.setLatLng(pCoord);
     state.hubMarker.setIcon(createMarkerHtml(p.place_name, '약속', false, false, true));
     state.hubMarker.off('click');
-    state.hubMarker.on('click', function() {
-      window.focusOrRecordConfirmedPlace();
-    });
+    if (window.bindInstantMarkerTap) {
+      window.bindInstantMarkerTap(state.hubMarker, function() {
+        window.openPlaceDetailModal(state.confirmedPlace || p);
+      });
+    } else {
+      state.hubMarker.on('click', function() {
+        window.openPlaceDetailModal(state.confirmedPlace || p);
+      });
+    }
   }
 
 

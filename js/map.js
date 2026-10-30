@@ -295,3 +295,102 @@ window.zoomToHub = function(isSilent) {
   }
 };
 
+/**
+ * 지도의 모든 마커에 대해 모바일 터치 및 데스크톱 클릭을 100% 즉각적(0ms)으로 반응하게 바인딩하는 유니버설 헬퍼.
+ * Leaflet 맵 드래그로 인한 클릭 이벤트 증발 방지 및 미세 떨림 터치(< 16px) 즉시 탭 인식.
+ */
+window.bindInstantMarkerTap = function(marker, callback) {
+  if (!marker || typeof callback !== 'function') return marker;
+
+  var lastTriggerTime = 0;
+  var safeTrigger = function(e) {
+    var now = Date.now();
+    if (now - lastTriggerTime < 280) return;
+    lastTriggerTime = now;
+    if (e) {
+      if (e.stopPropagation) e.stopPropagation();
+      if (e.originalEvent && e.originalEvent.stopPropagation) e.originalEvent.stopPropagation();
+    }
+    try {
+      callback(e);
+    } catch (err) {
+      console.warn('Marker tap callback error:', err);
+    }
+  };
+
+  // 1. Leaflet 마커 레벨 클릭 이벤트
+  marker.on('click', safeTrigger);
+
+  // 2. DOM 엘리먼트 레벨 다이렉트 터치/포인터 이벤트 바이패스
+  var attachEl = function(el) {
+    if (!el || el._instantTapBound) return;
+    el._instantTapBound = true;
+
+    // 마커 영역을 터치/클릭할 때 Leaflet 지도가 드래그(팬) 모드로 전환되어 클릭을 삼키지 않도록 방지
+    if (window.L && L.DomEvent) {
+      try {
+        L.DomEvent.disableClickPropagation(el);
+        L.DomEvent.disableScrollPropagation(el);
+      } catch (e) {}
+    }
+
+    var startX = 0;
+    var startY = 0;
+    var startTime = 0;
+    var isDown = false;
+
+    var onPointerDown = function(e) {
+      isDown = true;
+      startTime = Date.now();
+      if (e.touches && e.touches.length > 0) {
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+      } else {
+        startX = e.clientX;
+        startY = e.clientY;
+      }
+    };
+
+    var onPointerUp = function(e) {
+      if (!isDown) return;
+      isDown = false;
+      var dt = Date.now() - startTime;
+      var endX = startX;
+      var endY = startY;
+      if (e.changedTouches && e.changedTouches.length > 0) {
+        endX = e.changedTouches[0].clientX;
+        endY = e.changedTouches[0].clientY;
+      } else if (typeof e.clientX === 'number') {
+        endX = e.clientX;
+        endY = e.clientY;
+      }
+
+      var dist = Math.hypot(endX - startX, endY - startY);
+      // 손가락 미세 떨림이나 클릭 시 16px 미만 움직임은 모두 정당한 탭으로 인식
+      if (dist < 16 && dt < 600) {
+        if (e.cancelable) e.preventDefault();
+        safeTrigger(e);
+      }
+    };
+
+    el.addEventListener('touchstart', onPointerDown, { passive: true });
+    el.addEventListener('touchend', onPointerUp, { passive: false });
+    el.addEventListener('pointerdown', onPointerDown, { passive: true });
+    el.addEventListener('pointerup', onPointerUp, { passive: false });
+    el.addEventListener('click', safeTrigger);
+  };
+
+  var el = marker.getElement();
+  if (el) {
+    attachEl(el);
+  } else {
+    marker.on('add', function() {
+      var addedEl = marker.getElement();
+      if (addedEl) attachEl(addedEl);
+    });
+  }
+
+  return marker;
+};
+
+
