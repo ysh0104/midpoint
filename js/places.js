@@ -143,6 +143,7 @@ function fetchKakaoPlaces(centerCoord, distanceText) {
       }
 
       var topDocs = validDocs.slice(0, 8);
+      window._activePlaceDocs = topDocs;
 
       // 4. 지도 위에 깔끔한 마커 생성 (즉각적인 터치/클릭 반응)
       topDocs.forEach(function(p, i) {
@@ -153,7 +154,7 @@ function fetchKakaoPlaces(centerCoord, distanceText) {
         kakaoPlacesCache[p.id] = p;
         kakaoPlacesCache[p.place_name] = p;
 
-        var iconHtml = '<div class="place-pop-marker" style="animation-delay: ' + delaySec + 's;" data-place-id="' + p.id + '">' +
+        var iconHtml = '<div class="place-pop-marker" style="animation-delay: ' + delaySec + 's;" data-place-id="' + p.id + '" onclick="window.handlePlaceMarkerClick(event, ' + i + ')" ontouchend="window.handlePlaceMarkerClick(event, ' + i + ')">' +
           '<span class="w-2.5 h-2.5 rounded-full ' + dotColor + ' shrink-0"></span>' +
           '<span>' + shortName + '</span>' +
         '</div>';
@@ -162,21 +163,14 @@ function fetchKakaoPlaces(centerCoord, distanceText) {
           icon: L.divIcon({
             html: iconHtml,
             className: 'place-marker-icon-wrapper',
-            iconSize: [0, 0],
-            iconAnchor: [0, 0]
+            iconSize: [110, 32],
+            iconAnchor: [55, 16]
           }),
           zIndexOffset: 650
         }).addTo(map);
 
         var onMarkerSelect = function(e) {
-          if (e) {
-            if (e.stopPropagation) e.stopPropagation();
-            if (e.originalEvent && e.originalEvent.stopPropagation) e.originalEvent.stopPropagation();
-          }
-          window.openPlaceDetailModal(p);
-          if (map && p.y && p.x) {
-            map.panTo(pCoord, { animate: true, duration: 0.35 });
-          }
+          window.handlePlaceMarkerClick(e, i);
         };
 
         m.on('click', onMarkerSelect);
@@ -352,6 +346,45 @@ window.getPlacePhoto = function(p) {
 window.selectedModalPlace = null;
 
 var _placeModalOpenedAt = 0;
+window._lastPlaceMarkerClickAt = 0;
+
+window.handlePlaceMarkerClick = function(e, idx) {
+  if (e) {
+    if (e.stopPropagation) e.stopPropagation();
+    if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+    if (e.originalEvent && e.originalEvent.stopPropagation) e.originalEvent.stopPropagation();
+  }
+  var now = Date.now();
+  if (now - window._lastPlaceMarkerClickAt < 250) return;
+  window._lastPlaceMarkerClickAt = now;
+
+  var p = (window._activePlaceDocs && window._activePlaceDocs[idx]) || null;
+  if (!p) return;
+
+  window.openPlaceDetailModal(p);
+  if (map && p.y && p.x) {
+    map.panTo([parseFloat(p.y), parseFloat(p.x)], { animate: true, duration: 0.35 });
+  }
+};
+
+window.handleSearchPlaceMarkerClick = function(e, idx) {
+  if (e) {
+    if (e.stopPropagation) e.stopPropagation();
+    if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+    if (e.originalEvent && e.originalEvent.stopPropagation) e.originalEvent.stopPropagation();
+  }
+  var now = Date.now();
+  if (now - window._lastPlaceMarkerClickAt < 250) return;
+  window._lastPlaceMarkerClickAt = now;
+
+  var p = (window._activeSearchDocs && window._activeSearchDocs[idx]) || null;
+  if (!p) return;
+
+  window.openPlaceDetailModal(p);
+  if (map && p.y && p.x) {
+    map.panTo([parseFloat(p.y), parseFloat(p.x)], { animate: true, duration: 0.35 });
+  }
+};
 
 // 장소 상세 모달 열기 (가게 사진, 캐치테이블/네이버 예약, 사진 등록, 모임 확정)
 window.openPlaceDetailModal = function(place) {
@@ -658,29 +691,24 @@ window.searchPlaceKeywordDirect = function(keyword) {
         return;
       }
       clearPlaceMarkers();
-      docs.slice(0, 10).forEach(function(p, idx) {
+      var topSearchDocs = docs.slice(0, 10);
+      window._activeSearchDocs = topSearchDocs;
+      topSearchDocs.forEach(function(p, idx) {
         var pCoord = [parseFloat(p.y), parseFloat(p.x)];
         var shortName = p.place_name.length > 7 ? p.place_name.slice(0, 6) + '…' : p.place_name;
         kakaoPlacesCache[p.id] = p;
         kakaoPlacesCache[p.place_name] = p;
-        var iconHtml = '<div class="place-pop-marker" data-place-id="' + p.id + '">' +
+        var iconHtml = '<div class="place-pop-marker" data-place-id="' + p.id + '" onclick="window.handleSearchPlaceMarkerClick(event, ' + idx + ')" ontouchend="window.handleSearchPlaceMarkerClick(event, ' + idx + ')">' +
           '<span class="w-2.5 h-2.5 rounded-full bg-[#0284c7] shrink-0"></span>' +
           '<span>' + shortName + '</span>' +
         '</div>';
         var m = L.marker(pCoord, {
-          icon: L.divIcon({ html: iconHtml, className: 'place-marker-icon-wrapper', iconSize: [0, 0], iconAnchor: [0, 0] }),
+          icon: L.divIcon({ html: iconHtml, className: 'place-marker-icon-wrapper', iconSize: [110, 32], iconAnchor: [55, 16] }),
           zIndexOffset: 650
         }).addTo(map);
 
         var onMarkerSelect = function(e) {
-          if (e) {
-            if (e.stopPropagation) e.stopPropagation();
-            if (e.originalEvent && e.originalEvent.stopPropagation) e.originalEvent.stopPropagation();
-          }
-          window.openPlaceDetailModal(p);
-          if (map && p.y && p.x) {
-            map.panTo(pCoord, { animate: true, duration: 0.35 });
-          }
+          window.handleSearchPlaceMarkerClick(e, idx);
         };
 
         m.on('click', onMarkerSelect);
