@@ -169,9 +169,15 @@ function fetchKakaoPlaces(centerCoord, distanceText) {
           zIndexOffset: 650
         }).addTo(map);
 
-        m.on('click', function(e) {
-          window.handlePlaceMarkerClick(e, i, p.id);
-        });
+        if (window.bindInstantMarkerTap) {
+          window.bindInstantMarkerTap(m, function(e) {
+            window.handlePlaceMarkerClick(e, i, p.id);
+          });
+        } else {
+          m.on('click', function(e) {
+            window.handlePlaceMarkerClick(e, i, p.id);
+          });
+        }
 
         state.placeMarkers.push(m);
       });
@@ -332,7 +338,13 @@ window.handlePlaceMarkerClick = function(e, idx, placeId) {
   if (e) {
     if (e.stopPropagation) e.stopPropagation();
     if (e.stopImmediatePropagation) e.stopImmediatePropagation();
-    if (e.originalEvent && e.originalEvent.stopPropagation) e.originalEvent.stopPropagation();
+    if (e.originalEvent) {
+      if (e.originalEvent.stopPropagation) e.originalEvent.stopPropagation();
+      if (e.originalEvent.stopImmediatePropagation) e.originalEvent.stopImmediatePropagation();
+    }
+    if (window.L && L.DomEvent && L.DomEvent.stopPropagation) {
+      try { L.DomEvent.stopPropagation(e); } catch (err) {}
+    }
   }
   var now = Date.now();
   if (now - window._lastPlaceMarkerClickAt < 250) return;
@@ -342,16 +354,19 @@ window.handlePlaceMarkerClick = function(e, idx, placeId) {
   if (!p) return;
 
   window.openPlaceDetailModal(p);
-  if (map && p.y && p.x) {
-    map.panTo([parseFloat(p.y), parseFloat(p.x)], { animate: true, duration: 0.35 });
-  }
 };
 
 window.handleSearchPlaceMarkerClick = function(e, idx, placeId) {
   if (e) {
     if (e.stopPropagation) e.stopPropagation();
     if (e.stopImmediatePropagation) e.stopImmediatePropagation();
-    if (e.originalEvent && e.originalEvent.stopPropagation) e.originalEvent.stopPropagation();
+    if (e.originalEvent) {
+      if (e.originalEvent.stopPropagation) e.originalEvent.stopPropagation();
+      if (e.originalEvent.stopImmediatePropagation) e.originalEvent.stopImmediatePropagation();
+    }
+    if (window.L && L.DomEvent && L.DomEvent.stopPropagation) {
+      try { L.DomEvent.stopPropagation(e); } catch (err) {}
+    }
   }
   var now = Date.now();
   if (now - window._lastPlaceMarkerClickAt < 250) return;
@@ -361,9 +376,6 @@ window.handleSearchPlaceMarkerClick = function(e, idx, placeId) {
   if (!p) return;
 
   window.openPlaceDetailModal(p);
-  if (map && p.y && p.x) {
-    map.panTo([parseFloat(p.y), parseFloat(p.x)], { animate: true, duration: 0.35 });
-  }
 };
 
 // 장소 상세 모달 열기 (가게 사진, 캐치테이블/네이버 예약, 사진 등록, 모임 확정)
@@ -698,9 +710,15 @@ window.searchPlaceKeywordDirect = function(keyword) {
           zIndexOffset: 650
         }).addTo(map);
 
-        m.on('click', function(e) {
-          window.handleSearchPlaceMarkerClick(e, idx, p.id);
-        });
+        if (window.bindInstantMarkerTap) {
+          window.bindInstantMarkerTap(m, function(e) {
+            window.handleSearchPlaceMarkerClick(e, idx, p.id);
+          });
+        } else {
+          m.on('click', function(e) {
+            window.handleSearchPlaceMarkerClick(e, idx, p.id);
+          });
+        }
 
         state.placeMarkers.push(m);
       });
