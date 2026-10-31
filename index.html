@@ -46,7 +46,7 @@
 <!-- Lucide Icons -->
 <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
 
-<link rel="stylesheet" href="css/style.css?v=53" />
+<link rel="stylesheet" href="css/style.css?v=54" />
 </head>
 <body class="bg-zinc-200 text-slate-900 antialiased h-screen w-screen flex justify-center items-center">
 
@@ -1430,8 +1430,9 @@
   </div>
 
   <!-- 13. 장소 상세 모달 (가게/음식 대표 사진, 캐치테이블 & 네이버 예약, 사진/추억 등록, 약속 확정) -->
-  <div id="placeDetailModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 transition-all" onclick="if(event.target === this) window.closePlaceDetailModal(event)">
-    <div class="w-full max-w-sm bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[88vh] animate-in fade-in slide-in-from-bottom-6 duration-200">
+  <div id="placeDetailModal" class="hidden fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div id="placeDetailBackdrop" class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onclick="window.handlePlaceModalBackdropClick(event)"></div>
+    <div class="relative w-full max-w-sm bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[88vh] animate-in fade-in slide-in-from-bottom-6 duration-200 z-10">
       
       <!-- 상단 가게/음식 대표 사진 배너 -->
       <div class="relative w-full h-44 bg-slate-900 overflow-hidden shrink-0">
@@ -1717,17 +1718,17 @@
 </div>
 
 <!-- 기능별 모듈 스크립트 분리 (Clean Modular Architecture) -->
-<script src="js/config.js?v=53"></script>
-<script src="js/state.js?v=53"></script>
-<script src="js/map.js?v=53"></script>
-<script src="js/mobility.js?v=53"></script>
-<script src="js/places.js?v=53"></script>
-<script src="js/weather.js?v=53"></script>
-<script src="js/care.js?v=53"></script>
-<script src="js/game.js?v=53"></script>
-<script src="js/chat.js?v=53"></script>
-<script src="js/ui.js?v=53"></script>
-<script src="js/memory.js?v=53"></script>
-<script src="js/life4cut.js?v=53"></script>
+<script src="js/config.js?v=54"></script>
+<script src="js/state.js?v=54"></script>
+<script src="js/map.js?v=54"></script>
+<script src="js/mobility.js?v=54"></script>
+<script src="js/places.js?v=54"></script>
+<script src="js/weather.js?v=54"></script>
+<script src="js/care.js?v=54"></script>
+<script src="js/game.js?v=54"></script>
+<script src="js/chat.js?v=54"></script>
+<script src="js/ui.js?v=54"></script>
+<script src="js/memory.js?v=54"></script>
+<script src="js/life4cut.js?v=54"></script>
 </body>
 </html>

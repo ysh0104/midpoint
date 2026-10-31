@@ -270,12 +270,15 @@ body {
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
+  width: 110px !important;
+  height: 32px !important;
 }
 
 .place-pop-marker {
   position: relative;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   padding: 6px 13px;
   border-radius: 9999px;
@@ -292,7 +295,7 @@ body {
   user-select: none !important;
   -webkit-user-select: none !important;
   touch-action: manipulation !important;
-  transform: translate(-50%, -50%);
+  transform: none !important;
   z-index: 700;
 }
 

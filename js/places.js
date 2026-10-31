@@ -154,7 +154,7 @@ function fetchKakaoPlaces(centerCoord, distanceText) {
         kakaoPlacesCache[p.id] = p;
         kakaoPlacesCache[p.place_name] = p;
 
-        var iconHtml = '<div class="place-pop-marker" style="animation-delay: ' + delaySec + 's;" data-place-id="' + p.id + '" onclick="window.handlePlaceMarkerClick(event, ' + i + ', \'' + p.id + '\')" ontouchend="window.handlePlaceMarkerClick(event, ' + i + ', \'' + p.id + '\')">' +
+        var iconHtml = '<div class="place-pop-marker" style="animation-delay: ' + delaySec + 's;" data-place-id="' + p.id + '" onclick="window.handlePlaceMarkerClick(event, ' + i + ', \'' + p.id + '\')">' +
           '<span class="w-2.5 h-2.5 rounded-full ' + dotColor + ' shrink-0"></span>' +
           '<span>' + shortName + '</span>' +
         '</div>';
@@ -169,30 +169,10 @@ function fetchKakaoPlaces(centerCoord, distanceText) {
           zIndexOffset: 650
         }).addTo(map);
 
-        var onMarkerSelect = function(e) {
-          window.handlePlaceMarkerClick(e, i);
-        };
+        m.on('click', function(e) {
+          window.handlePlaceMarkerClick(e, i, p.id);
+        });
 
-        m.on('click', onMarkerSelect);
-        if (window.bindInstantMarkerTap) {
-          window.bindInstantMarkerTap(m, onMarkerSelect);
-        }
-
-        var bindElementDirectly = function(el) {
-          if (!el) return;
-          el.onclick = onMarkerSelect;
-          var child = el.querySelector('.place-pop-marker');
-          if (child) child.onclick = onMarkerSelect;
-        };
-
-        var markerEl = m.getElement();
-        if (markerEl) {
-          bindElementDirectly(markerEl);
-        } else {
-          m.on('add', function() {
-            bindElementDirectly(m.getElement());
-          });
-        }
         state.placeMarkers.push(m);
       });
 
@@ -462,9 +442,20 @@ window.openPlaceDetailModal = function(place) {
   if (window.lucide) lucide.createIcons();
 };
 
+window.handlePlaceModalBackdropClick = function(e) {
+  if (e) {
+    if (e.stopPropagation) e.stopPropagation();
+  }
+  // 모달이 열린 직후 450ms 동안은 방금 전 발생한 클릭 잔여 전달로 인한 즉시 닫힘 차단
+  if (Date.now() - _placeModalOpenedAt < 450) {
+    return;
+  }
+  window.closePlaceDetailModal(e, true);
+};
+
 window.closePlaceDetailModal = function(e, force) {
-  // 모달이 열린 직후 400ms 동안은 방금 전 발생한 클릭/터치 이벤트 잔여 전달로 인한 즉시 닫힘 방지
-  if (!force && (Date.now() - _placeModalOpenedAt < 400)) {
+  // 모달이 열린 직후 450ms 동안은 방금 전 발생한 클릭/터치 이벤트 잔여 전달로 인한 즉시 닫힘 방지
+  if (!force && (Date.now() - _placeModalOpenedAt < 450)) {
     if (e && e.stopPropagation) e.stopPropagation();
     return;
   }
@@ -698,7 +689,7 @@ window.searchPlaceKeywordDirect = function(keyword) {
         var shortName = p.place_name.length > 7 ? p.place_name.slice(0, 6) + '…' : p.place_name;
         kakaoPlacesCache[p.id] = p;
         kakaoPlacesCache[p.place_name] = p;
-        var iconHtml = '<div class="place-pop-marker" data-place-id="' + p.id + '" onclick="window.handleSearchPlaceMarkerClick(event, ' + idx + ', \'' + p.id + '\')" ontouchend="window.handleSearchPlaceMarkerClick(event, ' + idx + ', \'' + p.id + '\')">' +
+        var iconHtml = '<div class="place-pop-marker" data-place-id="' + p.id + '" onclick="window.handleSearchPlaceMarkerClick(event, ' + idx + ', \'' + p.id + '\')">' +
           '<span class="w-2.5 h-2.5 rounded-full bg-[#0284c7] shrink-0"></span>' +
           '<span>' + shortName + '</span>' +
         '</div>';
@@ -707,30 +698,10 @@ window.searchPlaceKeywordDirect = function(keyword) {
           zIndexOffset: 650
         }).addTo(map);
 
-        var onMarkerSelect = function(e) {
-          window.handleSearchPlaceMarkerClick(e, idx);
-        };
+        m.on('click', function(e) {
+          window.handleSearchPlaceMarkerClick(e, idx, p.id);
+        });
 
-        m.on('click', onMarkerSelect);
-        if (window.bindInstantMarkerTap) {
-          window.bindInstantMarkerTap(m, onMarkerSelect);
-        }
-
-        var bindSearchElement = function(el) {
-          if (!el) return;
-          el.onclick = onMarkerSelect;
-          var child = el.querySelector('.place-pop-marker');
-          if (child) child.onclick = onMarkerSelect;
-        };
-
-        var searchEl = m.getElement();
-        if (searchEl) {
-          bindSearchElement(searchEl);
-        } else {
-          m.on('add', function() {
-            bindSearchElement(m.getElement());
-          });
-        }
         state.placeMarkers.push(m);
       });
 
