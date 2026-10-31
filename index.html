@@ -55,7 +55,7 @@
 <!-- Lucide Icons -->
 <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
 
-<link rel="stylesheet" href="css/style.css?v=63" />
+<link rel="stylesheet" href="css/style.css?v=64" />
 </head>
 <body class="bg-slate-100 text-slate-900 antialiased h-[100dvh] w-full flex justify-center items-center overflow-hidden">
 
@@ -63,10 +63,20 @@
   <div id="appFrame" class="relative w-full max-w-[440px] h-full sm:h-[900px] bg-white sm:rounded-3xl sm:border border-slate-300 shadow-[0_30px_90px_-20px_rgba(15,23,42,0.3)] overflow-hidden flex flex-col">
 
     <!-- 0. 인트로 스플래시 스크린 (자동차 도로 주행 애니메이션) -->
-    <div id="splashScreen" class="absolute inset-0 z-50 bg-white flex flex-col items-center justify-center select-none overflow-hidden cursor-pointer" onclick="window.dismissSplashScreen()" title="터치하여 바로 시작">
+    <div id="splashScreen" class="absolute inset-0 z-[100] bg-white flex flex-col items-center justify-center select-none overflow-hidden cursor-pointer" onclick="window.dismissSplashScreen()" title="터치하여 바로 시작">
       <div class="relative w-[320px] h-[320px] sm:w-[360px] sm:h-[360px] flex items-center justify-center">
-        <!-- 배경: 깨끗한 도로가 놓인 반띵 로고 일러스트 -->
-        <img src="images/splash_bg_clean.png" alt="반띵" class="w-full h-full object-contain pointer-events-none select-none" />
+        <!-- 상단 갈라짐 레이어 (Top Half) -->
+        <div class="splash-slice-top absolute inset-0 pointer-events-none">
+          <img src="images/splash_bg_clean.png" alt="반띵" class="w-full h-full object-contain pointer-events-none select-none" />
+        </div>
+
+        <!-- 하단 갈라짐 레이어 (Bottom Half) -->
+        <div class="splash-slice-bottom absolute inset-0 pointer-events-none">
+          <img src="images/splash_bg_clean.png" alt="반띵" class="w-full h-full object-contain pointer-events-none select-none" />
+        </div>
+
+        <!-- 버스가 가르며 지나갈 때 번쩍이는 네온 절단광 (Laser Slash) -->
+        <div class="splash-slice-slash pointer-events-none"></div>
 
         <!-- 도로 위를 슉 지나가는 애니메이션 자동차 & 속도 트레일 -->
         <div class="splash-car-actor pointer-events-none">
@@ -1850,17 +1860,17 @@
 </div>
 
 <!-- 기능별 모듈 스크립트 분리 (Clean Modular Architecture) -->
-<script src="js/config.js?v=63"></script>
-<script src="js/state.js?v=63"></script>
-<script src="js/map.js?v=63"></script>
-<script src="js/mobility.js?v=63"></script>
-<script src="js/places.js?v=63"></script>
-<script src="js/weather.js?v=63"></script>
-<script src="js/care.js?v=63"></script>
-<script src="js/game.js?v=63"></script>
-<script src="js/chat.js?v=63"></script>
-<script src="js/ui.js?v=63"></script>
-<script src="js/memory.js?v=63"></script>
-<script src="js/life4cut.js?v=63"></script>
+<script src="js/config.js?v=64"></script>
+<script src="js/state.js?v=64"></script>
+<script src="js/map.js?v=64"></script>
+<script src="js/mobility.js?v=64"></script>
+<script src="js/places.js?v=64"></script>
+<script src="js/weather.js?v=64"></script>
+<script src="js/care.js?v=64"></script>
+<script src="js/game.js?v=64"></script>
+<script src="js/chat.js?v=64"></script>
+<script src="js/ui.js?v=64"></script>
+<script src="js/memory.js?v=64"></script>
+<script src="js/life4cut.js?v=64"></script>
 </body>
 </html>

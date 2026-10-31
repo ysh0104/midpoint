@@ -1164,6 +1164,7 @@ body {
    ========================================================================== */
 
 #splashScreen {
+  z-index: 100 !important;
   transition: opacity 0.65s cubic-bezier(0.16, 1, 0.3, 1), transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -1173,13 +1174,107 @@ body {
   pointer-events: none !important;
 }
 
+/* 상단 슬라이스: 도로 중심선 기준 위쪽 영역 */
+.splash-slice-top {
+  clip-path: polygon(0 0, 100% 0, 100% 37.6%, 0 63.9%);
+  transform-origin: center center;
+  animation: splashSplitTop 2.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* 하단 슬라이스: 도로 중심선 기준 아래쪽 영역 */
+.splash-slice-bottom {
+  clip-path: polygon(0 63.9%, 100% 37.6%, 100% 100%, 0 100%);
+  transform-origin: center center;
+  animation: splashSplitBottom 2.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* 버스가 도로를 가로지르며 슉 지나갈 때 위아래로 반띵되는 물리 모션 */
+@keyframes splashSplitTop {
+  0%, 25% {
+    transform: translate(0, 0);
+  }
+  /* 버스가 통과하기 시작하며 살짝 갈라짐 */
+  38% {
+    transform: translate(-1px, -3.5px);
+  }
+  /* 갈라짐 피크 (반띵!) */
+  65% {
+    transform: translate(-2px, -7.5px);
+  }
+  /* 쫀득한 감속 바운스 및 정착 */
+  84% {
+    transform: translate(-1.6px, -6px);
+  }
+  100% {
+    transform: translate(-1.8px, -6.5px);
+  }
+}
+
+@keyframes splashSplitBottom {
+  0%, 25% {
+    transform: translate(0, 0);
+  }
+  38% {
+    transform: translate(1px, 3.5px);
+  }
+  65% {
+    transform: translate(2px, 7.5px);
+  }
+  84% {
+    transform: translate(1.6px, 6px);
+  }
+  100% {
+    transform: translate(1.8px, 6.5px);
+  }
+}
+
+/* 버스가 가를 때 틈새로 번쩍이는 네온 절단광 (Laser Slash) */
+.splash-slice-slash {
+  position: absolute;
+  left: 0%;
+  top: 63.9%;
+  width: 105%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent 0%, rgba(102, 204, 255, 0.8) 20%, #38bdf8 60%, #ffffff 85%, transparent 100%);
+  transform-origin: left center;
+  transform: rotate(-15.1deg) scaleX(0);
+  opacity: 0;
+  filter: drop-shadow(0 0 6px #38bdf8);
+  z-index: 10;
+  animation: splashSliceSlash 2.2s ease-out forwards;
+}
+
+@keyframes splashSliceSlash {
+  0%, 26% {
+    transform: rotate(-15.1deg) scaleX(0);
+    opacity: 0;
+  }
+  36% {
+    opacity: 0.95;
+    transform: rotate(-15.1deg) scaleX(0.45);
+  }
+  56% {
+    opacity: 1;
+    transform: rotate(-15.1deg) scaleX(1);
+  }
+  76% {
+    opacity: 0.5;
+    transform: rotate(-15.1deg) scaleX(1);
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(-15.1deg) scaleX(1);
+  }
+}
+
 /* 자동차 주행 트랙 컨테이너: 도로 기울기(-15.2deg)와 일치 */
 .splash-car-actor {
   position: absolute;
   width: 68px;
   height: 42px;
+  z-index: 20;
   transform-origin: center center;
-  animation: splashCarDrive 2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: splashCarDrive 2.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
 @keyframes splashCarDrive {

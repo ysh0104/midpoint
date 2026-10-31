@@ -1310,29 +1310,32 @@ window.replaySplashIntro = function() {
   splash.style.display = 'flex';
   splash.classList.remove('splash-hidden');
   
-  // 자동차 및 핀 파동 애니메이션 리트리거
-  var car = splash.querySelector('.splash-car-actor');
-  if (car) {
-    car.style.animation = 'none';
-    car.offsetHeight; /* trigger reflow */
-    car.style.animation = '';
-  }
-  var ripple = splash.querySelector('.splash-pin-ripple');
-  if (ripple) {
-    ripple.style.animation = 'none';
-    ripple.offsetHeight;
-    ripple.style.animation = '';
-  }
+  // 자동차, 갈라짐 슬라이스, 절단광, 핀 파동 애니메이션 일괄 리트리거
+  var animSelectors = [
+    '.splash-slice-top',
+    '.splash-slice-bottom',
+    '.splash-slice-slash',
+    '.splash-car-actor',
+    '.splash-pin-ripple'
+  ];
+  animSelectors.forEach(function(sel) {
+    var el = splash.querySelector(sel);
+    if (el) {
+      el.style.animation = 'none';
+      el.offsetHeight; /* trigger reflow */
+      el.style.animation = '';
+    }
+  });
 
   if (splashDismissTimer) clearTimeout(splashDismissTimer);
   splashDismissTimer = setTimeout(function() {
     window.dismissSplashScreen();
-  }, 2350);
+  }, 2600);
 };
 
-// 페이지 로드 시 인트로 애니메이션 실행 후 약 2.3초 후 부드럽게 퇴장
+// 페이지 로드 시 인트로 애니메이션 실행 후 약 2.6초 후 부드럽게 퇴장
 splashDismissTimer = setTimeout(function() {
   window.dismissSplashScreen();
-}, 2350);
+}, 2600);
 
 
