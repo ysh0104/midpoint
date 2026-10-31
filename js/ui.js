@@ -1243,7 +1243,7 @@ window.openMobileDemoModal = function() {
   var qrImg = document.getElementById('mobileDemoQrImg');
   var fileNotice = document.getElementById('mobileDemoFileNotice');
 
-  var targetUrl = isFile ? 'https://ysh0104.github.io/midpoint/' : currentUrl;
+  var targetUrl = isFile ? 'https://midpoint-map.vercel.app' : currentUrl;
   if (demoUrlInput) demoUrlInput.value = targetUrl;
   if (qrImg) qrImg.src = 'https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=' + encodeURIComponent(targetUrl);
   if (fileNotice) {
