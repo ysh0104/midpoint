@@ -16,13 +16,19 @@ html, body {
   height: 100%;
   height: 100dvh;
   width: 100%;
+  max-width: 100vw;
   margin: 0;
   padding: 0;
-  overflow: hidden;
+  overflow: hidden !important;
+  overflow-x: hidden !important;
+  overflow-y: hidden !important;
   user-select: none;
   -webkit-user-select: none;
-  touch-action: pan-x pan-y;
-  overscroll-behavior-y: none;
+  touch-action: pan-y pinch-zoom;
+  overscroll-behavior: none !important;
+  overscroll-behavior-x: none !important;
+  overscroll-behavior-y: none !important;
+  -webkit-overflow-scrolling: touch;
 }
 
 body {
@@ -364,7 +370,15 @@ body {
   transform: translate(-50%, 0) scale(1);
 }
 
-/* 바텀 시트 슬라이드 트랜지션 */
+/* 바텀 시트 슬라이드 트랜지션 및 가로 스크롤 방지 */
+#bottomSheet {
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow-x: hidden !important;
+  overscroll-behavior-x: none !important;
+  box-sizing: border-box !important;
+}
+
 .sheet-collapsed {
   max-height: 285px;
 }
@@ -383,8 +397,20 @@ body {
   height: 80vh !important;
 }
 
+#bottomSheetScrollArea {
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow-x: hidden !important;
+  overscroll-behavior-x: none !important;
+  touch-action: pan-y !important;
+  box-sizing: border-box !important;
+}
+
 #bottomSheetScrollArea > * {
   flex-shrink: 0;
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
 }
 
 /* -------------------------------------------------------------
@@ -1071,16 +1097,32 @@ body {
   }
 }
 
-/* 실제 모바일 화면 (화면 너비 640px 이하) 전용 네이티브 앱 레이아웃 */
+/* 실제 모바일 화면 (화면 너비 640px 이하) 전용 네이티브 앱 레이아웃 (양 사이드 고정) */
 @media (max-width: 640px) {
   html, body {
+    position: fixed !important;
+    left: 0 !important;
+    right: 0 !important;
+    top: 0 !important;
+    bottom: 0 !important;
     height: 100dvh !important;
     min-height: 100dvh !important;
+    max-height: 100dvh !important;
     width: 100vw !important;
+    max-width: 100vw !important;
     overflow: hidden !important;
+    overflow-x: hidden !important;
+    overscroll-behavior: none !important;
+    overscroll-behavior-x: none !important;
+    touch-action: pan-y pinch-zoom !important;
   }
 
   #appFrame {
+    position: absolute !important;
+    left: 0 !important;
+    right: 0 !important;
+    top: 0 !important;
+    bottom: 0 !important;
     width: 100vw !important;
     max-width: 100vw !important;
     height: 100dvh !important;
@@ -1088,6 +1130,24 @@ body {
     border-radius: 0 !important;
     border: none !important;
     box-shadow: none !important;
+    overflow: hidden !important;
+    overflow-x: hidden !important;
+  }
+
+  #bottomSheet {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    overflow-x: hidden !important;
+    box-sizing: border-box !important;
+  }
+
+  #bottomSheetScrollArea {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+    box-sizing: border-box !important;
+    touch-action: pan-y !important;
+    overscroll-behavior-x: none !important;
   }
 
   /* 모바일에서 바텀 시트 높이 최적화 (전체 화면의 86%) */
@@ -1112,3 +1172,115 @@ body {
     box-shadow: 0 25px 70px -15px rgba(15, 23, 42, 0.35), 0 0 0 1px rgba(15, 23, 42, 0.08);
   }
 }
+
+/* ==========================================================================
+   스플래시 스크린 & 로고 자동차 주행 애니메이션 (Intro Splash Animation)
+   ========================================================================== */
+
+#splashScreen {
+  transition: opacity 0.65s cubic-bezier(0.16, 1, 0.3, 1), transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+#splashScreen.splash-hidden {
+  opacity: 0 !important;
+  transform: scale(1.04) !important;
+  pointer-events: none !important;
+}
+
+/* 자동차 주행 트랙 컨테이너: 도로 기울기(-15.2deg)와 일치 */
+.splash-car-actor {
+  position: absolute;
+  width: 68px;
+  height: 42px;
+  transform-origin: center center;
+  animation: splashCarDrive 2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes splashCarDrive {
+  0% {
+    left: 8%;
+    top: 60.5%;
+    transform: rotate(-15.2deg) scale(0.92);
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+    left: 14%;
+    top: 59.0%;
+    transform: rotate(-15.2deg) scale(1);
+  }
+  /* 중간 가속 슉! */
+  55% {
+    left: 45%;
+    top: 50.5%;
+    transform: rotate(-15.2deg) scale(1.02);
+  }
+  /* 목적지 핀 도착 & 부드러운 감속 */
+  85% {
+    left: 73.2%;
+    top: 42.8%;
+    transform: rotate(-15.2deg) scale(1.04);
+  }
+  92% {
+    left: 74.0%;
+    top: 42.5%;
+    transform: rotate(-15.2deg) scale(0.98);
+  }
+  100% {
+    left: 73.5%;
+    top: 42.6%;
+    transform: rotate(-15.2deg) scale(1);
+  }
+}
+
+/* 주행 시 뒤로 뿜어지는 네온 속도감 광선 트레일 */
+.splash-car-trail {
+  position: absolute;
+  right: 52px;
+  top: 22px;
+  height: 4px;
+  background: linear-gradient(to left, rgba(102, 204, 255, 0.85), rgba(2, 132, 199, 0.4), transparent);
+  border-radius: 9999px;
+  box-shadow: 0 0 10px rgba(102, 204, 255, 0.9);
+  animation: splashTrailGlow 2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes splashTrailGlow {
+  0% { width: 0px; opacity: 0; }
+  20% { width: 45px; opacity: 0.9; }
+  60% { width: 75px; opacity: 1; }
+  85% { width: 25px; opacity: 0.7; }
+  100% { width: 0px; opacity: 0; }
+}
+
+/* 핀 도착 시 사방으로 퍼지는 축하 파동 링 */
+.splash-pin-ripple {
+  position: absolute;
+  left: 77.6%;
+  top: 43.2%;
+  width: 24px;
+  height: 24px;
+  margin-left: -12px;
+  margin-top: -12px;
+  border-radius: 50%;
+  border: 2px solid #ef4444;
+  opacity: 0;
+  pointer-events: none;
+  animation: splashRipple 0.8s ease-out 1.35s forwards;
+}
+
+@keyframes splashRipple {
+  0% { transform: scale(0.3); opacity: 1; }
+  100% { transform: scale(2.8); opacity: 0; }
+}
+
+/* 머플러 연기 미세 애니메이션 */
+.splash-exhaust {
+  animation: splashSmokePuff 0.3s ease-in-out infinite alternate;
+}
+
+@keyframes splashSmokePuff {
+  from { transform: translateX(0px) scale(0.8); opacity: 0.4; }
+  to { transform: translateX(-3px) scale(1.2); opacity: 0.8; }
+}
+

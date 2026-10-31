@@ -1285,3 +1285,54 @@ window.copyMobileDemoUrl = function() {
   }
 };
 
+// --------------------------------------------------------------------
+// 인트로 스플래시 스크린 & 로고 자동차 주행 애니메이션 제어
+// --------------------------------------------------------------------
+var splashDismissTimer = null;
+
+window.dismissSplashScreen = function() {
+  if (splashDismissTimer) {
+    clearTimeout(splashDismissTimer);
+    splashDismissTimer = null;
+  }
+  var splash = document.getElementById('splashScreen');
+  if (splash && !splash.classList.contains('splash-hidden')) {
+    splash.classList.add('splash-hidden');
+    setTimeout(function() {
+      splash.style.display = 'none';
+    }, 700);
+  }
+};
+
+window.replaySplashIntro = function() {
+  var splash = document.getElementById('splashScreen');
+  if (!splash) return;
+  splash.style.display = 'flex';
+  splash.classList.remove('splash-hidden');
+  
+  // 자동차 및 핀 파동 애니메이션 리트리거
+  var car = splash.querySelector('.splash-car-actor');
+  if (car) {
+    car.style.animation = 'none';
+    car.offsetHeight; /* trigger reflow */
+    car.style.animation = '';
+  }
+  var ripple = splash.querySelector('.splash-pin-ripple');
+  if (ripple) {
+    ripple.style.animation = 'none';
+    ripple.offsetHeight;
+    ripple.style.animation = '';
+  }
+
+  if (splashDismissTimer) clearTimeout(splashDismissTimer);
+  splashDismissTimer = setTimeout(function() {
+    window.dismissSplashScreen();
+  }, 2350);
+};
+
+// 페이지 로드 시 인트로 애니메이션 실행 후 약 2.3초 후 부드럽게 퇴장
+splashDismissTimer = setTimeout(function() {
+  window.dismissSplashScreen();
+}, 2350);
+
+

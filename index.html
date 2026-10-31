@@ -55,7 +55,7 @@
 <!-- Lucide Icons -->
 <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
 
-<link rel="stylesheet" href="css/style.css?v=60" />
+<link rel="stylesheet" href="css/style.css?v=62" />
 </head>
 <body class="bg-slate-900 sm:bg-slate-900 text-slate-900 antialiased h-[100dvh] w-full flex flex-col justify-center items-center overflow-hidden relative">
 
@@ -87,6 +87,61 @@
     <!-- 데스크톱 폰 상단 다이내믹 아일랜드 (시현용 모바일 프레임) -->
     <div class="hidden sm:block absolute top-2.5 left-1/2 -translate-x-1/2 w-24 h-4 bg-black rounded-full z-40 pointer-events-none shadow-xs"></div>
 
+    <!-- 0. 인트로 스플래시 스크린 (자동차 도로 주행 애니메이션) -->
+    <div id="splashScreen" class="absolute inset-0 z-50 bg-white flex flex-col items-center justify-center select-none overflow-hidden cursor-pointer" onclick="window.dismissSplashScreen()" title="터치하여 바로 시작">
+      <div class="relative w-[320px] h-[320px] sm:w-[360px] sm:h-[360px] flex items-center justify-center">
+        <!-- 배경: 깨끗한 도로가 놓인 반띵 로고 일러스트 -->
+        <img src="images/splash_bg_clean.png" alt="반띵" class="w-full h-full object-contain pointer-events-none select-none" />
+
+        <!-- 도로 위를 슉 지나가는 애니메이션 자동차 & 속도 트레일 -->
+        <div class="splash-car-actor pointer-events-none">
+          <div class="splash-car-trail"></div>
+          <!-- 귀여운 미니어처 버스 SVG -->
+          <svg width="68" height="42" viewBox="0 0 68 42" fill="none" xmlns="http://www.w3.org/2000/svg" class="filter drop-shadow-md">
+            <ellipse cx="34" cy="38" rx="28" ry="2.5" fill="rgba(15,23,42,0.2)" />
+            <g class="splash-exhaust">
+              <circle cx="2" cy="31" r="2.5" fill="rgba(203,213,225,0.7)" />
+              <circle cx="-3" cy="29" r="3.5" fill="rgba(226,232,240,0.5)" />
+            </g>
+            <circle cx="18" cy="33" r="5.5" fill="#1e293b" />
+            <circle cx="18" cy="33" r="2" fill="#f8fafc" />
+            <circle cx="50" cy="33" r="5.5" fill="#1e293b" />
+            <circle cx="50" cy="33" r="2" fill="#f8fafc" />
+            <rect x="6" y="8" width="56" height="25" rx="8" fill="#e75b4f" stroke="#1e293b" stroke-width="2" stroke-linejoin="round" />
+            <path d="M12 10H56C58 10 60 11 60 13V14H8V13C8 11 10 10 12 10Z" fill="#d34336" />
+            <rect x="10" y="13" width="46" height="10.5" rx="3.5" fill="#334155" stroke="#1e293b" stroke-width="1.2" />
+            <rect x="12" y="14" width="9" height="8.5" rx="1.8" fill="#bae6fd" />
+            <rect x="23" y="14" width="9" height="8.5" rx="1.8" fill="#bae6fd" />
+            <rect x="34" y="14" width="9" height="8.5" rx="1.8" fill="#bae6fd" />
+            <path d="M45 14H53C54.5 14 55 15.5 54.5 17L53.5 22.5H45V14Z" fill="#e0f2fe" />
+            <path d="M13 15L18 21M24 15L29 21M35 15L40 21" stroke="white" stroke-width="0.9" stroke-linecap="round" opacity="0.6" />
+            <path d="M43 23V31" stroke="#1e293b" stroke-width="1.4" />
+            <rect x="4" y="23" width="3" height="4" rx="1.5" fill="#ef4444" />
+            <rect x="60" y="21" width="3.5" height="5" rx="1.5" fill="#fbbf24" stroke="#1e293b" stroke-width="0.8" />
+            <polygon points="63,23.5 105,12 105,37 63,25.5" fill="url(#headlightGrad)" opacity="0.6" />
+            <defs>
+              <linearGradient id="headlightGrad" x1="63" y1="23.5" x2="105" y2="24.5" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#fef08a" stop-opacity="0.85" />
+                <stop offset="100%" stop-color="#fef08a" stop-opacity="0" />
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+
+        <!-- 목적지 핀 도착 시 퍼지는 파동 효과 -->
+        <div class="splash-pin-ripple"></div>
+      </div>
+
+      <!-- 하단 브랜드 슬로건 및 터치하여 건너뛰기 안내 -->
+      <div class="flex flex-col items-center gap-1.5 -mt-3">
+        <div class="text-[13.5px] font-black text-slate-800 tracking-tight flex items-center gap-1.5">
+          <span>가장 공평한 중간 장소,</span>
+          <span class="text-[#0284c7]">반띵</span>
+        </div>
+        <p class="text-[10px] font-bold text-slate-400">화면을 터치하면 바로 시작합니다</p>
+      </div>
+    </div>
+
   <!-- 토스트 알림 (최상단) -->
   <div id="toast" class="toast glass absolute left-1/2 top-16 z-50 rounded-full pl-3 pr-4 py-2 flex items-center gap-2 shadow-xl shadow-slate-900/10 border border-slate-200/80" role="status">
     <span class="bg-[#0284c7] grid place-items-center w-5 h-5 rounded-full text-white">
@@ -98,7 +153,7 @@
   <!-- 1. 상단 미니멀 토스 스타일 브랜드 캡슐 바 (지도 공간 80% 확보) -->
   <header id="tossTopBar" class="absolute top-3.5 left-3.5 right-3.5 z-30 flex items-center justify-between pointer-events-none select-none">
     <!-- 좌측: 반띵 로고 & 상태 뱃지 -->
-    <div class="pointer-events-auto glass px-3.5 py-1.5 rounded-full border border-white/90 shadow-md shadow-slate-900/5 flex items-center gap-2">
+    <div class="pointer-events-auto glass px-3.5 py-1.5 rounded-full border border-white/90 shadow-md shadow-slate-900/5 flex items-center gap-2 cursor-pointer hover:border-[#66CCFF] transition-all" onclick="window.replaySplashIntro()" title="인트로 애니메이션 다시보기">
       <div class="w-2.5 h-2.5 rounded-full bg-[#2563eb] animate-pulse"></div>
       <span class="text-[13px] font-black text-slate-900 tracking-tight">반띵</span>
       <span id="tossStatusBadge" class="text-[10.5px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-[#2563eb]">약속 준비</span>
@@ -327,8 +382,8 @@
           <!-- 2. 친구 출발지 목록 (동적 렌더링) -->
           <div id="tossFriendsList" class="flex flex-col gap-1.5">
             <!-- 기본 상태: 친구 추가 유도 슬롯 -->
-            <div onclick="window.openAddModal()" class="press cursor-pointer border border-dashed border-slate-300 hover:border-[#2563eb] bg-white/70 hover:bg-blue-50/40 rounded-xl p-2.5 flex items-center justify-between gap-2 transition-all group">
-              <div class="flex items-center gap-2 min-w-0">
+            <div onclick="window.openAddModal()" class="press cursor-pointer border border-dashed border-slate-300 hover:border-[#2563eb] bg-white/70 hover:bg-blue-50/40 rounded-xl p-2.5 flex items-center justify-between gap-2 transition-all group w-full box-border overflow-hidden">
+              <div class="flex items-center gap-2 min-w-0 flex-1">
                 <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0"></span>
                 <span class="text-[10.5px] font-black px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 shrink-0">친구</span>
                 <span class="text-[12px] font-semibold text-slate-400 group-hover:text-[#2563eb] truncate transition-colors">터치하여 친구의 출발지를 입력하세요</span>
@@ -479,39 +534,39 @@
       </div>
 
       <!-- 5. 카테고리 탭 & 맞춤 설정 헤더 (스티키로 스크롤 시 상단에 자연스럽게 고정) -->
-      <div id="categoryStickyHeader" class="sticky top-0 z-20 pt-2 pb-2 -mx-4 px-4 bg-white/95 backdrop-blur-md border-y border-slate-100 shadow-2xs shrink-0 flex flex-col gap-2">
-        <div class="flex items-center justify-between gap-1.5">
+      <div id="categoryStickyHeader" class="sticky top-0 z-20 pt-2 pb-2 bg-white/95 backdrop-blur-md border-y border-slate-100 shadow-2xs shrink-0 flex flex-col gap-2 w-full max-w-full box-border overflow-hidden rounded-2xl">
+        <div class="flex items-center justify-between gap-1 w-full max-w-full box-border overflow-hidden">
           <!-- 좌측 카테고리 세그먼트 탭 -->
-          <div class="inline-flex items-center gap-1 bg-slate-100/90 p-0.5 rounded-xl border border-slate-200/80 shrink-0" id="categoryTabGroup">
-            <button type="button" id="tabCafeBtn" onclick="window.switchPlaceCategory('CE7')" class="press h-8 px-3 rounded-lg text-[12px] font-bold bg-white text-[#0284c7] shadow-xs border border-[#bae6fd] transition-all whitespace-nowrap flex items-center justify-center">
-              인기 카페
+          <div class="inline-flex items-center gap-0.5 bg-slate-100/90 p-0.5 rounded-xl border border-slate-200/80 shrink-0" id="categoryTabGroup">
+            <button type="button" id="tabCafeBtn" onclick="window.switchPlaceCategory('CE7')" class="press h-8 px-2.5 sm:px-3 rounded-lg text-[11.5px] sm:text-[12px] font-bold bg-white text-[#0284c7] shadow-xs border border-[#bae6fd] transition-all whitespace-nowrap flex items-center justify-center">
+              카페
             </button>
-            <button type="button" id="tabFoodBtn" onclick="window.switchPlaceCategory('FD6')" class="press h-8 px-3 rounded-lg text-[12px] font-semibold text-slate-600 hover:text-slate-900 transition-all whitespace-nowrap flex items-center justify-center">
-              추천 맛집
+            <button type="button" id="tabFoodBtn" onclick="window.switchPlaceCategory('FD6')" class="press h-8 px-2.5 sm:px-3 rounded-lg text-[11.5px] sm:text-[12px] font-semibold text-slate-600 hover:text-slate-900 transition-all whitespace-nowrap flex items-center justify-center">
+              맛집
             </button>
           </div>
 
           <!-- 우측 모임 도구 버튼 그룹 -->
-          <div class="flex items-center gap-1.5 shrink-0">
-            <button type="button" onclick="window.openChatDrawer()" class="relative press h-8 px-2.5 rounded-xl bg-white hover:bg-sky-50/60 text-slate-700 hover:text-[#0284c7] font-bold text-[11.5px] border border-slate-200/90 shadow-2xs flex items-center gap-1.5 transition-all whitespace-nowrap" title="모임 장소 조율 채팅">
+          <div class="flex items-center gap-1 shrink-0">
+            <button type="button" onclick="window.openChatDrawer()" class="relative press h-8 px-2 sm:px-2.5 rounded-xl bg-white hover:bg-sky-50/60 text-slate-700 hover:text-[#0284c7] font-bold text-[11px] sm:text-[11.5px] border border-slate-200/90 shadow-2xs flex items-center gap-1 transition-all whitespace-nowrap" title="모임 장소 조율 채팅">
               <i data-lucide="message-square" class="w-3.5 h-3.5 text-[#0284c7] shrink-0"></i>
-              <span class="whitespace-nowrap">모임 채팅</span>
+              <span class="whitespace-nowrap">채팅</span>
               <span id="chatHeaderBadge" class="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-rose-500 ring-2 ring-white shadow-xs"></span>
             </button>
-            <button type="button" onclick="window.openGameModal()" class="press h-8 px-2.5 rounded-xl bg-white hover:bg-sky-50/60 text-slate-700 hover:text-[#0284c7] font-bold text-[11.5px] border border-slate-200/90 shadow-2xs flex items-center gap-1.5 transition-all whitespace-nowrap" title="랜덤 결정 게임">
+            <button type="button" onclick="window.openGameModal()" class="press h-8 px-2 sm:px-2.5 rounded-xl bg-white hover:bg-sky-50/60 text-slate-700 hover:text-[#0284c7] font-bold text-[11px] sm:text-[11.5px] border border-slate-200/90 shadow-2xs flex items-center gap-1 transition-all whitespace-nowrap" title="랜덤 결정 게임">
               <i data-lucide="dices" class="w-3.5 h-3.5 text-[#0284c7] shrink-0"></i>
-              <span class="whitespace-nowrap">랜덤 결정</span>
+              <span class="whitespace-nowrap">랜덤</span>
             </button>
-            <button type="button" onclick="window.openMeetFilterModal()" class="relative press h-8 px-2.5 rounded-xl bg-white hover:bg-sky-50/60 text-slate-700 hover:text-[#0284c7] font-bold text-[11.5px] border border-slate-200/90 shadow-2xs flex items-center gap-1.5 transition-all whitespace-nowrap" title="모임 맞춤 필터">
+            <button type="button" onclick="window.openMeetFilterModal()" class="relative press h-8 px-2 sm:px-2.5 rounded-xl bg-white hover:bg-sky-50/60 text-slate-700 hover:text-[#0284c7] font-bold text-[11px] sm:text-[11.5px] border border-slate-200/90 shadow-2xs flex items-center gap-1 transition-all whitespace-nowrap" title="모임 맞춤 필터">
               <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5 text-[#0284c7] shrink-0"></i>
-              <span class="whitespace-nowrap">모임 맞춤</span>
+              <span class="whitespace-nowrap">맞춤</span>
               <span id="activeFilterBadgeCount" class="hidden absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#0284c7] text-white text-[9.5px] font-black ring-2 ring-white shadow-xs flex items-center justify-center">1</span>
             </button>
           </div>
         </div>
 
         <!-- 퀵 모임 목적 필터 칩 바 (원터치 전환) -->
-        <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5" id="quickPurposeChips">
+        <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 w-full max-w-full box-border" id="quickPurposeChips" style="overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch;">
           <button type="button" onclick="window.setQuickPurpose('all')" data-purpose="all" class="quick-purpose-chip press h-7.5 px-3 rounded-xl text-[11.5px] font-bold bg-[#0284c7] text-white shrink-0 transition-all shadow-xs flex items-center justify-center">
             전체
           </button>
@@ -1820,17 +1875,17 @@
 </div>
 
 <!-- 기능별 모듈 스크립트 분리 (Clean Modular Architecture) -->
-<script src="js/config.js?v=60"></script>
-<script src="js/state.js?v=60"></script>
-<script src="js/map.js?v=60"></script>
-<script src="js/mobility.js?v=60"></script>
-<script src="js/places.js?v=60"></script>
-<script src="js/weather.js?v=60"></script>
-<script src="js/care.js?v=60"></script>
-<script src="js/game.js?v=60"></script>
-<script src="js/chat.js?v=60"></script>
-<script src="js/ui.js?v=60"></script>
-<script src="js/memory.js?v=60"></script>
-<script src="js/life4cut.js?v=60"></script>
+<script src="js/config.js?v=62"></script>
+<script src="js/state.js?v=62"></script>
+<script src="js/map.js?v=62"></script>
+<script src="js/mobility.js?v=62"></script>
+<script src="js/places.js?v=62"></script>
+<script src="js/weather.js?v=62"></script>
+<script src="js/care.js?v=62"></script>
+<script src="js/game.js?v=62"></script>
+<script src="js/chat.js?v=62"></script>
+<script src="js/ui.js?v=62"></script>
+<script src="js/memory.js?v=62"></script>
+<script src="js/life4cut.js?v=62"></script>
 </body>
 </html>

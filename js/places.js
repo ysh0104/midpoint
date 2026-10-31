@@ -296,35 +296,35 @@ function fetchKakaoPlaces(centerCoord, distanceText) {
         var booking = window.getPlaceBookingEligibility(p);
         var bookingBarHtml = '';
         if (booking.hasAnyBooking) {
-          bookingBarHtml += '<div class="flex items-center gap-1.5 pt-1 border-t border-slate-100">';
+          bookingBarHtml += '<div class="flex items-center gap-1.5 pt-1 border-t border-slate-100 w-full overflow-hidden">';
           if (booking.hasCatchTable) {
-            bookingBarHtml += '<a href="' + ctUrl + '" target="_blank" rel="noopener noreferrer" class="press flex-1 py-1.5 px-2.5 rounded-xl bg-slate-50 hover:bg-orange-50/70 border border-slate-200/90 hover:border-orange-300 text-slate-800 font-extrabold text-[11px] shadow-2xs flex items-center justify-between transition-all" title="캐치테이블 실시간 예약 / 웨이팅">' +
-              '<div class="flex items-center gap-1.5 min-w-0">' +
+            bookingBarHtml += '<a href="' + ctUrl + '" target="_blank" rel="noopener noreferrer" class="press flex-1 min-w-0 py-1.5 px-2.5 rounded-xl bg-slate-50 hover:bg-orange-50/70 border border-slate-200/90 hover:border-orange-300 text-slate-800 font-extrabold text-[11px] shadow-2xs flex items-center justify-between transition-all" title="캐치테이블 실시간 예약 / 웨이팅">' +
+              '<div class="flex items-center gap-1.5 min-w-0 flex-1">' +
                 '<span class="w-4.5 h-4.5 rounded-md bg-orange-500/10 text-[#ff3d00] grid place-items-center shrink-0">' +
                   '<i data-lucide="utensils" class="w-2.5 h-2.5"></i>' +
                 '</span>' +
                 '<span class="truncate">캐치테이블</span>' +
               '</div>' +
-              '<span class="text-[9.5px] font-bold text-orange-600/80 shrink-0">예약</span>' +
+              '<span class="text-[9.5px] font-bold text-orange-600/80 shrink-0 ml-1">예약</span>' +
             '</a>';
           }
           if (booking.hasNaverBooking) {
-            bookingBarHtml += '<a href="' + nvUrl + '" target="_blank" rel="noopener noreferrer" class="press flex-1 py-1.5 px-2.5 rounded-xl bg-slate-50 hover:bg-emerald-50/70 border border-slate-200/90 hover:border-emerald-300 text-slate-800 font-extrabold text-[11px] shadow-2xs flex items-center justify-between transition-all" title="네이버 스마트플레이스 예약">' +
-              '<div class="flex items-center gap-1.5 min-w-0">' +
+            bookingBarHtml += '<a href="' + nvUrl + '" target="_blank" rel="noopener noreferrer" class="press flex-1 min-w-0 py-1.5 px-2.5 rounded-xl bg-slate-50 hover:bg-emerald-50/70 border border-slate-200/90 hover:border-emerald-300 text-slate-800 font-extrabold text-[11px] shadow-2xs flex items-center justify-between transition-all" title="네이버 스마트플레이스 예약">' +
+              '<div class="flex items-center gap-1.5 min-w-0 flex-1">' +
                 '<span class="w-4.5 h-4.5 rounded-md bg-emerald-500/10 text-[#03c75a] grid place-items-center shrink-0">' +
                   '<i data-lucide="calendar-check" class="w-2.5 h-2.5"></i>' +
                 '</span>' +
                 '<span class="truncate">네이버 예약</span>' +
               '</div>' +
-              '<span class="text-[9.5px] font-bold text-emerald-600/80 shrink-0">예약</span>' +
+              '<span class="text-[9.5px] font-bold text-emerald-600/80 shrink-0 ml-1">예약</span>' +
             '</a>';
           }
           bookingBarHtml += '</div>';
         }
 
-        return '<div class="bg-white rounded-2xl p-3 border ' + (isConfirmed ? 'border-emerald-400 ring-2 ring-emerald-100' : 'border-slate-200/80') + ' shadow-sm hover:border-[#66CCFF] transition-all flex flex-col gap-2" data-idx="' + i + '">' +
-          '<div class="flex items-start justify-between">' +
-            '<div class="min-w-0 pr-2">' +
+        return '<div class="bg-white rounded-2xl p-3 border ' + (isConfirmed ? 'border-emerald-400 ring-2 ring-emerald-100' : 'border-slate-200/80') + ' shadow-sm hover:border-[#66CCFF] transition-all flex flex-col gap-2 w-full max-w-full box-border overflow-hidden" data-idx="' + i + '">' +
+          '<div class="flex items-start justify-between gap-2 w-full">' +
+            '<div class="min-w-0 pr-1 flex-1">' +
               '<div class="flex items-center gap-1.5 flex-wrap">' +
                 '<span class="px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-slate-100 text-slate-700">' + subCat + '</span>' +
                 '<span class="px-1.5 py-0.5 rounded text-[9.5px] font-extrabold ' + smartBadge.color + '">' + smartBadge.text + '</span>' +
