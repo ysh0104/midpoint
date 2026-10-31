@@ -154,7 +154,7 @@ function fetchKakaoPlaces(centerCoord, distanceText) {
         kakaoPlacesCache[p.id] = p;
         kakaoPlacesCache[p.place_name] = p;
 
-        var iconHtml = '<div class="place-pop-marker" style="animation-delay: ' + delaySec + 's;" data-place-id="' + p.id + '" onclick="window.handlePlaceMarkerClick(event, ' + i + ')" ontouchend="window.handlePlaceMarkerClick(event, ' + i + ')">' +
+        var iconHtml = '<div class="place-pop-marker" style="animation-delay: ' + delaySec + 's;" data-place-id="' + p.id + '" onclick="window.handlePlaceMarkerClick(event, ' + i + ', \'' + p.id + '\')" ontouchend="window.handlePlaceMarkerClick(event, ' + i + ', \'' + p.id + '\')">' +
           '<span class="w-2.5 h-2.5 rounded-full ' + dotColor + ' shrink-0"></span>' +
           '<span>' + shortName + '</span>' +
         '</div>';
@@ -348,7 +348,7 @@ window.selectedModalPlace = null;
 var _placeModalOpenedAt = 0;
 window._lastPlaceMarkerClickAt = 0;
 
-window.handlePlaceMarkerClick = function(e, idx) {
+window.handlePlaceMarkerClick = function(e, idx, placeId) {
   if (e) {
     if (e.stopPropagation) e.stopPropagation();
     if (e.stopImmediatePropagation) e.stopImmediatePropagation();
@@ -358,7 +358,7 @@ window.handlePlaceMarkerClick = function(e, idx) {
   if (now - window._lastPlaceMarkerClickAt < 250) return;
   window._lastPlaceMarkerClickAt = now;
 
-  var p = (window._activePlaceDocs && window._activePlaceDocs[idx]) || null;
+  var p = (placeId && kakaoPlacesCache[placeId]) || (window._activePlaceDocs && window._activePlaceDocs[idx]) || null;
   if (!p) return;
 
   window.openPlaceDetailModal(p);
@@ -367,7 +367,7 @@ window.handlePlaceMarkerClick = function(e, idx) {
   }
 };
 
-window.handleSearchPlaceMarkerClick = function(e, idx) {
+window.handleSearchPlaceMarkerClick = function(e, idx, placeId) {
   if (e) {
     if (e.stopPropagation) e.stopPropagation();
     if (e.stopImmediatePropagation) e.stopImmediatePropagation();
@@ -377,7 +377,7 @@ window.handleSearchPlaceMarkerClick = function(e, idx) {
   if (now - window._lastPlaceMarkerClickAt < 250) return;
   window._lastPlaceMarkerClickAt = now;
 
-  var p = (window._activeSearchDocs && window._activeSearchDocs[idx]) || null;
+  var p = (placeId && kakaoPlacesCache[placeId]) || (window._activeSearchDocs && window._activeSearchDocs[idx]) || null;
   if (!p) return;
 
   window.openPlaceDetailModal(p);
@@ -698,7 +698,7 @@ window.searchPlaceKeywordDirect = function(keyword) {
         var shortName = p.place_name.length > 7 ? p.place_name.slice(0, 6) + '…' : p.place_name;
         kakaoPlacesCache[p.id] = p;
         kakaoPlacesCache[p.place_name] = p;
-        var iconHtml = '<div class="place-pop-marker" data-place-id="' + p.id + '" onclick="window.handleSearchPlaceMarkerClick(event, ' + idx + ')" ontouchend="window.handleSearchPlaceMarkerClick(event, ' + idx + ')">' +
+        var iconHtml = '<div class="place-pop-marker" data-place-id="' + p.id + '" onclick="window.handleSearchPlaceMarkerClick(event, ' + idx + ', \'' + p.id + '\')" ontouchend="window.handleSearchPlaceMarkerClick(event, ' + idx + ', \'' + p.id + '\')">' +
           '<span class="w-2.5 h-2.5 rounded-full bg-[#0284c7] shrink-0"></span>' +
           '<span>' + shortName + '</span>' +
         '</div>';
