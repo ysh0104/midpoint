@@ -114,7 +114,7 @@ function renderMemoryMarkersOnMap() {
   // 너무 멀리서 볼 때(Zoom < 12.5)는 지도 깔끔함을 위해 마커 숨김
   if (currentZoom < 12.5) return;
 
-  var isCloseUp = currentZoom >= 14.0; // Zoom 14.0 이상이면 감성 폴라로이드 모드로 전환!
+  var isCloseUp = currentZoom >= 15.3; // 확대했을 때만(Zoom >= 15.3) 큼직한 폴라로이드 사진으로 전환!
   var myLoc = (window.state && state.myLocation) ? state.myLocation : ((window.state && state.locations && state.locations[0]) ? state.locations[0].loc : null);
 
   memoryStore.memories.forEach(function(mem, memIdx) {
@@ -136,7 +136,7 @@ function renderMemoryMarkersOnMap() {
     var is4Cut = (mem.category === '인생네컷');
 
     if (isCloseUp) {
-      // [근접 확대 뷰 (Zoom >= 14.0)]: 감성 폴라로이드 사진 프레임
+      // [근접 확대 뷰 (Zoom >= 15.3)]: 확대했을 때 보이는 큼직하고 감성적인 폴라로이드 사진 프레임
       var tilt = mem.tiltDeg || 0;
       var polaroidWidth = is4Cut ? 76 : 86;
       var polaroidHeight = is4Cut ? 116 : 104;
@@ -163,35 +163,23 @@ function renderMemoryMarkersOnMap() {
         iconAnchor: [Math.round((polaroidWidth + 10) / 2), polaroidHeight + 6]
       });
     } else {
-      // [원거리 뷰]: 시인성 높은 와이드 미니 사진 카드 뱃지 (사진이 크고 비율이 온전함)
-      var thumbClass = is4Cut ? 'memory-pin-thumb memory-pin-thumb-4cut' : 'memory-pin-thumb memory-pin-thumb-normal';
-      var catColor = is4Cut ? 'bg-violet-50 text-violet-600 border-violet-200' : 'bg-sky-50 text-[#0284c7] border-sky-200';
+      // [원거리 뷰 (Zoom < 15.3)]: 주변 가게를 가리지 않는 작고 깔끔한 '다녀온 곳' 미니 칩
       var iconBadge = is4Cut ? '🎞️' : '📸';
-      var ddayBadge = mem.ddayText ? ('<span class="text-[9.5px] text-slate-400 font-semibold">' + mem.ddayText + '</span>') : '';
+      var shortName = mem.placeName.length > 8 ? mem.placeName.slice(0, 7) + '…' : mem.placeName;
+      var chipClass = is4Cut ? 'memory-visited-chip memory-visited-4cut' : 'memory-visited-chip';
 
       var pinHtml = 
-        '<div class="memory-pin-marker group" onclick="window.openMemoryDetailModal(\'' + mem.id + '\')">' +
-          '<div class="memory-pin-badge">' +
-            '<div class="memory-pin-thumb-wrap">' +
-              '<img src="' + mem.photo + '" alt="" class="' + thumbClass + '" />' +
-              '<span class="memory-pin-sub-tag">' + iconBadge + '</span>' +
-            '</div>' +
-            '<div class="memory-pin-info">' +
-              '<div class="memory-pin-header">' +
-                '<span class="memory-pin-cat ' + catColor + '">' + (mem.category || '추억') + '</span>' +
-                ddayBadge +
-              '</div>' +
-              '<span class="memory-pin-name" title="' + mem.placeName + '">' + mem.placeName + '</span>' +
-            '</div>' +
-          '</div>' +
-          '<div class="memory-pin-point"></div>' +
+        '<div class="' + chipClass + '" onclick="window.openMemoryDetailModal(\'' + mem.id + '\')">' +
+          '<span class="memory-visited-icon">' + iconBadge + '</span>' +
+          '<span class="memory-visited-text">' + shortName + '</span>' +
+          '<span class="memory-visited-badge">방문</span>' +
         '</div>';
 
       markerIcon = L.divIcon({
         html: pinHtml,
         className: 'polaroid-leaflet-icon',
-        iconSize: [210, 58],
-        iconAnchor: [105, 56]
+        iconSize: [110, 28],
+        iconAnchor: [55, 14]
       });
     }
 

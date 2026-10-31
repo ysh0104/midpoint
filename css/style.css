@@ -591,7 +591,70 @@ body {
   pointer-events: auto !important;
 }
 
-/* 1. 멀리서 볼 때: 시원하고 선명한 미니 사진 카드 뱃지 (원거리 뷰에서도 사진이 또렷하게 보임) */
+/* 1. 멀리서 볼 때 (Zoom < 15.3): 다른 가게를 가리지 않는 콤팩트한 '방문한 곳' 미니 칩 */
+.memory-visited-chip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 9px 4px 7px;
+  border-radius: 9999px;
+  background: #ffffff;
+  border: 1.5px solid #fef08a; /* 따뜻한 옐로우 톤: 다녀온 장소 */
+  box-shadow: 0 3px 10px rgba(15, 23, 42, 0.1);
+  white-space: nowrap;
+  cursor: pointer !important;
+  pointer-events: auto !important;
+  user-select: none !important;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+  z-index: 760;
+}
+
+.memory-visited-chip:hover {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 6px 16px rgba(245, 158, 11, 0.22);
+  border-color: #f59e0b;
+  z-index: 9999 !important;
+}
+
+.memory-visited-4cut {
+  border-color: #ddd6fe !important;
+}
+
+.memory-visited-4cut:hover {
+  border-color: #8b5cf6 !important;
+  box-shadow: 0 6px 16px rgba(139, 92, 246, 0.22);
+}
+
+.memory-visited-icon {
+  font-size: 11.5px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.memory-visited-text {
+  font-size: 11.5px;
+  font-weight: 800;
+  color: #1e293b;
+  letter-spacing: -0.02em;
+}
+
+.memory-visited-badge {
+  font-size: 9px;
+  font-weight: 800;
+  color: #b45309;
+  background: #fef3c7;
+  padding: 1px 4.5px;
+  border-radius: 4px;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.memory-visited-4cut .memory-visited-badge {
+  color: #6d28d9;
+  background: #ede9fe;
+}
+
 .memory-pin-marker {
   position: relative;
   display: inline-flex;
