@@ -64,6 +64,97 @@ function generateSmartBadge(place, category, filter) {
   }
 }
 
+/**
+ * 장소의 실시간 예약(캐치테이블 / 네이버 예약) 필요 여부 스마트 판별
+ * - 스타벅스, 패스트푸드, 테이크아웃, 편의점 등 비예약 매장은 예약 버튼을 노출하지 않음
+ * - 다이닝, 레스토랑, 고기/구이, 오마카세 등은 캐치테이블 & 네이버 예약 노출
+ * - 보드게임카페(레드버튼 등), 룸카페, 방탈출 등은 네이버 예약 노출
+ */
+window.getPlaceBookingEligibility = function(place) {
+  if (!place) return { hasCatchTable: false, hasNaverBooking: false, hasAnyBooking: false };
+
+  var name = (place.place_name || '').toLowerCase();
+  var cat = (place.category_name || '').toLowerCase();
+
+  // 1. 비예약 프랜차이즈 / 테이크아웃 / 편의시설 블랙리스트 (예약 불필요)
+  var NO_BOOKING_NAMES = [
+    '스타벅스', 'starbucks', '이디야', 'ediya', '메가mgc', '메가커피', '컴포즈커피', 'compose',
+    '빽다방', '더벤티', '매머드커피', '매머드익스프레스', '텐퍼센트', '하삼동커피', '공차', 'gongcha',
+    '할리스', '파스쿠찌', '탐앤탐스', '앤제리너스', '블루보틀',
+    '맥도날드', 'mcdonald', '롯데리아', '버거킹', 'burger king', '서브웨이', 'subway', 'kfc',
+    '맘스터치', '프랭크버거', '노브랜드버거',
+    '파리바게뜨', '파리바게트', '뚜레쥬르', '던킨', '배스킨라빈스', '베스킨라빈스', '설빙',
+    '김밥천국', '김가네', '죠스떡볶이', '신전떡볶이', '엽기떡볶이', '배떡',
+    '다이소', '올리브영', 'cu', 'gs25', '세븐일레븐', '이마트24', '미니스톱'
+  ];
+
+  for (var i = 0; i < NO_BOOKING_NAMES.length; i++) {
+    if (name.indexOf(NO_BOOKING_NAMES[i]) !== -1) {
+      return { hasCatchTable: false, hasNaverBooking: false, hasAnyBooking: false };
+    }
+  }
+
+  // 비예약 카테고리 (패스트푸드, 분식, 도시락, 포장마차 등)
+  if (cat.indexOf('패스트푸드') !== -1 || cat.indexOf('분식') !== -1 || cat.indexOf('도시락') !== -1 || cat.indexOf('포장마차') !== -1) {
+    return { hasCatchTable: false, hasNaverBooking: false, hasAnyBooking: false };
+  }
+
+  // 2. 캐치테이블 대상 판별 (파인다이닝, 오마카세, 양식, 일식, 고기/구이, 바/주점, 다이닝 펍 등)
+  var isCatchTableEligible = false;
+  var CT_KEYWORDS = [
+    '오마카세', '다이닝', '비스트로', '레스토랑', '스테이크', '파스타', '스시', '초밥',
+    '이자카야', '와인바', '와인', '바베큐', 'bbq', '그릴', '화로', '한우', '갈비', '삼겹살',
+    '곱창', '샤브샤브', '스키야키', '코스', '룸식당', '브런치', '루프탑', '갓포', '솥밥'
+  ];
+  var CT_CATEGORIES = [
+    '양식', '이탈리안', '프렌치', '일식', '오마카세', '육류,고기', '소고기구이', '곱창,막창',
+    '패밀리레스토랑', '아시아음식', '뷔페', '샤브샤브', '퓨전요리', '바(bar)', '와인바'
+  ];
+
+  for (var k = 0; k < CT_KEYWORDS.length; k++) {
+    if (name.indexOf(CT_KEYWORDS[k]) !== -1) {
+      isCatchTableEligible = true;
+      break;
+    }
+  }
+  if (!isCatchTableEligible) {
+    for (var c = 0; c < CT_CATEGORIES.length; c++) {
+      if (cat.indexOf(CT_CATEGORIES[c]) !== -1) {
+        isCatchTableEligible = true;
+        break;
+      }
+    }
+  }
+
+  // 3. 네이버 예약 대상 판별 (공간/테이블 예약 지원: 보드게임, 방탈출, 파티룸, 룸카페 및 일반 다이닝 식당)
+  var isNaverBookingEligible = false;
+  var NAVER_SPACE_KEYWORDS = [
+    '보드게임', '방탈출', '파티룸', '룸카페', '스터디룸', '공방', '스튜디오', '클라이밍', '스크린골프', '원데이클래스'
+  ];
+
+  for (var s = 0; s < NAVER_SPACE_KEYWORDS.length; s++) {
+    if (name.indexOf(NAVER_SPACE_KEYWORDS[s]) !== -1 || cat.indexOf(NAVER_SPACE_KEYWORDS[s]) !== -1) {
+      isNaverBookingEligible = true;
+      break;
+    }
+  }
+
+  // 일반 식당(음식점) 중에서도 캐치테이블 대상이거나 한식/양식/일식/중식 등 매장 식사 식당
+  if (!isNaverBookingEligible) {
+    if (isCatchTableEligible || cat.indexOf('음식점') !== -1 || cat.indexOf('한식') !== -1 || cat.indexOf('중식') !== -1 || cat.indexOf('술집') !== -1) {
+      if (cat.indexOf('카페') === -1 || isCatchTableEligible) {
+        isNaverBookingEligible = true;
+      }
+    }
+  }
+
+  return {
+    hasCatchTable: isCatchTableEligible,
+    hasNaverBooking: isNaverBookingEligible,
+    hasAnyBooking: isCatchTableEligible || isNaverBookingEligible
+  };
+};
+
 function fetchKakaoPlaces(centerCoord, distanceText) {
   state.currentHubCoord = centerCoord;
   state.currentHubName = distanceText;
@@ -202,6 +293,34 @@ function fetchKakaoPlaces(centerCoord, distanceText) {
 
         var ctUrl = 'https://app.catchtable.co.kr/ct/search/total?query=' + encodeURIComponent(p.place_name);
         var nvUrl = 'https://search.naver.com/search.naver?query=' + encodeURIComponent(p.place_name + ' 예약');
+        var booking = window.getPlaceBookingEligibility(p);
+        var bookingBarHtml = '';
+        if (booking.hasAnyBooking) {
+          bookingBarHtml += '<div class="flex items-center gap-1.5 pt-1 border-t border-slate-100">';
+          if (booking.hasCatchTable) {
+            bookingBarHtml += '<a href="' + ctUrl + '" target="_blank" rel="noopener noreferrer" class="press flex-1 py-1.5 px-2.5 rounded-xl bg-slate-50 hover:bg-orange-50/70 border border-slate-200/90 hover:border-orange-300 text-slate-800 font-extrabold text-[11px] shadow-2xs flex items-center justify-between transition-all" title="캐치테이블 실시간 예약 / 웨이팅">' +
+              '<div class="flex items-center gap-1.5 min-w-0">' +
+                '<span class="w-4.5 h-4.5 rounded-md bg-orange-500/10 text-[#ff3d00] grid place-items-center shrink-0">' +
+                  '<i data-lucide="utensils" class="w-2.5 h-2.5"></i>' +
+                '</span>' +
+                '<span class="truncate">캐치테이블</span>' +
+              '</div>' +
+              '<span class="text-[9.5px] font-bold text-orange-600/80 shrink-0">예약</span>' +
+            '</a>';
+          }
+          if (booking.hasNaverBooking) {
+            bookingBarHtml += '<a href="' + nvUrl + '" target="_blank" rel="noopener noreferrer" class="press flex-1 py-1.5 px-2.5 rounded-xl bg-slate-50 hover:bg-emerald-50/70 border border-slate-200/90 hover:border-emerald-300 text-slate-800 font-extrabold text-[11px] shadow-2xs flex items-center justify-between transition-all" title="네이버 스마트플레이스 예약">' +
+              '<div class="flex items-center gap-1.5 min-w-0">' +
+                '<span class="w-4.5 h-4.5 rounded-md bg-emerald-500/10 text-[#03c75a] grid place-items-center shrink-0">' +
+                  '<i data-lucide="calendar-check" class="w-2.5 h-2.5"></i>' +
+                '</span>' +
+                '<span class="truncate">네이버 예약</span>' +
+              '</div>' +
+              '<span class="text-[9.5px] font-bold text-emerald-600/80 shrink-0">예약</span>' +
+            '</a>';
+          }
+          bookingBarHtml += '</div>';
+        }
 
         return '<div class="bg-white rounded-2xl p-3 border ' + (isConfirmed ? 'border-emerald-400 ring-2 ring-emerald-100' : 'border-slate-200/80') + ' shadow-sm hover:border-[#66CCFF] transition-all flex flex-col gap-2" data-idx="' + i + '">' +
           '<div class="flex items-start justify-between">' +
@@ -218,29 +337,8 @@ function fetchKakaoPlaces(centerCoord, distanceText) {
               '<i data-lucide="crosshair" class="w-4 h-4"></i>' +
             '</button>' +
           '</div>' +
-          '<div class="flex items-center gap-2 pt-1 border-t border-slate-100">' +
-            '<a href="' + ctUrl + '" target="_blank" rel="noopener noreferrer" class="press flex-1 py-1.5 px-2.5 rounded-xl bg-slate-50 hover:bg-orange-50/70 border border-slate-200/90 hover:border-orange-300 text-slate-800 font-extrabold text-[11px] shadow-2xs flex items-center justify-between transition-all" title="캐치테이블 실시간 예약 / 웨이팅">' +
-              '<div class="flex items-center gap-1.5 min-w-0">' +
-                '<span class="w-4.5 h-4.5 rounded-md bg-orange-500/10 text-[#ff3d00] grid place-items-center shrink-0">' +
-                  '<i data-lucide="utensils" class="w-2.5 h-2.5"></i>' +
-                '</span>' +
-                '<span class="truncate">캐치테이블</span>' +
-              '</div>' +
-              '<span class="text-[9.5px] font-bold text-orange-600/80 shrink-0">예약</span>' +
-            '</a>' +
-            '<a href="' + nvUrl + '" target="_blank" rel="noopener noreferrer" class="press flex-1 py-1.5 px-2.5 rounded-xl bg-slate-50 hover:bg-emerald-50/70 border border-slate-200/90 hover:border-emerald-300 text-slate-800 font-extrabold text-[11px] shadow-2xs flex items-center justify-between transition-all" title="네이버 스마트플레이스 예약">' +
-              '<div class="flex items-center gap-1.5 min-w-0">' +
-                '<span class="w-4.5 h-4.5 rounded-md bg-emerald-500/10 text-[#03c75a] grid place-items-center shrink-0">' +
-                  '<i data-lucide="calendar-check" class="w-2.5 h-2.5"></i>' +
-                '</span>' +
-                '<span class="truncate">네이버 예약</span>' +
-              '</div>' +
-              '<span class="text-[9.5px] font-bold text-emerald-600/80 shrink-0">예약</span>' +
-            '</a>' +
-          '</div>' +
+          bookingBarHtml +
           '<div class="flex items-center justify-between pt-0.5 text-[11px]">' +
-            (p.phone ? ('<span class="text-slate-400 font-medium truncate max-w-[95px]">' + p.phone + '</span>') : '<span class="text-slate-300">전화번호 미등록</span>') +
-            '<div class="flex items-center gap-1.5">' +
               '<button type="button" onclick="window.sharePlaceToChat(\'' + id + '\')" class="press px-2 py-1 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold text-[10.5px] border border-slate-200/80 flex items-center gap-1 transition-all" title="모임 채팅방에 장소 공유">' +
                 '<i data-lucide="share-2" class="w-3 h-3 text-[#0284c7]"></i>' +
                 '<span>공유</span>' +
@@ -424,13 +522,37 @@ window.openPlaceDetailModal = function(place) {
     phoneEl.textContent = place.phone ? place.phone : '전화번호 미등록';
   }
 
-  // 캐치테이블 & 네이버 예약 링크
+  // 캐치테이블 & 네이버 예약 링크 및 섹션 노출 제어
   var pName = place.place_name || '';
-  if (ctBtn) {
-    ctBtn.href = 'https://app.catchtable.co.kr/ct/search/total?query=' + encodeURIComponent(pName);
-  }
-  if (nvBtn) {
-    nvBtn.href = 'https://search.naver.com/search.naver?query=' + encodeURIComponent(pName + ' 예약');
+  var booking = window.getPlaceBookingEligibility(place);
+  var bookingSec = document.getElementById('placeModalBookingSection');
+  var bookingGrid = document.getElementById('placeModalBookingGrid');
+
+  if (bookingSec) {
+    if (!booking.hasAnyBooking) {
+      bookingSec.classList.add('hidden');
+    } else {
+      bookingSec.classList.remove('hidden');
+      if (bookingGrid) {
+        if (booking.hasCatchTable && booking.hasNaverBooking) {
+          bookingGrid.className = 'grid grid-cols-2 gap-2';
+        } else {
+          bookingGrid.className = 'grid grid-cols-1 gap-2';
+        }
+      }
+      if (ctBtn) {
+        ctBtn.classList.toggle('hidden', !booking.hasCatchTable);
+        if (booking.hasCatchTable) {
+          ctBtn.href = 'https://app.catchtable.co.kr/ct/search/total?query=' + encodeURIComponent(pName);
+        }
+      }
+      if (nvBtn) {
+        nvBtn.classList.toggle('hidden', !booking.hasNaverBooking);
+        if (booking.hasNaverBooking) {
+          nvBtn.href = 'https://search.naver.com/search.naver?query=' + encodeURIComponent(pName + ' 예약');
+        }
+      }
+    }
   }
 
   // 카카오맵 링크
@@ -733,6 +855,34 @@ window.searchPlaceKeywordDirect = function(keyword) {
           var isConfirmed = state.confirmedPlace && state.confirmedPlace.id === p.id;
           var ctUrl = 'https://app.catchtable.co.kr/ct/search/total?query=' + encodeURIComponent(p.place_name);
           var nvUrl = 'https://search.naver.com/search.naver?query=' + encodeURIComponent(p.place_name + ' 예약');
+          var booking = window.getPlaceBookingEligibility(p);
+          var bookingBarHtml = '';
+          if (booking.hasAnyBooking) {
+            bookingBarHtml += '<div class="flex items-center gap-1.5 pt-1 border-t border-slate-100">';
+            if (booking.hasCatchTable) {
+              bookingBarHtml += '<a href="' + ctUrl + '" target="_blank" rel="noopener noreferrer" class="press flex-1 py-1.5 px-2.5 rounded-xl bg-slate-50 hover:bg-orange-50/70 border border-slate-200/90 hover:border-orange-300 text-slate-800 font-extrabold text-[11px] shadow-2xs flex items-center justify-between transition-all" title="캐치테이블 실시간 예약 / 웨이팅">' +
+                '<div class="flex items-center gap-1.5 min-w-0">' +
+                  '<span class="w-4.5 h-4.5 rounded-md bg-orange-500/10 text-[#ff3d00] grid place-items-center shrink-0">' +
+                    '<i data-lucide="utensils" class="w-2.5 h-2.5"></i>' +
+                  '</span>' +
+                  '<span class="truncate">캐치테이블</span>' +
+                '</div>' +
+                '<span class="text-[9.5px] font-bold text-orange-600/80 shrink-0">예약</span>' +
+              '</a>';
+            }
+            if (booking.hasNaverBooking) {
+              bookingBarHtml += '<a href="' + nvUrl + '" target="_blank" rel="noopener noreferrer" class="press flex-1 py-1.5 px-2.5 rounded-xl bg-slate-50 hover:bg-emerald-50/70 border border-slate-200/90 hover:border-emerald-300 text-slate-800 font-extrabold text-[11px] shadow-2xs flex items-center justify-between transition-all" title="네이버 스마트플레이스 예약">' +
+                '<div class="flex items-center gap-1.5 min-w-0">' +
+                  '<span class="w-4.5 h-4.5 rounded-md bg-emerald-500/10 text-[#03c75a] grid place-items-center shrink-0">' +
+                    '<i data-lucide="calendar-check" class="w-2.5 h-2.5"></i>' +
+                  '</span>' +
+                  '<span class="truncate">네이버 예약</span>' +
+                '</div>' +
+                '<span class="text-[9.5px] font-bold text-emerald-600/80 shrink-0">예약</span>' +
+              '</a>';
+            }
+            bookingBarHtml += '</div>';
+          }
 
           return '<div class="bg-white rounded-2xl p-3 border ' + (isConfirmed ? 'border-emerald-400 ring-2 ring-emerald-100' : 'border-slate-200/80') + ' shadow-sm hover:border-[#66CCFF] transition-all flex flex-col gap-2" data-idx="' + i + '">' +
             '<div class="flex items-start justify-between">' +
@@ -748,27 +898,8 @@ window.searchPlaceKeywordDirect = function(keyword) {
                 '<i data-lucide="crosshair" class="w-4 h-4"></i>' +
               '</button>' +
             '</div>' +
-            '<div class="flex items-center gap-2 pt-1 border-t border-slate-100">' +
-              '<a href="' + ctUrl + '" target="_blank" rel="noopener noreferrer" class="press flex-1 py-1.5 px-2.5 rounded-xl bg-slate-50 hover:bg-orange-50/70 border border-slate-200/90 hover:border-orange-300 text-slate-800 font-extrabold text-[11px] shadow-2xs flex items-center justify-between transition-all" title="캐치테이블 실시간 예약 / 웨이팅">' +
-                '<div class="flex items-center gap-1.5 min-w-0">' +
-                  '<span class="w-4.5 h-4.5 rounded-md bg-orange-500/10 text-[#ff3d00] grid place-items-center shrink-0">' +
-                    '<i data-lucide="utensils" class="w-2.5 h-2.5"></i>' +
-                  '</span>' +
-                  '<span class="truncate">캐치테이블</span>' +
-                '</div>' +
-                '<span class="text-[9.5px] font-bold text-orange-600/80 shrink-0">예약</span>' +
-              '</a>' +
-              '<a href="' + nvUrl + '" target="_blank" rel="noopener noreferrer" class="press flex-1 py-1.5 px-2.5 rounded-xl bg-slate-50 hover:bg-emerald-50/70 border border-slate-200/90 hover:border-emerald-300 text-slate-800 font-extrabold text-[11px] shadow-2xs flex items-center justify-between transition-all" title="네이버 스마트플레이스 예약">' +
-                '<div class="flex items-center gap-1.5 min-w-0">' +
-                  '<span class="w-4.5 h-4.5 rounded-md bg-emerald-500/10 text-[#03c75a] grid place-items-center shrink-0">' +
-                    '<i data-lucide="calendar-check" class="w-2.5 h-2.5"></i>' +
-                  '</span>' +
-                  '<span class="truncate">네이버 예약</span>' +
-                '</div>' +
-                '<span class="text-[9.5px] font-bold text-emerald-600/80 shrink-0">예약</span>' +
-              '</a>' +
-            '</div>' +
-          '</div>';
+            bookingBarHtml +
+          '</div>';;
         }).join('');
         if (window.lucide) lucide.createIcons();
       }

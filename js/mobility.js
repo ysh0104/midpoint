@@ -982,10 +982,35 @@ window.confirmMeetingPlace = function(idOrName, fallbackName) {
   if (pTitleEl) pTitleEl.textContent = p.place_name;
   if (pAddrEl) pAddrEl.textContent = (p.road_address_name || p.address_name) + ' (약속 장소)';
 
+  var booking = window.getPlaceBookingEligibility ? window.getPlaceBookingEligibility(p) : { hasCatchTable: true, hasNaverBooking: true, hasAnyBooking: true };
+  var bookingRow = document.getElementById('confirmedBookingLinksRow');
   var ctLink = document.getElementById('confirmedCatchTableLink');
   var nvLink = document.getElementById('confirmedNaverBookingLink');
-  if (ctLink) ctLink.href = 'https://app.catchtable.co.kr/ct/search/total?query=' + encodeURIComponent(p.place_name);
-  if (nvLink) nvLink.href = 'https://search.naver.com/search.naver?query=' + encodeURIComponent(p.place_name + ' 예약');
+
+  if (bookingRow) {
+    if (!booking.hasAnyBooking) {
+      bookingRow.classList.add('hidden');
+    } else {
+      bookingRow.classList.remove('hidden');
+      if (booking.hasCatchTable && booking.hasNaverBooking) {
+        bookingRow.className = 'grid grid-cols-2 gap-2 pt-1';
+      } else {
+        bookingRow.className = 'grid grid-cols-1 gap-2 pt-1';
+      }
+      if (ctLink) {
+        ctLink.classList.toggle('hidden', !booking.hasCatchTable);
+        if (booking.hasCatchTable) {
+          ctLink.href = 'https://app.catchtable.co.kr/ct/search/total?query=' + encodeURIComponent(p.place_name);
+        }
+      }
+      if (nvLink) {
+        nvLink.classList.toggle('hidden', !booking.hasNaverBooking);
+        if (booking.hasNaverBooking) {
+          nvLink.href = 'https://search.naver.com/search.naver?query=' + encodeURIComponent(p.place_name + ' 예약');
+        }
+      }
+    }
+  }
 
   document.getElementById('sheetMainTitle').textContent = p.place_name;
   document.getElementById('sheetSubTitle').textContent = (p.road_address_name || p.address_name) + ' (약속 장소)';
