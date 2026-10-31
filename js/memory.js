@@ -114,7 +114,7 @@ function renderMemoryMarkersOnMap() {
   // 너무 멀리서 볼 때(Zoom < 12.5)는 지도 깔끔함을 위해 마커 숨김
   if (currentZoom < 12.5) return;
 
-  var isCloseUp = currentZoom >= 15.5; // 확대 많이 했을 때 폴라로이드 모드 전환 기준
+  var isCloseUp = currentZoom >= 14.0; // Zoom 14.0 이상이면 감성 폴라로이드 모드로 전환!
   var myLoc = (window.state && state.myLocation) ? state.myLocation : ((window.state && state.locations && state.locations[0]) ? state.locations[0].loc : null);
 
   memoryStore.memories.forEach(function(mem, memIdx) {
@@ -133,18 +133,25 @@ function renderMemoryMarkersOnMap() {
       }
     }
 
+    var is4Cut = (mem.category === '인생네컷');
+
     if (isCloseUp) {
-      // [근접 확대 뷰 (Zoom >= 15.5)]: 감성적이고 아기자기한 폴라로이드 사진 프레임
+      // [근접 확대 뷰 (Zoom >= 14.0)]: 감성 폴라로이드 사진 프레임
       var tilt = mem.tiltDeg || 0;
+      var polaroidWidth = is4Cut ? 76 : 86;
+      var polaroidHeight = is4Cut ? 116 : 104;
+      var frameClass = is4Cut ? 'polaroid-photo-frame polaroid-4cut-frame' : 'polaroid-photo-frame';
+      var catBadgeColor = is4Cut ? 'bg-violet-600/90' : 'bg-slate-900/80';
+
       var polaroidHtml = 
-        '<div class="polaroid-marker group cursor-pointer" onclick="window.openMemoryDetailModal(\'' + mem.id + '\')" style="transform: rotate(' + tilt + 'deg);">' +
+        '<div class="polaroid-marker group cursor-pointer ' + (is4Cut ? 'polaroid-4cut-card' : '') + '" onclick="window.openMemoryDetailModal(\'' + mem.id + '\')" style="transform: rotate(' + tilt + 'deg);">' +
           '<div class="polaroid-pin"></div>' +
-          '<div class="polaroid-photo-frame">' +
+          '<div class="' + frameClass + '">' +
             '<img src="' + mem.photo + '" alt="' + mem.placeName + '" class="polaroid-img" />' +
-            '<div class="polaroid-category-badge">' + mem.category + '</div>' +
+            '<div class="polaroid-category-badge ' + catBadgeColor + '">' + (mem.category || '추억') + '</div>' +
           '</div>' +
           '<div class="polaroid-caption">' +
-            '<div class="polaroid-title">' + mem.placeName + '</div>' +
+            '<div class="polaroid-title truncate">' + mem.placeName + '</div>' +
             '<div class="polaroid-date">' + mem.date + '</div>' +
           '</div>' +
         '</div>';
@@ -152,16 +159,30 @@ function renderMemoryMarkersOnMap() {
       markerIcon = L.divIcon({
         html: polaroidHtml,
         className: 'polaroid-leaflet-icon',
-        iconSize: [80, 102],
-        iconAnchor: [40, 98]
+        iconSize: [polaroidWidth + 10, polaroidHeight + 10],
+        iconAnchor: [Math.round((polaroidWidth + 10) / 2), polaroidHeight + 6]
       });
     } else {
-      // [원거리 뷰 (Zoom 12.5 ~ 15.4)]: 지도를 가리지 않는 예쁘고 미니멀한 핀포인트 뱃지 마커
+      // [원거리 뷰]: 시인성 높은 와이드 미니 사진 카드 뱃지 (사진이 크고 비율이 온전함)
+      var thumbClass = is4Cut ? 'memory-pin-thumb memory-pin-thumb-4cut' : 'memory-pin-thumb memory-pin-thumb-normal';
+      var catColor = is4Cut ? 'bg-violet-50 text-violet-600 border-violet-200' : 'bg-sky-50 text-[#0284c7] border-sky-200';
+      var iconBadge = is4Cut ? '🎞️' : '📸';
+      var ddayBadge = mem.ddayText ? ('<span class="text-[9.5px] text-slate-400 font-semibold">' + mem.ddayText + '</span>') : '';
+
       var pinHtml = 
         '<div class="memory-pin-marker group" onclick="window.openMemoryDetailModal(\'' + mem.id + '\')">' +
           '<div class="memory-pin-badge">' +
-            '<img src="' + mem.photo + '" alt="" class="memory-pin-thumb" />' +
-            '<span class="memory-pin-name">' + mem.placeName + '</span>' +
+            '<div class="memory-pin-thumb-wrap">' +
+              '<img src="' + mem.photo + '" alt="" class="' + thumbClass + '" />' +
+              '<span class="memory-pin-sub-tag">' + iconBadge + '</span>' +
+            '</div>' +
+            '<div class="memory-pin-info">' +
+              '<div class="memory-pin-header">' +
+                '<span class="memory-pin-cat ' + catColor + '">' + (mem.category || '추억') + '</span>' +
+                ddayBadge +
+              '</div>' +
+              '<span class="memory-pin-name" title="' + mem.placeName + '">' + mem.placeName + '</span>' +
+            '</div>' +
           '</div>' +
           '<div class="memory-pin-point"></div>' +
         '</div>';
@@ -169,8 +190,8 @@ function renderMemoryMarkersOnMap() {
       markerIcon = L.divIcon({
         html: pinHtml,
         className: 'polaroid-leaflet-icon',
-        iconSize: [120, 36],
-        iconAnchor: [60, 34]
+        iconSize: [210, 58],
+        iconAnchor: [105, 56]
       });
     }
 

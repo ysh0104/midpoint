@@ -584,79 +584,136 @@ body {
 .polaroid-leaflet-icon {
   background: transparent !important;
   border: none !important;
+  overflow: visible !important;
+  pointer-events: auto !important;
 }
 
-/* 1. 멀리서 볼 때: 아기자기하고 예쁜 미니 핀포인트 마커 (Zoom < 15.5) */
+/* 1. 멀리서 볼 때: 시원하고 선명한 미니 사진 카드 뱃지 (원거리 뷰에서도 사진이 또렷하게 보임) */
 .memory-pin-marker {
   position: relative;
-  display: flex;
+  display: inline-flex;
   flex-direction: column;
   align-items: center;
   cursor: pointer;
   user-select: none;
   animation: pinBounceIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-  transition: transform 0.2s ease;
+  transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.18s ease;
   pointer-events: auto !important;
-}
-
-.memory-pin-marker::before {
-  content: '';
-  position: absolute;
-  inset: -10px -8px;
-  cursor: pointer !important;
-  pointer-events: auto !important;
-  z-index: 10;
+  z-index: 780;
 }
 
 .memory-pin-marker:hover {
-  transform: translateY(-4px) scale(1.1);
+  transform: translateY(-4px) scale(1.05);
+  filter: drop-shadow(0 10px 22px rgba(15, 23, 42, 0.22));
   z-index: 9999 !important;
 }
 
 .memory-pin-badge {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 8px;
   background: #ffffff;
-  padding: 4px 8px 4px 5px;
-  border-radius: 9999px;
-  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.16), 0 2px 4px rgba(15, 23, 42, 0.08);
-  border: 1.5px solid #ffffff;
+  padding: 5px 12px 5px 5px;
+  border-radius: 14px;
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.14), 0 2px 6px rgba(15, 23, 42, 0.08);
+  border: 1.5px solid #e2e8f0;
   white-space: nowrap;
 }
 
+.memory-pin-thumb-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0 !important;
+}
+
+/* 일반 사진 썸네일: 시원한 38px 정사각형 라운드 (기존 20px 왜곡 해소) */
 .memory-pin-thumb {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 1px solid rgba(226, 232, 240, 0.8);
+  display: block !important;
+  object-fit: cover !important;
+  flex-shrink: 0 !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+}
+
+.memory-pin-thumb-normal {
+  width: 38px !important;
+  height: 38px !important;
+  border-radius: 9px !important;
+  border: 1px solid rgba(226, 232, 240, 0.9) !important;
+}
+
+/* 인생네컷 썸네일: 비율을 살린 28px x 42px 세로형 필름 스트립 */
+.memory-pin-thumb-4cut {
+  width: 28px !important;
+  height: 42px !important;
+  border-radius: 6px !important;
+  border: 1px solid rgba(139, 92, 246, 0.4) !important;
+  background: #0f172a;
+  object-position: center 20% !important;
+}
+
+.memory-pin-sub-tag {
+  position: absolute;
+  bottom: -3px;
+  right: -3px;
+  font-size: 10px;
+  line-height: 1;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.25));
+}
+
+.memory-pin-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  gap: 1.5px;
+  min-width: 0;
+}
+
+.memory-pin-header {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.memory-pin-cat {
+  font-size: 9.5px;
+  font-weight: 800;
+  padding: 1px 5px;
+  border-radius: 4px;
+  border-width: 1px;
+  line-height: 1.2;
 }
 
 .memory-pin-name {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 800;
-  color: #1e293b;
+  color: #0f172a;
   letter-spacing: -0.02em;
+  max-width: 130px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .memory-pin-point {
   width: 0;
   height: 0;
-  border-left: 5px solid transparent;
-  border-right: 5px solid transparent;
-  border-top: 6px solid #ffffff;
-  filter: drop-shadow(0 2px 1.5px rgba(0, 0, 0, 0.12));
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 7px solid #ffffff;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.15));
   margin-top: -1px;
 }
 
-/* 2. 가까이서 볼 때: 정교하고 아기자기한 클래식 폴라로이드 (Zoom >= 15.5) */
+/* 2. 가까이서 볼 때: 정교하고 아기자기한 클래식 폴라로이드 (Zoom >= 14.0) */
 .polaroid-marker {
   position: relative;
-  width: 80px;
+  width: 86px;
   background: #ffffff;
-  padding: 5px 5px 8px 5px;
-  border-radius: 6px;
+  padding: 6px 6px 9px 6px;
+  border-radius: 8px;
   box-shadow: 0 12px 28px -4px rgba(15, 23, 42, 0.28), 0 4px 10px -2px rgba(15, 23, 42, 0.12);
   border: 1px solid rgba(226, 232, 240, 0.95);
   transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
@@ -664,6 +721,10 @@ body {
   animation: polaroidPop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
   pointer-events: auto !important;
   cursor: pointer !important;
+}
+
+.polaroid-4cut-card {
+  width: 76px !important;
 }
 
 .polaroid-marker::before {
@@ -675,7 +736,7 @@ body {
 }
 
 .polaroid-marker:hover {
-  transform: scale(1.16) rotate(0deg) !important;
+  transform: scale(1.15) rotate(0deg) !important;
   z-index: 9999 !important;
   box-shadow: 0 18px 36px -6px rgba(37, 99, 235, 0.32), 0 6px 14px rgba(15, 23, 42, 0.18);
 }
@@ -696,9 +757,9 @@ body {
 
 .polaroid-photo-frame {
   position: relative;
-  width: 70px;
-  height: 62px;
-  border-radius: 4px;
+  width: 74px;
+  height: 64px;
+  border-radius: 5px;
   overflow: hidden;
   background: #18181b;
   display: flex !important;
@@ -706,11 +767,16 @@ body {
   justify-content: center !important;
 }
 
+.polaroid-4cut-frame {
+  width: 64px !important;
+  height: 92px !important;
+}
+
 .polaroid-img {
   width: 100% !important;
   height: 100% !important;
   object-fit: cover !important;
-  object-position: center 15% !important;
+  object-position: center 20% !important;
   display: block !important;
   transition: transform 0.25s ease;
 }
