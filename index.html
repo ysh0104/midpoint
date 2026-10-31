@@ -46,7 +46,7 @@
 <!-- Lucide Icons -->
 <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
 
-<link rel="stylesheet" href="css/style.css?v=56" />
+<link rel="stylesheet" href="css/style.css?v=57" />
 </head>
 <body class="bg-zinc-200 text-slate-900 antialiased h-screen w-screen flex justify-center items-center">
 
@@ -417,14 +417,24 @@
         </div>
 
         <!-- 캐치테이블 & 네이버 예약 다이렉트 바로가기 -->
-        <div id="confirmedBookingLinksRow" class="grid grid-cols-2 gap-1.5 pt-1">
-          <a id="confirmedCatchTableLink" href="https://catchtable.co.kr" target="_blank" rel="noopener noreferrer" class="press py-2 px-2.5 rounded-xl bg-gradient-to-r from-[#ff3d00] to-[#ff5722] hover:from-[#e53600] hover:to-[#f4511e] text-white font-extrabold text-[11px] shadow-2xs flex items-center justify-center gap-1.5 transition-all" title="캐치테이블 실시간 예약 및 웨이팅 확인">
-            <i data-lucide="utensils" class="w-3.5 h-3.5"></i>
-            <span>캐치테이블 예약</span>
+        <div id="confirmedBookingLinksRow" class="grid grid-cols-2 gap-2 pt-1">
+          <a id="confirmedCatchTableLink" href="https://catchtable.co.kr" target="_blank" rel="noopener noreferrer" class="press py-2 px-3 rounded-2xl bg-slate-50/90 hover:bg-orange-50/70 border border-slate-200/90 hover:border-orange-300 text-slate-800 shadow-2xs flex items-center justify-between transition-all group" title="캐치테이블 실시간 예약 및 웨이팅 확인">
+            <div class="flex items-center gap-1.5 min-w-0">
+              <span class="w-5.5 h-5.5 rounded-lg bg-orange-500/10 text-[#ff4b2b] grid place-items-center shrink-0 group-hover:scale-105 transition-transform">
+                <i data-lucide="utensils" class="w-3 h-3"></i>
+              </span>
+              <span class="text-[11.5px] font-extrabold text-slate-800 tracking-tight truncate">캐치테이블</span>
+            </div>
+            <span class="text-[9.5px] font-bold text-orange-600 bg-orange-100/70 px-1.5 py-0.5 rounded-md shrink-0">예약</span>
           </a>
-          <a id="confirmedNaverBookingLink" href="https://map.naver.com" target="_blank" rel="noopener noreferrer" class="press py-2 px-2.5 rounded-xl bg-[#03c75a] hover:bg-[#02b351] text-white font-extrabold text-[11px] shadow-2xs flex items-center justify-center gap-1.5 transition-all" title="네이버 스마트플레이스 예약">
-            <i data-lucide="calendar-check" class="w-3.5 h-3.5"></i>
-            <span>네이버 예약</span>
+          <a id="confirmedNaverBookingLink" href="https://map.naver.com" target="_blank" rel="noopener noreferrer" class="press py-2 px-3 rounded-2xl bg-slate-50/90 hover:bg-emerald-50/70 border border-slate-200/90 hover:border-emerald-300 text-slate-800 shadow-2xs flex items-center justify-between transition-all group" title="네이버 스마트플레이스 예약">
+            <div class="flex items-center gap-1.5 min-w-0">
+              <span class="w-5.5 h-5.5 rounded-lg bg-emerald-500/10 text-[#03c75a] grid place-items-center shrink-0 group-hover:scale-105 transition-transform">
+                <i data-lucide="calendar-check" class="w-3 h-3"></i>
+              </span>
+              <span class="text-[11.5px] font-extrabold text-slate-800 tracking-tight truncate">네이버 예약</span>
+            </div>
+            <span class="text-[9.5px] font-bold text-emerald-600 bg-emerald-100/70 px-1.5 py-0.5 rounded-md shrink-0">예약</span>
           </a>
         </div>
 
@@ -1718,17 +1728,17 @@
 </div>
 
 <!-- 기능별 모듈 스크립트 분리 (Clean Modular Architecture) -->
-<script src="js/config.js?v=56"></script>
-<script src="js/state.js?v=56"></script>
-<script src="js/map.js?v=56"></script>
-<script src="js/mobility.js?v=56"></script>
-<script src="js/places.js?v=56"></script>
-<script src="js/weather.js?v=56"></script>
-<script src="js/care.js?v=56"></script>
-<script src="js/game.js?v=56"></script>
-<script src="js/chat.js?v=56"></script>
-<script src="js/ui.js?v=56"></script>
-<script src="js/memory.js?v=56"></script>
-<script src="js/life4cut.js?v=56"></script>
+<script src="js/config.js?v=57"></script>
+<script src="js/state.js?v=57"></script>
+<script src="js/map.js?v=57"></script>
+<script src="js/mobility.js?v=57"></script>
+<script src="js/places.js?v=57"></script>
+<script src="js/weather.js?v=57"></script>
+<script src="js/care.js?v=57"></script>
+<script src="js/game.js?v=57"></script>
+<script src="js/chat.js?v=57"></script>
+<script src="js/ui.js?v=57"></script>
+<script src="js/memory.js?v=57"></script>
+<script src="js/life4cut.js?v=57"></script>
 </body>
 </html>
