@@ -55,37 +55,12 @@
 <!-- Lucide Icons -->
 <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
 
-<link rel="stylesheet" href="css/style.css?v=62" />
+<link rel="stylesheet" href="css/style.css?v=63" />
 </head>
-<body class="bg-slate-900 sm:bg-slate-900 text-slate-900 antialiased h-[100dvh] w-full flex flex-col justify-center items-center overflow-hidden relative">
-
-  <!-- 데스크톱 전용 모바일 시현 & 디바이스 토글 바 (화면 너비 641px 이상에서만 노출) -->
-  <aside class="hidden sm:flex items-center justify-between w-full max-w-[520px] px-2 py-1.5 mb-2 text-white/90 z-30 select-none">
-    <div class="flex items-center gap-2">
-      <div class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
-      <span class="text-[12px] font-black tracking-tight text-white">반띵 모바일 시현 모드</span>
-    </div>
-
-    <!-- 기기 해상도 프리뷰 토글 -->
-    <div class="flex items-center bg-slate-800/90 p-0.5 rounded-xl border border-slate-700/80 text-[11px] font-bold">
-      <button type="button" id="deviceBtn_iphone" onclick="window.setDevicePreview('iphone')" class="device-preview-btn px-2.5 py-1 rounded-lg text-slate-400 hover:text-white transition-all">iPhone</button>
-      <button type="button" id="deviceBtn_galaxy" onclick="window.setDevicePreview('galaxy')" class="device-preview-btn px-2.5 py-1 rounded-lg text-slate-400 hover:text-white transition-all">Galaxy</button>
-      <button type="button" id="deviceBtn_default" onclick="window.setDevicePreview('default')" class="device-preview-btn px-2.5 py-1 rounded-lg bg-white text-slate-900 shadow-xs transition-all">기본(440)</button>
-      <button type="button" id="deviceBtn_full" onclick="window.setDevicePreview('full')" class="device-preview-btn px-2.5 py-1 rounded-lg text-slate-400 hover:text-white transition-all">전체화면</button>
-    </div>
-
-    <!-- QR 코드로 폰에서 직접 열기 버튼 -->
-    <button type="button" onclick="window.openMobileDemoModal()" class="press px-3 py-1 rounded-xl bg-gradient-to-r from-[#2563eb] to-[#0284c7] hover:from-[#1d4ed8] hover:to-[#0369a1] text-white font-black text-[11.5px] flex items-center gap-1.5 shadow-md shadow-blue-500/20 transition-all">
-      <i data-lucide="qr-code" class="w-3.5 h-3.5"></i>
-      <span>폰으로 열기</span>
-    </button>
-  </aside>
+<body class="bg-slate-100 text-slate-900 antialiased h-[100dvh] w-full flex justify-center items-center overflow-hidden">
 
   <!-- 메인 앱 컨테이너 (모바일 뷰어 프레임) -->
-  <div id="appFrame" class="relative w-full sm:max-w-[440px] h-full sm:h-[900px] bg-white sm:rounded-[40px] sm:border-[8px] sm:border-slate-800/90 shadow-2xl overflow-hidden flex flex-col transition-all duration-300">
-    
-    <!-- 데스크톱 폰 상단 다이내믹 아일랜드 (시현용 모바일 프레임) -->
-    <div class="hidden sm:block absolute top-2.5 left-1/2 -translate-x-1/2 w-24 h-4 bg-black rounded-full z-40 pointer-events-none shadow-xs"></div>
+  <div id="appFrame" class="relative w-full max-w-[440px] h-full sm:h-[900px] bg-white sm:rounded-3xl sm:border border-slate-300 shadow-[0_30px_90px_-20px_rgba(15,23,42,0.3)] overflow-hidden flex flex-col">
 
     <!-- 0. 인트로 스플래시 스크린 (자동차 도로 주행 애니메이션) -->
     <div id="splashScreen" class="absolute inset-0 z-50 bg-white flex flex-col items-center justify-center select-none overflow-hidden cursor-pointer" onclick="window.dismissSplashScreen()" title="터치하여 바로 시작">
@@ -539,10 +514,10 @@
           <!-- 좌측 카테고리 세그먼트 탭 -->
           <div class="inline-flex items-center gap-0.5 bg-slate-100/90 p-0.5 rounded-xl border border-slate-200/80 shrink-0" id="categoryTabGroup">
             <button type="button" id="tabCafeBtn" onclick="window.switchPlaceCategory('CE7')" class="press h-8 px-2.5 sm:px-3 rounded-lg text-[11.5px] sm:text-[12px] font-bold bg-white text-[#0284c7] shadow-xs border border-[#bae6fd] transition-all whitespace-nowrap flex items-center justify-center">
-              카페
+              <span class="hidden sm:inline">인기 </span>카페
             </button>
             <button type="button" id="tabFoodBtn" onclick="window.switchPlaceCategory('FD6')" class="press h-8 px-2.5 sm:px-3 rounded-lg text-[11.5px] sm:text-[12px] font-semibold text-slate-600 hover:text-slate-900 transition-all whitespace-nowrap flex items-center justify-center">
-              맛집
+              <span class="hidden sm:inline">추천 </span>맛집
             </button>
           </div>
 
@@ -550,16 +525,16 @@
           <div class="flex items-center gap-1 shrink-0">
             <button type="button" onclick="window.openChatDrawer()" class="relative press h-8 px-2 sm:px-2.5 rounded-xl bg-white hover:bg-sky-50/60 text-slate-700 hover:text-[#0284c7] font-bold text-[11px] sm:text-[11.5px] border border-slate-200/90 shadow-2xs flex items-center gap-1 transition-all whitespace-nowrap" title="모임 장소 조율 채팅">
               <i data-lucide="message-square" class="w-3.5 h-3.5 text-[#0284c7] shrink-0"></i>
-              <span class="whitespace-nowrap">채팅</span>
+              <span><span class="hidden sm:inline">모임 </span>채팅</span>
               <span id="chatHeaderBadge" class="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-rose-500 ring-2 ring-white shadow-xs"></span>
             </button>
             <button type="button" onclick="window.openGameModal()" class="press h-8 px-2 sm:px-2.5 rounded-xl bg-white hover:bg-sky-50/60 text-slate-700 hover:text-[#0284c7] font-bold text-[11px] sm:text-[11.5px] border border-slate-200/90 shadow-2xs flex items-center gap-1 transition-all whitespace-nowrap" title="랜덤 결정 게임">
               <i data-lucide="dices" class="w-3.5 h-3.5 text-[#0284c7] shrink-0"></i>
-              <span class="whitespace-nowrap">랜덤</span>
+              <span><span class="hidden sm:inline">랜덤 </span>결정</span>
             </button>
             <button type="button" onclick="window.openMeetFilterModal()" class="relative press h-8 px-2 sm:px-2.5 rounded-xl bg-white hover:bg-sky-50/60 text-slate-700 hover:text-[#0284c7] font-bold text-[11px] sm:text-[11.5px] border border-slate-200/90 shadow-2xs flex items-center gap-1 transition-all whitespace-nowrap" title="모임 맞춤 필터">
               <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5 text-[#0284c7] shrink-0"></i>
-              <span class="whitespace-nowrap">맞춤</span>
+              <span><span class="hidden sm:inline">모임 </span>맞춤</span>
               <span id="activeFilterBadgeCount" class="hidden absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#0284c7] text-white text-[9.5px] font-black ring-2 ring-white shadow-xs flex items-center justify-center">1</span>
             </button>
           </div>
@@ -1875,17 +1850,17 @@
 </div>
 
 <!-- 기능별 모듈 스크립트 분리 (Clean Modular Architecture) -->
-<script src="js/config.js?v=62"></script>
-<script src="js/state.js?v=62"></script>
-<script src="js/map.js?v=62"></script>
-<script src="js/mobility.js?v=62"></script>
-<script src="js/places.js?v=62"></script>
-<script src="js/weather.js?v=62"></script>
-<script src="js/care.js?v=62"></script>
-<script src="js/game.js?v=62"></script>
-<script src="js/chat.js?v=62"></script>
-<script src="js/ui.js?v=62"></script>
-<script src="js/memory.js?v=62"></script>
-<script src="js/life4cut.js?v=62"></script>
+<script src="js/config.js?v=63"></script>
+<script src="js/state.js?v=63"></script>
+<script src="js/map.js?v=63"></script>
+<script src="js/mobility.js?v=63"></script>
+<script src="js/places.js?v=63"></script>
+<script src="js/weather.js?v=63"></script>
+<script src="js/care.js?v=63"></script>
+<script src="js/game.js?v=63"></script>
+<script src="js/chat.js?v=63"></script>
+<script src="js/ui.js?v=63"></script>
+<script src="js/memory.js?v=63"></script>
+<script src="js/life4cut.js?v=63"></script>
 </body>
 </html>
