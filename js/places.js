@@ -338,19 +338,20 @@ function fetchKakaoPlaces(centerCoord, distanceText) {
             '</button>' +
           '</div>' +
           bookingBarHtml +
-          '<div class="flex items-center justify-between pt-0.5 text-[11px]">' +
-              '<button type="button" onclick="window.sharePlaceToChat(\'' + id + '\')" class="press px-2 py-1 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold text-[10.5px] border border-slate-200/80 flex items-center gap-1 transition-all" title="모임 채팅방에 장소 공유">' +
-                '<i data-lucide="share-2" class="w-3 h-3 text-[#0284c7]"></i>' +
+          '<div class="flex items-center justify-between pt-1 border-t border-slate-100/70 mt-0.5 text-[11px]">' +
+            '<div class="flex items-center gap-1.5 shrink-0">' +
+              '<button type="button" onclick="window.sharePlaceToChat(\'' + id + '\')" class="press px-2.5 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold text-[10.5px] border border-slate-200/80 flex items-center gap-1 transition-all" title="모임 채팅방에 장소 공유">' +
+                '<i data-lucide="share-2" class="w-3.5 h-3.5 text-[#0284c7]"></i>' +
                 '<span>공유</span>' +
               '</button>' +
-              '<a href="' + p.place_url + '" target="_blank" rel="noopener noreferrer" class="px-2 py-1 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold text-[10.5px] border border-slate-200/80 flex items-center gap-1 transition-all">' +
+              '<a href="' + (p.place_url || ('https://map.kakao.com/link/search/' + encodeURIComponent(p.place_name))) + '" target="_blank" rel="noopener noreferrer" class="press px-2.5 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold text-[10.5px] border border-slate-200/80 flex items-center gap-1 transition-all" title="카카오맵 상세 정보 보기">' +
                 '<span>지도</span><i data-lucide="external-link" class="w-3 h-3 text-slate-400"></i>' +
               '</a>' +
-              '<button type="button" onclick="window.confirmMeetingPlace(\'' + id + '\')" class="press px-2.5 py-1 rounded-lg font-black text-[10.5px] transition-all flex items-center gap-1 ' + confirmBtnClass + '">' +
-                '<i data-lucide="' + (isConfirmed ? 'check-circle' : 'check') + '" class="w-3 h-3"></i>' +
-                '<span>' + confirmBtnText + '</span>' +
-              '</button>' +
             '</div>' +
+            '<button type="button" onclick="window.confirmMeetingPlace(\'' + id + '\')" class="press px-3 py-1.5 rounded-xl font-black text-[10.5px] transition-all flex items-center gap-1.5 ' + confirmBtnClass + '">' +
+              '<i data-lucide="' + (isConfirmed ? 'check-circle' : 'check') + '" class="w-3.5 h-3.5"></i>' +
+              '<span>' + confirmBtnText + '</span>' +
+            '</button>' +
           '</div>' +
         '</div>';
       }).join('');
@@ -884,6 +885,11 @@ window.searchPlaceKeywordDirect = function(keyword) {
             bookingBarHtml += '</div>';
           }
 
+          var confirmBtnClass = isConfirmed
+            ? 'bg-emerald-600 text-white'
+            : 'bg-gradient-to-r from-[#2563eb] to-[#0284c7] hover:from-[#1d4ed8] hover:to-[#0369a1] text-white shadow-2xs';
+          var confirmBtnText = isConfirmed ? '확정된 장소' : '여기서 모이기';
+
           return '<div class="bg-white rounded-2xl p-3 border ' + (isConfirmed ? 'border-emerald-400 ring-2 ring-emerald-100' : 'border-slate-200/80') + ' shadow-sm hover:border-[#66CCFF] transition-all flex flex-col gap-2" data-idx="' + i + '">' +
             '<div class="flex items-start justify-between">' +
               '<div class="min-w-0 pr-2">' +
@@ -899,7 +905,22 @@ window.searchPlaceKeywordDirect = function(keyword) {
               '</button>' +
             '</div>' +
             bookingBarHtml +
-          '</div>';;
+            '<div class="flex items-center justify-between pt-1 border-t border-slate-100/70 mt-0.5 text-[11px]">' +
+              '<div class="flex items-center gap-1.5 shrink-0">' +
+                '<button type="button" onclick="window.sharePlaceToChat(\'' + id + '\')" class="press px-2.5 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold text-[10.5px] border border-slate-200/80 flex items-center gap-1 transition-all" title="모임 채팅방에 장소 공유">' +
+                  '<i data-lucide="share-2" class="w-3.5 h-3.5 text-[#0284c7]"></i>' +
+                  '<span>공유</span>' +
+                '</button>' +
+                '<a href="' + (p.place_url || ('https://map.kakao.com/link/search/' + encodeURIComponent(p.place_name))) + '" target="_blank" rel="noopener noreferrer" class="press px-2.5 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold text-[10.5px] border border-slate-200/80 flex items-center gap-1 transition-all" title="카카오맵 상세 정보 보기">' +
+                  '<span>지도</span><i data-lucide="external-link" class="w-3 h-3 text-slate-400"></i>' +
+                '</a>' +
+              '</div>' +
+              '<button type="button" onclick="window.confirmMeetingPlace(\'' + id + '\')" class="press px-3 py-1.5 rounded-xl font-black text-[10.5px] transition-all flex items-center gap-1.5 ' + confirmBtnClass + '">' +
+                '<i data-lucide="' + (isConfirmed ? 'check-circle' : 'check') + '" class="w-3.5 h-3.5"></i>' +
+                '<span>' + confirmBtnText + '</span>' +
+              '</button>' +
+            '</div>' +
+          '</div>';
         }).join('');
         if (window.lucide) lucide.createIcons();
       }
