@@ -1066,6 +1066,25 @@ document.addEventListener('DOMContentLoaded', function() {
         sheet.classList.add('sheet-collapsed');
       }
     });
+
+    var touchStartY = 0;
+    sheetHandle.addEventListener('touchstart', function(e) {
+      if (e.touches && e.touches[0]) touchStartY = e.touches[0].clientY;
+    }, { passive: true });
+
+    sheetHandle.addEventListener('touchend', function(e) {
+      if (!e.changedTouches || !e.changedTouches[0]) return;
+      var diffY = e.changedTouches[0].clientY - touchStartY;
+      if (diffY < -30) {
+        state.sheetExpanded = true;
+        sheet.classList.remove('sheet-collapsed');
+        sheet.classList.add('sheet-expanded');
+      } else if (diffY > 30) {
+        state.sheetExpanded = false;
+        sheet.classList.remove('sheet-expanded');
+        sheet.classList.add('sheet-collapsed');
+      }
+    }, { passive: true });
   }
 
   var scrollArea = document.getElementById('bottomSheetScrollArea');
@@ -1177,3 +1196,92 @@ document.addEventListener('DOMContentLoaded', function() {
   locateMe(true);
   if (window.lucide) lucide.createIcons();
 });
+
+// --------------------------------------------------------------------
+// 모바일 시현 & 디바이스 프리뷰 제어기
+// --------------------------------------------------------------------
+window.setDevicePreview = function(mode) {
+  var frame = document.getElementById('appFrame');
+  var btns = document.querySelectorAll('.device-preview-btn');
+  btns.forEach(function(b) {
+    b.classList.remove('bg-white', 'text-slate-900', 'shadow-xs');
+    b.classList.add('text-slate-400');
+  });
+  var activeBtn = document.getElementById('deviceBtn_' + mode);
+  if (activeBtn) {
+    activeBtn.classList.remove('text-slate-400');
+    activeBtn.classList.add('bg-white', 'text-slate-900', 'shadow-xs');
+  }
+
+  if (!frame) return;
+  if (mode === 'iphone') {
+    frame.style.maxWidth = '393px';
+    frame.style.height = '852px';
+  } else if (mode === 'galaxy') {
+    frame.style.maxWidth = '412px';
+    frame.style.height = '915px';
+  } else if (mode === 'default') {
+    frame.style.maxWidth = '440px';
+    frame.style.height = '900px';
+  } else if (mode === 'full') {
+    frame.style.maxWidth = '100vw';
+    frame.style.height = '100dvh';
+  }
+  if (window.map) {
+    setTimeout(function() { window.map.invalidateSize(); }, 350);
+  }
+};
+
+window.openMobileDemoModal = function() {
+  var modal = document.getElementById('mobileDemoModal');
+  if (!modal) return;
+  modal.classList.remove('hidden');
+
+  var currentUrl = window.location.href;
+  var isFile = currentUrl.startsWith('file://');
+  var demoUrlInput = document.getElementById('mobileDemoUrlInput');
+  var qrImg = document.getElementById('mobileDemoQrImg');
+  var fileNotice = document.getElementById('mobileDemoFileNotice');
+
+  var targetUrl = isFile ? 'https://ysh0104.github.io/midpoint/' : currentUrl;
+  if (demoUrlInput) demoUrlInput.value = targetUrl;
+  if (qrImg) qrImg.src = 'https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=' + encodeURIComponent(targetUrl);
+  if (fileNotice) {
+    if (isFile) fileNotice.classList.remove('hidden');
+    else fileNotice.classList.add('hidden');
+  }
+  if (window.lucide) lucide.createIcons();
+};
+
+window.closeMobileDemoModal = function() {
+  var modal = document.getElementById('mobileDemoModal');
+  if (modal) modal.classList.add('hidden');
+};
+
+window.updateMobileDemoQr = function(url) {
+  var qrImg = document.getElementById('mobileDemoQrImg');
+  if (qrImg && url) {
+    qrImg.src = 'https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=' + encodeURIComponent(url.trim());
+  }
+};
+
+window.copyMobileDemoUrl = function() {
+  var demoUrlInput = document.getElementById('mobileDemoUrlInput');
+  if (demoUrlInput && demoUrlInput.value) {
+    var val = demoUrlInput.value;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(val).then(function() {
+        showToast('모바일 접속 링크가 복사되었습니다!', 'check');
+      }).catch(function() {
+        demoUrlInput.select();
+        document.execCommand('copy');
+        showToast('링크가 복사되었습니다!', 'check');
+      });
+    } else {
+      demoUrlInput.select();
+      document.execCommand('copy');
+      showToast('링크가 복사되었습니다!', 'check');
+    }
+  }
+};
+
