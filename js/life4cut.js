@@ -2,9 +2,9 @@
  * 반띵 (Ban-Dding) - 인생네컷 (Life 4-Cut Photo Booth Studio)
  * 
  * 1. 실시간 웹캠 4컷 촬영 (3초 자동 카운트다운 타이머 & 단일 컷 수동 촬영)
- * 2. 8종 감성 포토부스 배경 테마 (하루필름 블루, 핑크 블라썸, Y2K 라벤더, 힙 매트블랙, 선셋 글로우, 세이지 민트, 밀크 베이지, 퓨어 화이트)
- * 3. 감성 뷰티 필터 (맑은 뽀샤시, 피치 웜톤, 감성 필름, 클래식 흑백, 내추럴 원본) -> 실제 저장 사진에 물리적 100% 합성 반영
- * 4. 내 갤러리 사진 4장 업로드 & 무왜곡 4:3 자동 센터크롭
+ * 2. 감성 뷰티 필터 (맑은 뽀샤시, 피치 웜톤, 감성 필름, 클래식 흑백, 내추럴 원본) -> 실제 저장 사진에 물리적 100% 영구 합성
+ * 3. 내 갤러리 사진 4장 업로드 & 무왜곡 4:3 자동 센터크롭
+ * 4. 시그니처 클래식 포토부스 프레임 (깔끔한 딥 매트블랙 스튜디오 스타일)
  * 5. 스마트폰 규격 최적화 저장:
  *    - 앱·인스타 스토리 규격: 1080 × 1920 px (칸당 466 × 690 px)
  *    - 인쇄용 2:3 규격: 1080 × 1620 px (칸당 466 × 690 px)
@@ -17,15 +17,15 @@ var life4CutState = {
   stream: null,
   shots: [null, null, null, null],
   currentShotIdx: 0,
-  theme: 'haru_blue', // 'haru_blue', 'pink_blossom', 'y2k_lavender', 'dark_matte', 'sunset_glow', 'sage_green', 'milk_beige', 'pure_white'
+  theme: 'black',
   filter: 'glow',      // 'glow', 'peach', 'film', 'mono', 'original'
   isCountingDown: false,
   countdownTimer: null,
   locationName: '오늘의 모임',
   dateText: '',
-  facingMode: 'user',  // 'user' (전면 셀카) 또는 'environment' (후면 카메라)
+  facingMode: 'user',   // 'user' (전면 셀카) 또는 'environment' (후면 카메라)
   mobileView: 'camera', // 'camera' (촬영 모드) 또는 'strip' (네컷 완성본 뷰)
-  mobileToolTab: 'filter' // 'filter', 'theme', 'text'
+  mobileToolTab: 'filter' // 'filter', 'text'
 };
 
 // 감성 뷰티 필터 프리셋 정의 (하루필름/포토이즘 스타일 화사한 보정)
@@ -56,129 +56,6 @@ var FILTER_PRESETS = {
     css: 'none'
   }
 };
-
-// 8종 프리미엄 포토부스 배경 테마 정의 (그라데이션 및 캔버스 렌더링 색상)
-var BACKGROUND_THEMES = {
-  haru_blue: {
-    id: 'haru_blue',
-    name: '☁️ 하루필름 블루',
-    gradStart: '#38bdf8',
-    gradEnd: '#0284c7',
-    bgHex: '#0284c7',
-    textHex: '#ffffff',
-    subTextHex: '#bae6fd',
-    logoBgHex: '#ffffff',
-    logoTextHex: '#0284c7',
-    qrLightHex: '#ffffff',
-    qrDarkHex: '#0284c7',
-    cssClass: 'theme-strip-haru_blue'
-  },
-  pink_blossom: {
-    id: 'pink_blossom',
-    name: '🌸 핑크 블라썸',
-    gradStart: '#fbcfe8',
-    gradEnd: '#f472b6',
-    bgHex: '#f472b6',
-    textHex: '#831843',
-    subTextHex: '#9d174d',
-    logoBgHex: '#831843',
-    logoTextHex: '#fdf2f8',
-    qrLightHex: '#ffffff',
-    qrDarkHex: '#831843',
-    cssClass: 'theme-strip-pink_blossom'
-  },
-  y2k_lavender: {
-    id: 'y2k_lavender',
-    name: '💜 Y2K 라벤더',
-    gradStart: '#e9d5ff',
-    gradEnd: '#c084fc',
-    bgHex: '#c084fc',
-    textHex: '#581c87',
-    subTextHex: '#6b21a8',
-    logoBgHex: '#581c87',
-    logoTextHex: '#f3e8ff',
-    qrLightHex: '#ffffff',
-    qrDarkHex: '#581c87',
-    cssClass: 'theme-strip-y2k_lavender'
-  },
-  dark_matte: {
-    id: 'dark_matte',
-    name: '🖤 힙 매트블랙',
-    gradStart: '#27272a',
-    gradEnd: '#09090b',
-    bgHex: '#18181b',
-    textHex: '#ffffff',
-    subTextHex: '#a1a1aa',
-    logoBgHex: '#ffffff',
-    logoTextHex: '#09090b',
-    qrLightHex: '#ffffff',
-    qrDarkHex: '#09090b',
-    cssClass: 'theme-strip-dark_matte'
-  },
-  sunset_glow: {
-    id: 'sunset_glow',
-    name: '🌅 선셋 웜글로우',
-    gradStart: '#fed7aa',
-    gradEnd: '#fb923c',
-    bgHex: '#fb923c',
-    textHex: '#7c2d12',
-    subTextHex: '#9a3412',
-    logoBgHex: '#7c2d12',
-    logoTextHex: '#fff7ed',
-    qrLightHex: '#ffffff',
-    qrDarkHex: '#7c2d12',
-    cssClass: 'theme-strip-sunset_glow'
-  },
-  sage_green: {
-    id: 'sage_green',
-    name: '🌿 세이지 민트',
-    gradStart: '#dcfce7',
-    gradEnd: '#86efac',
-    bgHex: '#86efac',
-    textHex: '#14532d',
-    subTextHex: '#166534',
-    logoBgHex: '#14532d',
-    logoTextHex: '#f0fdf4',
-    qrLightHex: '#ffffff',
-    qrDarkHex: '#14532d',
-    cssClass: 'theme-strip-sage_green'
-  },
-  milk_beige: {
-    id: 'milk_beige',
-    name: '🥛 밀크 베이지',
-    gradStart: '#fefce8',
-    gradEnd: '#fef08a',
-    bgHex: '#fef08a',
-    textHex: '#451a03',
-    subTextHex: '#713f12',
-    logoBgHex: '#451a03',
-    logoTextHex: '#fefce8',
-    qrLightHex: '#fffbeb',
-    qrDarkHex: '#451a03',
-    cssClass: 'theme-strip-milk_beige'
-  },
-  pure_white: {
-    id: 'pure_white',
-    name: '🤍 퓨어 화이트',
-    gradStart: '#ffffff',
-    gradEnd: '#f8fafc',
-    bgHex: '#ffffff',
-    textHex: '#0f172a',
-    subTextHex: '#64748b',
-    logoBgHex: '#0f172a',
-    logoTextHex: '#ffffff',
-    qrLightHex: '#f1f5f9',
-    qrDarkHex: '#0f172a',
-    cssClass: 'theme-strip-pure_white'
-  }
-};
-
-// 기존 테마 코드 하위 호환 매핑
-BACKGROUND_THEMES.blue = BACKGROUND_THEMES.haru_blue;
-BACKGROUND_THEMES.pink = BACKGROUND_THEMES.pink_blossom;
-BACKGROUND_THEMES.black = BACKGROUND_THEMES.dark_matte;
-BACKGROUND_THEMES.white = BACKGROUND_THEMES.pure_white;
-BACKGROUND_THEMES.cream = BACKGROUND_THEMES.milk_beige;
 
 /**
  * 모바일/데스크톱 크로스 브라우저 호환 라운드 렉트 헬퍼 함수
@@ -230,10 +107,9 @@ window.openLife4CutStudio = function() {
   window.setLife4CutMobileView('camera');
   window.setLife4CutMobileToolTab('filter');
 
-  // 슬롯 렌더링 & 기본 필터 및 테마 세팅
+  // 슬롯 렌더링 & 기본 필터 세팅
   renderLife4CutStrip();
   window.setLife4CutFilter(life4CutState.filter || 'glow');
-  window.setLife4CutTheme(life4CutState.theme || 'haru_blue');
 
   // 웹캠 시작
   startWebcam();
@@ -329,10 +205,10 @@ window.setLife4CutMobileView = function(view) {
   }
 };
 
-// 4-D. 모바일 도구 카테고리 탭 전환 (필터 / 배경 테마 / 문구)
+// 4-D. 모바일 도구 카테고리 탭 전환 (필터 / 문구)
 window.setLife4CutMobileToolTab = function(tab) {
-  life4CutState.mobileToolTab = tab || 'filter';
-  var tabs = ['filter', 'theme', 'text'];
+  life4CutState.mobileToolTab = (tab === 'text') ? 'text' : 'filter';
+  var tabs = ['filter', 'text'];
   tabs.forEach(function(t) {
     var btn = document.getElementById('mobileToolTab_' + t);
     var panel = document.getElementById('mobileToolPanel_' + t);
@@ -392,37 +268,11 @@ window.setLife4CutFilter = function(filterId) {
   if (nameEl) nameEl.textContent = filterDef.name;
 };
 
-// 6. 감성 배경 테마 변경 (8종 포토부스 배경)
-window.setLife4CutTheme = function(themeName) {
-  if (!BACKGROUND_THEMES[themeName]) themeName = 'haru_blue';
-  life4CutState.theme = themeName;
-  var themeDef = BACKGROUND_THEMES[themeName];
-
-  var strip = document.getElementById('life4CutStrip');
-  if (strip) {
-    strip.className = 'life4cut-strip transition-all duration-300 ' + (themeDef.cssClass || ('theme-strip-' + themeName));
-  }
-
-  // 테마 버튼 활성화 스타일 업데이트
-  var btns = document.querySelectorAll('.theme-btn');
-  btns.forEach(function(b) {
-    if (b.getAttribute('data-theme') === themeName) {
-      b.classList.add('active');
-    } else {
-      b.classList.remove('active');
-    }
-  });
-
-  var nameEl = document.getElementById('life4CutThemeName');
-  if (nameEl) nameEl.textContent = themeDef.name;
-
-  renderLife4CutStrip();
-};
-
-// 소품 제거 관련 안전 빈 함수 (호환용)
+// 안전 호환용 빈 함수
+window.setLife4CutTheme = function() {};
 window.setLife4CutProp = function() {};
 
-// 7. 4컷 자동 연속 촬영 (3초 카운트다운 x 4회)
+// 6. 4컷 자동 연속 촬영 (3초 카운트다운 x 4회)
 window.startLife4CutAutoCapture = function() {
   if (life4CutState.isCountingDown) return;
   var video = document.getElementById('life4CutVideo');
@@ -472,7 +322,7 @@ window.startLife4CutAutoCapture = function() {
   takeNextShot();
 };
 
-// 8. 단일 컷 수동 촬영 / 교체
+// 7. 단일 컷 수동 촬영 / 교체
 window.captureSingleShot = function(slotIdx) {
   var video = document.getElementById('life4CutVideo');
   if (!life4CutState.stream || !video) {
@@ -487,7 +337,7 @@ window.captureSingleShot = function(slotIdx) {
 };
 
 /**
- * 9. 무왜곡 4:3 센터크롭 캡처
+ * 8. 무왜곡 4:3 센터크롭 캡처
  */
 function captureCurrentFrameToSlot(slotIdx) {
   var video = document.getElementById('life4CutVideo');
@@ -555,7 +405,7 @@ function hideCountdownOverlay() {
   if (overlay) overlay.classList.add('hidden');
 }
 
-// 10. 인생네컷 스트립 실시간 프리뷰 렌더링
+// 9. 인생네컷 스트립 실시간 프리뷰 렌더링
 function renderLife4CutStrip() {
   var filterDef = FILTER_PRESETS[life4CutState.filter] || FILTER_PRESETS.glow;
   var filterCss = (filterDef && filterDef.css !== 'none') ? filterDef.css : '';
@@ -619,21 +469,21 @@ function renderLife4CutStrip() {
   if (dateEl) dateEl.textContent = life4CutState.dateText;
 }
 
-// 11. 장소명 실시간 입력 반영
+// 10. 장소명 실시간 입력 반영
 window.updateLife4CutPlace = function(val) {
   life4CutState.locationName = val || '반띵 모임';
   var placeEl = document.getElementById('life4CutPlaceText');
   if (placeEl) placeEl.textContent = life4CutState.locationName;
 };
 
-// 12. 모든 슬롯 비우기 및 새로 촬영
+// 11. 모든 슬롯 비우기 및 새로 촬영
 window.resetLife4CutShots = function() {
   life4CutState.shots = [null, null, null, null];
   renderLife4CutStrip();
   if (window.showToast) showToast('인생네컷 슬롯이 초기화되었습니다. 새로 촬영해보세요!', 'rotate-ccw');
 };
 
-// 13. 파일 업로드로 4컷 채우기 (무왜곡 4:3 자동 센터크롭 적용)
+// 12. 파일 업로드로 4컷 채우기 (무왜곡 4:3 자동 센터크롭 적용)
 window.handleLife4CutFileUpload = function(event) {
   var files = event.target.files;
   if (!files || files.length === 0) return;
@@ -799,11 +649,22 @@ function drawMiniQrCode(ctx, x, y, size, darkColor, lightColor) {
   ctx.restore();
 }
 
-function getThemeColors(theme) {
-  return BACKGROUND_THEMES[theme] || BACKGROUND_THEMES.haru_blue;
+// 시그니처 클래식 포토부스 프레임 컬러 팔레트 (다크 매트블랙)
+var CLASSIC_BOOTH_COLORS = {
+  bgHex: '#18181b',
+  textHex: '#ffffff',
+  subTextHex: '#a1a1aa',
+  logoBgHex: '#ffffff',
+  logoTextHex: '#09090b',
+  qrLightHex: '#ffffff',
+  qrDarkHex: '#09090b'
+};
+
+function getThemeColors() {
+  return CLASSIC_BOOTH_COLORS;
 }
 
-// 14-A. 스마트폰 앱·인스타 스토리 최적화 캔버스 생성 (1080 x 1920 px, 개별 칸 466 x 690 px)
+// 13-A. 스마트폰 앱·인스타 스토리 최적화 캔버스 생성 (1080 x 1920 px, 개별 칸 466 x 690 px)
 function generateAppStoryCanvas() {
   return new Promise(function(resolve, reject) {
     try {
@@ -814,13 +675,10 @@ function generateAppStoryCanvas() {
       canvas.height = H;
       var ctx = canvas.getContext('2d');
 
-      var colors = getThemeColors(life4CutState.theme);
+      var colors = getThemeColors();
 
-      // 감성 그라데이션 배경 채우기
-      var grad = ctx.createLinearGradient(0, 0, W * 0.5, H);
-      grad.addColorStop(0, colors.gradStart || colors.bgHex);
-      grad.addColorStop(1, colors.gradEnd || colors.bgHex);
-      ctx.fillStyle = grad;
+      // 시그니처 딥블랙 포토부스 배경
+      ctx.fillStyle = colors.bgHex;
       ctx.fillRect(0, 0, W, H);
 
       // 1) 상단 감성 헤더
@@ -853,7 +711,7 @@ function generateAppStoryCanvas() {
       var gapX = 40;
       var gapY = 36;
       var leftX = 54;
-      var rightX = leftX + slotW + gapX; // 560
+      var rightX = leftX + slotW + gapX;
 
       var slotPositions = [
         { x: leftX, y: startY },
@@ -904,7 +762,7 @@ function generateAppStoryCanvas() {
 
             applyPixelFilterToContext(ctx, pos.x, pos.y, slotW, slotH, life4CutState.filter);
           } else {
-            ctx.fillStyle = 'rgba(255,255,255,0.18)';
+            ctx.fillStyle = 'rgba(255,255,255,0.08)';
             drawRoundedRect(ctx, pos.x, pos.y, slotW, slotH, 20);
             ctx.fill();
 
@@ -916,7 +774,7 @@ function generateAppStoryCanvas() {
         });
 
         // 3) 하단 푸터 영역
-        var footerY = startY + (slotH * 2) + gapY + 36; // 1612
+        var footerY = startY + (slotH * 2) + gapY + 36;
 
         ctx.strokeStyle = colors.subTextHex;
         ctx.lineWidth = 1.5;
@@ -969,7 +827,7 @@ function generateAppStoryCanvas() {
   });
 }
 
-// 14-B. 프린터/인화용 4x6 캔버스 생성 (1080 x 1620 px, 개별 칸 466 x 690 px)
+// 13-B. 프린터/인화용 4x6 캔버스 생성 (1080 x 1620 px, 개별 칸 466 x 690 px)
 function generatePrinterCanvas() {
   return new Promise(function(resolve, reject) {
     try {
@@ -980,12 +838,9 @@ function generatePrinterCanvas() {
       canvas.height = H;
       var ctx = canvas.getContext('2d');
 
-      var colors = getThemeColors(life4CutState.theme);
+      var colors = getThemeColors();
 
-      var grad = ctx.createLinearGradient(0, 0, W * 0.5, H);
-      grad.addColorStop(0, colors.gradStart || colors.bgHex);
-      grad.addColorStop(1, colors.gradEnd || colors.bgHex);
-      ctx.fillStyle = grad;
+      ctx.fillStyle = colors.bgHex;
       ctx.fillRect(0, 0, W, H);
 
       var slotW = 466;
@@ -1045,7 +900,7 @@ function generatePrinterCanvas() {
 
             applyPixelFilterToContext(ctx, pos.x, pos.y, slotW, slotH, life4CutState.filter);
           } else {
-            ctx.fillStyle = 'rgba(255,255,255,0.18)';
+            ctx.fillStyle = 'rgba(255,255,255,0.08)';
             drawRoundedRect(ctx, pos.x, pos.y, slotW, slotH, 18);
             ctx.fill();
 
@@ -1056,7 +911,7 @@ function generatePrinterCanvas() {
           }
         });
 
-        var footerY = startY + (slotH * 2) + gapY + 22; // 1462
+        var footerY = startY + (slotH * 2) + gapY + 22;
 
         ctx.strokeStyle = colors.subTextHex;
         ctx.lineWidth = 1.5;
@@ -1092,7 +947,7 @@ function generatePrinterCanvas() {
   });
 }
 
-// 14-C. 오리지널 클래식 1:3 롱 스트립 캔버스 생성 (1200 x 3600 px)
+// 13-C. 오리지널 클래식 1:3 롱 스트립 캔버스 생성 (1200 x 3600 px)
 function generateSingleStripCanvas() {
   return new Promise(function(resolve, reject) {
     try {
@@ -1103,12 +958,9 @@ function generateSingleStripCanvas() {
       canvas.height = H;
       var ctx = canvas.getContext('2d');
 
-      var colors = getThemeColors(life4CutState.theme);
+      var colors = getThemeColors();
 
-      var grad = ctx.createLinearGradient(0, 0, W * 0.4, H);
-      grad.addColorStop(0, colors.gradStart || colors.bgHex);
-      grad.addColorStop(1, colors.gradEnd || colors.bgHex);
-      ctx.fillStyle = grad;
+      ctx.fillStyle = colors.bgHex;
       ctx.fillRect(0, 0, W, H);
 
       var padX = 80;
@@ -1159,7 +1011,7 @@ function generateSingleStripCanvas() {
 
             applyPixelFilterToContext(ctx, padX, slotY, slotW, slotH, life4CutState.filter);
           } else {
-            ctx.fillStyle = 'rgba(255,255,255,0.18)';
+            ctx.fillStyle = 'rgba(255,255,255,0.08)';
             drawRoundedRect(ctx, padX, slotY, slotW, slotH, 20);
             ctx.fill();
 
@@ -1216,7 +1068,7 @@ var currentLife4CutFormat = 'app_story';
 var lastLife4CutBlob = null;
 var lastLife4CutDataUrl = '';
 
-// 14-D. 포맷별 캔버스 생성기 디스패처
+// 14. 포맷별 캔버스 생성기 디스패처
 function generateLife4CutCanvas(format) {
   var f = format || currentLife4CutFormat || 'app_story';
   if (f === 'printer') {
