@@ -20,7 +20,10 @@ var life4CutState = {
   isCountingDown: false,
   countdownTimer: null,
   locationName: '오늘의 모임',
-  dateText: ''
+  dateText: '',
+  facingMode: 'user', // 'user' (전면 셀카) 또는 'environment' (후면 카메라)
+  mobileView: 'camera', // 'camera' (촬영 모드) 또는 'strip' (네컷 완성본 뷰)
+  mobileToolTab: 'filter' // 'filter', 'prop', 'theme', 'text'
 };
 
 // 감성 뷰티 필터 프리셋 정의 (하루필름/포토이즘 스타일 화사한 보정)
@@ -424,11 +427,17 @@ window.openLife4CutStudio = function() {
 
   var locInput = document.getElementById('life4CutPlaceInput');
   if (locInput) locInput.value = life4CutState.locationName;
+  var locInputM = document.getElementById('life4CutPlaceInputMobile');
+  if (locInputM) locInputM.value = life4CutState.locationName;
 
   var dateDisplay = document.getElementById('life4CutDateDisplay');
   if (dateDisplay) dateDisplay.textContent = life4CutState.dateText;
 
   modal.classList.remove('hidden');
+
+  // 모바일 전용 UI 상태 초기화
+  window.setLife4CutMobileView('camera');
+  window.setLife4CutMobileToolTab('filter');
 
   // 깨끗한 슬롯 렌더링 & 기본 뽀샤시 필터 및 소품 세팅
   renderLife4CutStrip();
@@ -449,7 +458,7 @@ window.closeLife4CutStudio = function() {
   stopWebcam();
 };
 
-// 3. 웹캠 스트림 시작 (좌우 반전 미러 모드 & 필터 실시간 연동)
+// 3. 웹캠 스트림 시작 (전면 셀카 좌우 반전 미러 모드 / 후면 카메라 정방향 & 필터 실시간 연동)
 function startWebcam() {
   var video = document.getElementById('life4CutVideo');
   var videoPlaceholder = document.getElementById('life4CutVideoPlaceholder');
@@ -458,18 +467,20 @@ function startWebcam() {
     return;
   }
 
-  navigator.mediaDevices.getUserMedia({
+  var constraints = {
     video: {
       width: { ideal: 1280 },
       height: { ideal: 720 },
-      facingMode: 'user'
+      facingMode: life4CutState.facingMode || 'user'
     },
     audio: false
-  }).then(function(stream) {
+  };
+
+  navigator.mediaDevices.getUserMedia(constraints).then(function(stream) {
     life4CutState.stream = stream;
     video.srcObject = stream;
     video.play();
-    video.style.transform = 'scaleX(-1)';
+    video.style.transform = (life4CutState.facingMode === 'environment') ? 'none' : 'scaleX(-1)';
 
     video.onloadeddata = function() {
       if (life4CutState.prop !== 'none') {
@@ -495,6 +506,73 @@ function stopWebcam() {
     life4CutState.stream = null;
   }
 }
+
+// 4-B. 전면/후면 카메라 플립 전환
+window.toggleLife4CutCameraFacing = function() {
+  life4CutState.facingMode = (life4CutState.facingMode === 'user') ? 'environment' : 'user';
+  stopFaceTrackingLoop();
+  stopWebcam();
+  startWebcam();
+  if (navigator.vibrate) navigator.vibrate(40);
+  if (window.showToast) {
+    showToast(life4CutState.facingMode === 'user' ? '전면(셀카) 카메라로 전환되었습니다' : '후면 카메라로 전환되었습니다', 'camera');
+  }
+};
+
+// 4-C. 모바일 뷰 전환 (촬영 모드 vs 네컷 완성본 뷰)
+window.setLife4CutMobileView = function(view) {
+  life4CutState.mobileView = view || 'camera';
+  var camContainer = document.getElementById('life4CutCameraContainer');
+  var stripContainer = document.getElementById('life4CutStripContainer');
+  var btnCam = document.getElementById('mobileTabCamBtn');
+  var btnStrip = document.getElementById('mobileTabStripBtn');
+  var camBottom = document.getElementById('life4CutMobileCamBottom');
+  var stripBottom = document.getElementById('life4CutMobileStripBottom');
+
+  if (life4CutState.mobileView === 'strip') {
+    if (camContainer) camContainer.classList.add('mobile-view-hidden');
+    if (stripContainer) stripContainer.classList.remove('mobile-view-hidden');
+    if (btnCam) btnCam.className = 'press py-1 px-2.5 rounded-lg text-zinc-400 font-bold text-[11px] transition-all flex items-center gap-1';
+    if (btnStrip) btnStrip.className = 'press py-1 px-2.5 rounded-lg bg-rose-500 text-white font-extrabold text-[11px] shadow-sm transition-all flex items-center gap-1';
+    if (camBottom) camBottom.classList.add('hidden');
+    if (stripBottom) stripBottom.classList.remove('hidden');
+  } else {
+    if (camContainer) camContainer.classList.remove('mobile-view-hidden');
+    if (stripContainer) stripContainer.classList.add('mobile-view-hidden');
+    if (btnCam) btnCam.className = 'press py-1 px-2.5 rounded-lg bg-rose-500 text-white font-extrabold text-[11px] shadow-sm transition-all flex items-center gap-1';
+    if (btnStrip) btnStrip.className = 'press py-1 px-2.5 rounded-lg text-zinc-400 font-bold text-[11px] transition-all flex items-center gap-1';
+    if (camBottom) camBottom.classList.remove('hidden');
+    if (stripBottom) stripBottom.classList.add('hidden');
+  }
+};
+
+// 4-D. 모바일 도구 카테고리 탭 전환 (필터 / 소품 / 테마 / 문구)
+window.setLife4CutMobileToolTab = function(tab) {
+  life4CutState.mobileToolTab = tab || 'filter';
+  var tabs = ['filter', 'prop', 'theme', 'text'];
+  tabs.forEach(function(t) {
+    var btn = document.getElementById('mobileToolTab_' + t);
+    var panel = document.getElementById('mobileToolPanel_' + t);
+    if (btn) {
+      if (t === life4CutState.mobileToolTab) {
+        btn.className = 'press flex-1 py-1 px-1 rounded-lg bg-zinc-800 text-white font-extrabold text-[10.5px] border border-zinc-700 shadow-xs flex items-center justify-center gap-1 transition-all';
+      } else {
+        btn.className = 'press flex-1 py-1 px-1 rounded-lg bg-transparent text-zinc-500 font-bold text-[10.5px] flex items-center justify-center gap-1 transition-all';
+      }
+    }
+    if (panel) {
+      if (t === life4CutState.mobileToolTab) panel.classList.remove('hidden');
+      else panel.classList.add('hidden');
+    }
+  });
+};
+
+// 4-E. 모바일 대형 셔터 버튼 터치 핸들러
+window.handleMobileShutterTap = function() {
+  if (life4CutState.isCountingDown) return;
+  if (navigator.vibrate) navigator.vibrate(40);
+  window.startLife4CutAutoCapture();
+};
 
 // 5. 머리띠 & 촬영 소품 선택
 window.setLife4CutProp = function(propId) {
@@ -628,11 +706,17 @@ window.startLife4CutAutoCapture = function() {
   }
 
   life4CutState.isCountingDown = true;
+  var ring = document.getElementById('mobileShutterRing');
+  if (ring) ring.classList.add('counting');
+  if (navigator.vibrate) navigator.vibrate([30, 40, 30]);
+
   var shotIndex = 0;
 
   function takeNextShot() {
     if (shotIndex >= 4) {
       life4CutState.isCountingDown = false;
+      var r = document.getElementById('mobileShutterRing');
+      if (r) r.classList.remove('counting');
       hideCountdownOverlay();
       if (window.showToast) showToast('반띵 인생네컷 4컷 완성! 갤러리에 저장합니다', 'check');
       setTimeout(function() {
@@ -652,6 +736,7 @@ window.startLife4CutAutoCapture = function() {
         clearInterval(life4CutState.countdownTimer);
         // 찰칵 효과 및 무왜곡 4:3 캡처 + 소품 합성
         flashShutterEffect();
+        if (navigator.vibrate) navigator.vibrate(35);
         captureCurrentFrameToSlot(shotIndex);
         shotIndex++;
         setTimeout(takeNextShot, 1200); // 다음 컷까지 1.2초 포즈 변경 여유
@@ -671,6 +756,7 @@ window.captureSingleShot = function(slotIdx) {
   }
 
   flashShutterEffect();
+  if (navigator.vibrate) navigator.vibrate(35);
   captureCurrentFrameToSlot(slotIdx);
   if (window.showToast) showToast((slotIdx + 1) + '번째 컷이 촬영되었습니다', 'camera');
 };
@@ -704,11 +790,15 @@ function captureCurrentFrameToSlot(slotIdx) {
   canvas.height = targetH;
   var ctx = canvas.getContext('2d');
 
-  // 좌우 반전 거울 모드 렌더링
-  ctx.translate(canvas.width, 0);
-  ctx.scale(-1, 1);
-  ctx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, targetW, targetH);
-  ctx.setTransform(1, 0, 0, 1, 0, 0); // 복원
+  // 좌우 반전 거울 모드 (전면 카메라일 때만 반전, 후면 카메라는 정방향)
+  if (life4CutState.facingMode === 'environment') {
+    ctx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, targetW, targetH);
+  } else {
+    ctx.translate(canvas.width, 0);
+    ctx.scale(-1, 1);
+    ctx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, targetW, targetH);
+    ctx.setTransform(1, 0, 0, 1, 0, 0); // 복원
+  }
 
   // 선택된 머리띠 / 파티 소품 합성 (실시간 얼굴 추적 좌표 & 기울기 각도 & 스케일 반영)
   var propDef = PROP_DEFINITIONS[life4CutState.prop];
@@ -766,26 +856,60 @@ function hideCountdownOverlay() {
   if (overlay) overlay.classList.add('hidden');
 }
 
-// 11. 4컷 스트립 UI 렌더링 (필터 실시간 반영)
+// 11. 4컷 스트립 UI 렌더링 (필터 실시간 반영 및 모바일 슬롯 동기화)
 function renderLife4CutStrip() {
   var filterDef = FILTER_PRESETS[life4CutState.filter] || FILTER_PRESETS.glow;
   var filterCss = (filterDef && filterDef.css !== 'none') ? filterDef.css : '';
 
+  var filledCount = 0;
   for (var i = 0; i < 4; i++) {
     var slotEl = document.getElementById('life4CutSlot_' + i);
     var imgEl = document.getElementById('life4CutImg_' + i);
     var placeholderEl = document.getElementById('life4CutPlaceholder_' + i);
 
-    if (slotEl && imgEl && placeholderEl) {
-      if (life4CutState.shots[i]) {
+    // 모바일 전용 미니 슬롯 요소들
+    var mSlot = document.getElementById('mobileMiniSlot_' + i);
+    var mImg = document.getElementById('mobileMiniImg_' + i);
+    var mTxt = document.getElementById('mobileMiniTxt_' + i);
+
+    if (life4CutState.shots[i]) {
+      filledCount++;
+      if (imgEl) {
         imgEl.src = life4CutState.shots[i];
         imgEl.style.filter = filterCss;
         imgEl.classList.remove('hidden');
-        placeholderEl.classList.add('hidden');
-      } else {
-        imgEl.classList.add('hidden');
-        placeholderEl.classList.remove('hidden');
       }
+      if (placeholderEl) placeholderEl.classList.add('hidden');
+
+      if (mImg) {
+        mImg.src = life4CutState.shots[i];
+        mImg.style.filter = filterCss;
+        mImg.classList.remove('hidden');
+      }
+      if (mTxt) mTxt.classList.add('hidden');
+      if (mSlot) mSlot.classList.add('filled');
+    } else {
+      if (imgEl) imgEl.classList.add('hidden');
+      if (placeholderEl) placeholderEl.classList.remove('hidden');
+
+      if (mImg) mImg.classList.add('hidden');
+      if (mTxt) mTxt.classList.remove('hidden');
+      if (mSlot) mSlot.classList.remove('filled');
+    }
+  }
+
+  // 모바일 촬영 진행 상태 배지
+  var badge = document.getElementById('life4CutMobileProgressBadge');
+  if (badge) {
+    if (filledCount === 4) {
+      badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-400"></span><span class="text-emerald-300 font-extrabold">4/4컷 완성!</span>';
+      badge.className = 'px-2.5 py-1 rounded-full bg-emerald-500/20 backdrop-blur-md text-emerald-300 border border-emerald-500/40 text-[10.5px] font-bold flex items-center gap-1.5 shadow-sm';
+    } else if (filledCount > 0) {
+      badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-rose-400 animate-pulse"></span><span class="text-rose-300 font-extrabold">' + filledCount + '/4컷 완료</span>';
+      badge.className = 'px-2.5 py-1 rounded-full bg-rose-500/20 backdrop-blur-md text-rose-300 border border-rose-500/40 text-[10.5px] font-bold flex items-center gap-1.5 shadow-sm';
+    } else {
+      badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-zinc-400"></span><span>4컷 촬영 대기</span>';
+      badge.className = 'px-2.5 py-1 rounded-full bg-zinc-800/80 backdrop-blur-md text-zinc-300 border border-zinc-700 text-[10.5px] font-bold flex items-center gap-1.5 shadow-sm';
     }
   }
 
@@ -864,6 +988,10 @@ function cropImageTo43(dataUrl, callback) {
 // 14. 장소명 커스텀 입력 반영
 window.updateLife4CutPlace = function(val) {
   life4CutState.locationName = val || '반띵 모임';
+  var dInput = document.getElementById('life4CutPlaceInput');
+  var mInput = document.getElementById('life4CutPlaceInputMobile');
+  if (dInput && dInput.value !== val) dInput.value = val;
+  if (mInput && mInput.value !== val) mInput.value = val;
   var placeEl = document.getElementById('life4CutPlaceText');
   if (placeEl) placeEl.textContent = life4CutState.locationName;
 };

@@ -1411,3 +1411,94 @@ body {
   to { transform: translateX(-3px) scale(1.2); opacity: 0.8; }
 }
 
+/* ==========================================================================
+   인생네컷 모바일 전용 카메라 UI & 뷰파인더 최적화
+   ========================================================================== */
+
+@media (max-width: 639px) {
+  #life4CutModal {
+    padding: 0 !important;
+    background: #000000 !important;
+  }
+
+  #life4CutModal > div {
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    border-radius: 0 !important;
+    border: none !important;
+    background: #09090b !important;
+  }
+
+  .mobile-view-hidden {
+    display: none !important;
+  }
+
+  /* Safe Area 대응 */
+  #life4CutModalHeader {
+    padding-top: max(12px, env(safe-area-inset-top)) !important;
+  }
+
+  #life4CutMobileCamBottom,
+  #life4CutMobileStripBottom {
+    padding-bottom: max(16px, env(safe-area-inset-bottom)) !important;
+  }
+}
+
+@media (min-width: 640px) {
+  .mobile-view-hidden {
+    display: flex !important;
+  }
+}
+
+/* 셔터 버튼 햅틱 애니메이션 & 더블링 */
+.mobile-shutter-ring {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  border: 4px solid rgba(255, 255, 255, 0.95);
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.5), 0 0 20px rgba(244, 63, 94, 0.3);
+  transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  background: transparent;
+  cursor: pointer;
+  user-select: none;
+}
+.mobile-shutter-ring:active {
+  transform: scale(0.92);
+}
+.mobile-shutter-inner {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #f43f5e, #e11d48);
+  transition: background 0.2s ease, transform 0.15s ease, border-radius 0.2s ease;
+}
+.mobile-shutter-ring.counting .mobile-shutter-inner {
+  border-radius: 12px;
+  background: #f43f5e;
+  transform: scale(0.6);
+}
+
+/* 미니 슬롯 썸네일 카드 */
+.mobile-mini-slot {
+  position: relative;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #18181b;
+  border: 1.5px solid #27272a;
+  aspect-ratio: 4 / 3;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  user-select: none;
+}
+.mobile-mini-slot.active {
+  border-color: #f43f5e;
+  box-shadow: 0 0 0 2px rgba(244, 63, 94, 0.4);
+}
+.mobile-mini-slot.filled {
+  border-color: #10b981;
+}
+
