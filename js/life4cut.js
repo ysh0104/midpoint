@@ -52,7 +52,7 @@ var FILTER_PRESETS = {
   }
 };
 
-// 머리띠 및 파티 소품 정의 (인생네컷 시그니처 아이템)
+// 머리띠 및 파티 소품 정의 (인생네컷 시그니처 아이템 & AR 앵커 정보)
 var PROP_DEFINITIONS = {
   none: {
     id: 'none',
@@ -63,7 +63,10 @@ var PROP_DEFINITIONS = {
     id: 'bunny',
     name: '🐰 토끼 머리띠',
     w: 360, h: 180, x: 300, y: 30,
-    topStyle: 'top: 4%; width: 55%;',
+    anchorType: 'head',
+    anchorOffset: 1.05,
+    trackedWidth: '56%',
+    defaultTransform: 'translate3d(50%, 15%, 0) translate3d(-50%, -50%, 0) rotate(0deg) scale(1)',
     svg: '<svg viewBox="0 0 400 200" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full h-full drop-shadow-md">' +
          '<path d="M 60 185 Q 200 130 340 185" stroke="#f472b6" stroke-width="12" stroke-linecap="round" fill="none"/>' +
          '<path d="M 120 160 C 80 120 70 30 115 15 C 160 0 170 100 140 155 Z" fill="#ffffff" stroke="#f472b6" stroke-width="6"/>' +
@@ -77,7 +80,10 @@ var PROP_DEFINITIONS = {
     id: 'cat',
     name: '🐱 냥이 귀',
     w: 340, h: 160, x: 310, y: 35,
-    topStyle: 'top: 5%; width: 52%;',
+    anchorType: 'head',
+    anchorOffset: 0.95,
+    trackedWidth: '52%',
+    defaultTransform: 'translate3d(50%, 15%, 0) translate3d(-50%, -50%, 0) rotate(0deg) scale(1)',
     svg: '<svg viewBox="0 0 400 180" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full h-full drop-shadow-md">' +
          '<path d="M 70 165 Q 200 125 330 165" stroke="#18181b" stroke-width="10" stroke-linecap="round" fill="none"/>' +
          '<polygon points="90,150 140,40 175,135" fill="#18181b" stroke="#f43f5e" stroke-width="5"/>' +
@@ -92,7 +98,10 @@ var PROP_DEFINITIONS = {
     id: 'bear',
     name: '🐻 곰돌이 귀',
     w: 360, h: 160, x: 300, y: 35,
-    topStyle: 'top: 5%; width: 55%;',
+    anchorType: 'head',
+    anchorOffset: 0.95,
+    trackedWidth: '55%',
+    defaultTransform: 'translate3d(50%, 15%, 0) translate3d(-50%, -50%, 0) rotate(0deg) scale(1)',
     svg: '<svg viewBox="0 0 400 180" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full h-full drop-shadow-md">' +
          '<path d="M 70 165 Q 200 120 330 165" stroke="#78350f" stroke-width="12" stroke-linecap="round" fill="none"/>' +
          '<circle cx="125" cy="95" r="48" fill="#b45309" stroke="#78350f" stroke-width="6"/>' +
@@ -105,7 +114,10 @@ var PROP_DEFINITIONS = {
     id: 'crown',
     name: '👑 골드 왕관',
     w: 300, h: 180, x: 330, y: 30,
-    topStyle: 'top: 4%; width: 44%;',
+    anchorType: 'head',
+    anchorOffset: 0.85,
+    trackedWidth: '45%',
+    defaultTransform: 'translate3d(50%, 14%, 0) translate3d(-50%, -50%, 0) rotate(0deg) scale(1)',
     svg: '<svg viewBox="0 0 320 200" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full h-full drop-shadow-md">' +
          '<path d="M 40 170 L 60 70 L 115 120 L 160 40 L 205 120 L 260 70 L 280 170 Z" fill="#fbbf24" stroke="#d97706" stroke-width="8" stroke-linejoin="round"/>' +
          '<circle cx="60" cy="65" r="14" fill="#ef4444" stroke="#ffffff" stroke-width="3"/>' +
@@ -119,7 +131,10 @@ var PROP_DEFINITIONS = {
     id: 'ribbon',
     name: '🎀 빅 리본',
     w: 340, h: 180, x: 310, y: 35,
-    topStyle: 'top: 5%; width: 52%;',
+    anchorType: 'head',
+    anchorOffset: 0.95,
+    trackedWidth: '52%',
+    defaultTransform: 'translate3d(50%, 15%, 0) translate3d(-50%, -50%, 0) rotate(0deg) scale(1)',
     svg: '<svg viewBox="0 0 380 200" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full h-full drop-shadow-md">' +
          '<path d="M 80 185 Q 190 140 300 185" stroke="#e11d48" stroke-width="10" stroke-linecap="round" fill="none"/>' +
          '<path d="M 230 135 C 160 90 150 40 220 50 C 270 58 240 120 230 135 Z" fill="#f43f5e" stroke="#be123c" stroke-width="6"/>' +
@@ -133,7 +148,10 @@ var PROP_DEFINITIONS = {
     id: 'sunglass',
     name: '🕶️ 선글라스',
     w: 340, h: 130, x: 310, y: 250,
-    topStyle: 'top: 36%; width: 50%;',
+    anchorType: 'eyes',
+    anchorOffset: 0,
+    trackedWidth: '52%',
+    defaultTransform: 'translate3d(50%, 42%, 0) translate3d(-50%, -50%, 0) rotate(0deg) scale(1)',
     svg: '<svg viewBox="0 0 360 140" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full h-full drop-shadow-lg">' +
          '<rect x="25" y="25" width="135" height="85" rx="24" fill="#09090b" stroke="#ffffff" stroke-width="5"/>' +
          '<rect x="200" y="25" width="135" height="85" rx="24" fill="#09090b" stroke="#ffffff" stroke-width="5"/>' +
@@ -146,7 +164,10 @@ var PROP_DEFINITIONS = {
     id: 'hearts',
     name: '💖 러브 볼하트',
     w: 480, h: 320, x: 240, y: 120,
-    topStyle: 'top: 15%; width: 68%;',
+    anchorType: 'cheeks',
+    anchorOffset: 0.45,
+    trackedWidth: '68%',
+    defaultTransform: 'translate3d(50%, 48%, 0) translate3d(-50%, -50%, 0) rotate(0deg) scale(1)',
     svg: '<svg viewBox="0 0 460 300" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full h-full drop-shadow-md">' +
          '<path d="M 90 190 C 90 170 70 160 55 175 C 40 160 20 170 20 190 C 20 215 55 235 55 240 C 55 235 90 215 90 190 Z" fill="#f43f5e" opacity="0.9"/>' +
          '<ellipse cx="55" cy="210" rx="40" ry="22" fill="#fda4af" opacity="0.5"/>' +
@@ -173,6 +194,218 @@ function preloadPropImages() {
   });
 }
 preloadPropImages();
+
+// ========================================================
+// AR 실시간 얼굴 인식 & 소품 자동 트래킹 엔진 (BlazeFace AI)
+// ========================================================
+var faceTracker = {
+  model: null,
+  loadingPromise: null,
+  active: false,
+  rafId: null,
+  isTracking: false,
+  lostCount: 0,
+  smoothedFace: null, // { anchorX, anchorY, scale, rollDeg }
+  lastTrackTime: 0
+};
+
+function initFaceTracker() {
+  if (faceTracker.model) return Promise.resolve(faceTracker.model);
+  if (faceTracker.loadingPromise) return faceTracker.loadingPromise;
+
+  if (typeof blazeface === 'undefined') {
+    return Promise.reject('BlazeFace AI 라이브러리가 아직 로드되지 않았습니다.');
+  }
+
+  faceTracker.loadingPromise = blazeface.load().then(function(model) {
+    faceTracker.model = model;
+    return model;
+  }).catch(function(err) {
+    console.warn('Face tracker model load failed:', err);
+    faceTracker.loadingPromise = null;
+    throw err;
+  });
+
+  return faceTracker.loadingPromise;
+}
+
+function startFaceTrackingLoop() {
+  if (faceTracker.active) return;
+  faceTracker.active = true;
+
+  var video = document.getElementById('life4CutVideo');
+  var trackInterval = 1000 / 30; // 30 FPS 부드러운 트래킹
+
+  function loop(timestamp) {
+    if (!faceTracker.active || !video || video.paused || video.ended) {
+      faceTracker.active = false;
+      return;
+    }
+
+    if (timestamp - faceTracker.lastTrackTime >= trackInterval) {
+      faceTracker.lastTrackTime = timestamp;
+
+      if (faceTracker.model && video.readyState >= 2 && video.videoWidth > 0) {
+        faceTracker.model.estimateFaces(video, false).then(function(predictions) {
+          if (predictions && predictions.length > 0) {
+            processFacePrediction(predictions[0], video);
+          } else {
+            handleFaceLost();
+          }
+        }).catch(function() {
+          handleFaceLost();
+        });
+      }
+    }
+
+    faceTracker.rafId = requestAnimationFrame(loop);
+  }
+
+  initFaceTracker().then(function() {
+    if (faceTracker.active) {
+      faceTracker.rafId = requestAnimationFrame(loop);
+    }
+  }).catch(function(err) {
+    console.log('Face tracker waiting for camera frame:', err);
+  });
+}
+
+function stopFaceTrackingLoop() {
+  faceTracker.active = false;
+  if (faceTracker.rafId) {
+    cancelAnimationFrame(faceTracker.rafId);
+    faceTracker.rafId = null;
+  }
+  var badge = document.getElementById('life4CutFaceTrackingBadge');
+  if (badge) badge.classList.add('hidden');
+}
+
+function processFacePrediction(prediction, video) {
+  var vw = video.videoWidth || 640;
+  var vh = video.videoHeight || 480;
+  var targetAspect = 4 / 3;
+  var videoAspect = vw / vh;
+
+  var cropX = 0, cropY = 0, cropW = vw, cropH = vh;
+  if (videoAspect > targetAspect) {
+    cropW = vh * targetAspect;
+    cropX = (vw - cropW) / 2;
+  } else {
+    cropH = vw / targetAspect;
+    cropY = (vh - cropH) / 2;
+  }
+
+  var landmarks = prediction.landmarks;
+  if (!landmarks || landmarks.length < 2) return;
+
+  var rightEye = landmarks[0]; // [x, y] in video pixels
+  var leftEye = landmarks[1];
+
+  // 1) 비디오 좌표 -> 4:3 컨테이너 정규화 (0.0 ~ 1.0)
+  var reNormX = (rightEye[0] - cropX) / cropW;
+  var reNormY = (rightEye[1] - cropY) / cropH;
+  var leNormX = (leftEye[0] - cropX) / cropW;
+  var leNormY = (leftEye[1] - cropY) / cropH;
+
+  // 2) 셀카 미러 모드 (scaleX(-1)) 반영
+  var mReX = 1 - reNormX;
+  var mLeX = 1 - leNormX;
+
+  var eyeCenterX = (mReX + mLeX) / 2;
+  var eyeCenterY = (reNormY + leNormY) / 2;
+
+  // 3) 눈 간격 거리 및 각도 (고개 갸우뚱 기울기 Roll Angle)
+  var dx = mLeX - mReX; // 좌우 반전 공간
+  var dy = leNormY - reNormY;
+  var rollRad = Math.atan2(dy, dx);
+  var rollDeg = rollRad * (180 / Math.PI);
+  var eyeDist = Math.hypot(dx, dy);
+
+  // 4) 카메라 거리 비례 스케일 (기본 셀카 거리: 0.18)
+  var rawScale = Math.min(Math.max(eyeDist / 0.18, 0.55), 2.2);
+
+  // 5) 소품 종류별 부착 지점(앵커) 계산
+  var propDef = PROP_DEFINITIONS[life4CutState.prop] || PROP_DEFINITIONS.bunny;
+  var anchorType = propDef.anchorType || 'head';
+  var offsetMultiplier = (typeof propDef.anchorOffset === 'number') ? propDef.anchorOffset : 0.95;
+
+  var anchorX = eyeCenterX;
+  var anchorY = eyeCenterY;
+
+  if (anchorType === 'head') {
+    // 머리 위 (눈 중심에서 머리 위쪽 수직 벡터 방향으로 오프셋)
+    var headOffset = eyeDist * offsetMultiplier;
+    anchorX = eyeCenterX + Math.sin(rollRad) * headOffset;
+    anchorY = eyeCenterY - Math.cos(rollRad) * headOffset;
+  } else if (anchorType === 'cheeks') {
+    // 볼 (눈 중심에서 아래쪽 방향)
+    var cheekOffset = eyeDist * offsetMultiplier;
+    anchorX = eyeCenterX - Math.sin(rollRad) * cheekOffset;
+    anchorY = eyeCenterY + Math.cos(rollRad) * cheekOffset;
+  }
+  // eyes 타입(선글라스)은 눈 중심에 정확히 안착
+
+  // 6) 지터 방지 EMA 스무딩 (부드럽고 쫀득한 트래킹)
+  if (!faceTracker.smoothedFace) {
+    faceTracker.smoothedFace = {
+      anchorX: anchorX,
+      anchorY: anchorY,
+      scale: rawScale,
+      rollDeg: rollDeg
+    };
+  } else {
+    var alpha = 0.38;
+    faceTracker.smoothedFace.anchorX += (anchorX - faceTracker.smoothedFace.anchorX) * alpha;
+    faceTracker.smoothedFace.anchorY += (anchorY - faceTracker.smoothedFace.anchorY) * alpha;
+    faceTracker.smoothedFace.scale += (rawScale - faceTracker.smoothedFace.scale) * alpha;
+
+    var diffAngle = rollDeg - faceTracker.smoothedFace.rollDeg;
+    while (diffAngle < -180) diffAngle += 360;
+    while (diffAngle > 180) diffAngle -= 360;
+    faceTracker.smoothedFace.rollDeg += diffAngle * alpha;
+  }
+
+  faceTracker.lostCount = 0;
+  faceTracker.isTracking = true;
+
+  // 7) 뷰파인더 소품 위치 & 회전 & 크기 실시간 동기화
+  updateTrackedPropDOM();
+
+  var badge = document.getElementById('life4CutFaceTrackingBadge');
+  if (badge && life4CutState.prop !== 'none') {
+    badge.classList.remove('hidden');
+  }
+}
+
+function handleFaceLost() {
+  faceTracker.lostCount++;
+  if (faceTracker.lostCount > 10) {
+    faceTracker.isTracking = false;
+    var badge = document.getElementById('life4CutFaceTrackingBadge');
+    if (badge) badge.classList.add('hidden');
+
+    if (faceTracker.smoothedFace) {
+      faceTracker.smoothedFace.anchorX += (0.5 - faceTracker.smoothedFace.anchorX) * 0.1;
+      faceTracker.smoothedFace.anchorY += (0.16 - faceTracker.smoothedFace.anchorY) * 0.1;
+      faceTracker.smoothedFace.rollDeg += (0 - faceTracker.smoothedFace.rollDeg) * 0.1;
+      faceTracker.smoothedFace.scale += (1 - faceTracker.smoothedFace.scale) * 0.1;
+      updateTrackedPropDOM();
+    }
+  }
+}
+
+function updateTrackedPropDOM() {
+  var propEl = document.getElementById('life4CutTrackedProp');
+  if (!propEl || !faceTracker.smoothedFace || life4CutState.prop === 'none') return;
+
+  var sf = faceTracker.smoothedFace;
+  var px = (sf.anchorX * 100).toFixed(2);
+  var py = (sf.anchorY * 100).toFixed(2);
+  var rot = sf.rollDeg.toFixed(2);
+  var sc = sf.scale.toFixed(3);
+
+  propEl.style.transform = 'translate3d(' + px + '%, ' + py + '%, 0) translate3d(-50%, -50%, 0) rotate(' + rot + 'deg) scale(' + sc + ')';
+}
 
 // 1. 인생네컷 스튜디오 모달 열기
 window.openLife4CutStudio = function() {
@@ -212,6 +445,7 @@ window.openLife4CutStudio = function() {
 window.closeLife4CutStudio = function() {
   var modal = document.getElementById('life4CutModal');
   if (modal) modal.classList.add('hidden');
+  stopFaceTrackingLoop();
   stopWebcam();
 };
 
@@ -236,6 +470,12 @@ function startWebcam() {
     video.srcObject = stream;
     video.play();
     video.style.transform = 'scaleX(-1)';
+
+    video.onloadeddata = function() {
+      if (life4CutState.prop !== 'none') {
+        startFaceTrackingLoop();
+      }
+    };
     
     // 현재 선택된 필터 실시간 비디오에 즉시 반영
     var filterDef = FILTER_PRESETS[life4CutState.filter] || FILTER_PRESETS.glow;
@@ -263,12 +503,27 @@ window.setLife4CutProp = function(propId) {
   var def = PROP_DEFINITIONS[propId];
 
   // 1) 뷰파인더 라이브 오버레이 업데이트
-  var overlay = document.getElementById('life4CutPropOverlay');
-  if (overlay) {
+  var propEl = document.getElementById('life4CutTrackedProp');
+  var badge = document.getElementById('life4CutFaceTrackingBadge');
+
+  if (propEl) {
     if (def.svg) {
-      overlay.innerHTML = '<div class="absolute flex items-center justify-center transition-all duration-150" style="' + def.topStyle + '">' + def.svg + '</div>';
+      propEl.innerHTML = def.svg;
+      propEl.style.width = def.trackedWidth || '52%';
+      propEl.style.display = 'block';
+
+      if (faceTracker.smoothedFace && faceTracker.isTracking) {
+        updateTrackedPropDOM();
+      } else {
+        var defT = def.defaultTransform || 'translate3d(50%, 15%, 0) translate3d(-50%, -50%, 0) rotate(0deg) scale(1)';
+        propEl.style.transform = defT;
+      }
+
+      startFaceTrackingLoop();
     } else {
-      overlay.innerHTML = '';
+      propEl.innerHTML = '';
+      propEl.style.display = 'none';
+      if (badge) badge.classList.add('hidden');
     }
   }
 
@@ -455,12 +710,29 @@ function captureCurrentFrameToSlot(slotIdx) {
   ctx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, targetW, targetH);
   ctx.setTransform(1, 0, 0, 1, 0, 0); // 복원
 
-  // 선택된 머리띠 / 파티 소품 합성
+  // 선택된 머리띠 / 파티 소품 합성 (실시간 얼굴 추적 좌표 & 기울기 각도 & 스케일 반영)
   var propDef = PROP_DEFINITIONS[life4CutState.prop];
   if (propDef && propDef.svg) {
     var cachedImg = PROP_IMAGE_CACHE[life4CutState.prop];
     if (cachedImg && cachedImg.complete) {
-      ctx.drawImage(cachedImg, propDef.x, propDef.y, propDef.w, propDef.h);
+      if (faceTracker.isTracking && faceTracker.smoothedFace) {
+        var sf = faceTracker.smoothedFace;
+        var cx = sf.anchorX * targetW;
+        var cy = sf.anchorY * targetH;
+        var baseW = propDef.w * 0.9;
+        var baseH = propDef.h * 0.9;
+        var pw = baseW * sf.scale;
+        var ph = baseH * sf.scale;
+        var rad = sf.rollDeg * (Math.PI / 180);
+
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(rad);
+        ctx.drawImage(cachedImg, -pw / 2, -ph / 2, pw, ph);
+        ctx.restore();
+      } else {
+        ctx.drawImage(cachedImg, propDef.x, propDef.y, propDef.w, propDef.h);
+      }
     }
   }
 

@@ -55,7 +55,7 @@
 <!-- Lucide Icons -->
 <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
 
-<link rel="stylesheet" href="css/style.css?v=71" />
+<link rel="stylesheet" href="css/style.css?v=72" />
 </head>
 <body class="bg-slate-100 text-slate-900 antialiased h-[100dvh] w-full flex justify-center items-center overflow-hidden">
 
@@ -1648,8 +1648,16 @@
           <div class="relative w-full aspect-[4/3] rounded-2xl overflow-hidden bg-black border border-zinc-800 shadow-inner flex items-center justify-center">
             <video id="life4CutVideo" autoplay playsinline muted class="w-full h-full object-cover"></video>
             
-            <!-- 머리띠 & 촬영 소품 실시간 라이브 오버레이 -->
-            <div id="life4CutPropOverlay" class="pointer-events-none absolute inset-0 z-10 flex items-center justify-center"></div>
+            <!-- 머리띠 & 촬영 소품 실시간 라이브 오버레이 (AR 얼굴 추적) -->
+            <div id="life4CutPropOverlay" class="pointer-events-none absolute inset-0 z-10 overflow-hidden">
+              <div id="life4CutTrackedProp" class="absolute pointer-events-none transition-transform duration-75 ease-out" style="top: 0; left: 0; width: 55%; transform-origin: center center; display: none;"></div>
+            </div>
+            
+            <!-- AR 얼굴 인식 트래킹 상태 뱃지 -->
+            <div id="life4CutFaceTrackingBadge" class="hidden pointer-events-none absolute top-2.5 left-2.5 z-20 px-2.5 py-1 rounded-full bg-black/70 backdrop-blur-md border border-emerald-500/50 flex items-center gap-1.5 text-[10.5px] font-extrabold text-emerald-400 shadow-lg">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span>얼굴 인식 트래킹 중</span>
+            </div>
             
             <!-- 카메라 미지원 시 플레이스홀더 -->
             <div id="life4CutVideoPlaceholder" class="hidden absolute inset-0 flex flex-col items-center justify-center gap-2 bg-zinc-900 text-zinc-400 p-4 text-center">
@@ -1999,18 +2007,22 @@
   </div>
 </div>
 
+<!-- AR 얼굴 인식 트래킹 (TensorFlow.js + BlazeFace) -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.18.0/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/blazeface@0.0.7/dist/blazeface.min.js"></script>
+
 <!-- 기능별 모듈 스크립트 분리 (Clean Modular Architecture) -->
-<script src="js/config.js?v=71"></script>
-<script src="js/state.js?v=71"></script>
-<script src="js/map.js?v=71"></script>
-<script src="js/mobility.js?v=71"></script>
-<script src="js/places.js?v=71"></script>
-<script src="js/weather.js?v=71"></script>
-<script src="js/care.js?v=71"></script>
-<script src="js/game.js?v=71"></script>
-<script src="js/chat.js?v=71"></script>
-<script src="js/ui.js?v=71"></script>
-<script src="js/memory.js?v=71"></script>
-<script src="js/life4cut.js?v=71"></script>
+<script src="js/config.js?v=72"></script>
+<script src="js/state.js?v=72"></script>
+<script src="js/map.js?v=72"></script>
+<script src="js/mobility.js?v=72"></script>
+<script src="js/places.js?v=72"></script>
+<script src="js/weather.js?v=72"></script>
+<script src="js/care.js?v=72"></script>
+<script src="js/game.js?v=72"></script>
+<script src="js/chat.js?v=72"></script>
+<script src="js/ui.js?v=72"></script>
+<script src="js/memory.js?v=72"></script>
+<script src="js/life4cut.js?v=72"></script>
 </body>
 </html>
