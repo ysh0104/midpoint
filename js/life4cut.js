@@ -2,28 +2,30 @@
  * 반띵 (Ban-Dding) - 인생네컷 (Life 4-Cut Photo Booth Studio)
  * 
  * 1. 실시간 웹캠 4컷 촬영 (3초 자동 카운트다운 타이머 & 단일 컷 수동 촬영)
- * 2. 머리띠 & 촬영 소품 (토끼 귀, 냥이 귀, 곰돌이, 골드 왕관, 빅 리본, 선글라스, 볼하트)
+ * 2. 8종 감성 포토부스 배경 테마 (하루필름 블루, 핑크 블라썸, Y2K 라벤더, 힙 매트블랙, 선셋 글로우, 세이지 민트, 밀크 베이지, 퓨어 화이트)
  * 3. 감성 뷰티 필터 (맑은 뽀샤시, 피치 웜톤, 감성 필름, 클래식 흑백, 내추럴 원본) -> 실제 저장 사진에 물리적 100% 합성 반영
  * 4. 내 갤러리 사진 4장 업로드 & 무왜곡 4:3 자동 센터크롭
- * 5. 인생네컷 프레임 테마 (딥블랙, 반띵블루, 클래식화이트, 버터크림, 로맨틱핑크)
- * 6. 스마트폰 갤러리/사진 앱에 직접 저장 (Web Share API 및 꾹 누르기 저장 모달)
- * 7. Canvas 초고화질 합성 렌더링 (1200 x 3600 px) & 지도 추억 폴라로이드 등록
+ * 5. 스마트폰 규격 최적화 저장:
+ *    - 앱·인스타 스토리 규격: 1080 × 1920 px (칸당 466 × 690 px)
+ *    - 인쇄용 2:3 규격: 1080 × 1620 px (칸당 466 × 690 px)
+ *    - 클래식 1:3 롱 스트립: 1200 × 3600 px (2×6인치)
+ * 6. 스마트폰 갤러리/사진 앱에 직접 저장 (Web Share API 및 1초 꾹 누르기 저장 모달)
+ * 7. 지도 추억 폴라로이드 원클릭 등록
  */
 
 var life4CutState = {
   stream: null,
   shots: [null, null, null, null],
   currentShotIdx: 0,
-  theme: 'black', // 'black', 'blue', 'white', 'cream', 'pink'
-  filter: 'glow', // 'glow', 'peach', 'film', 'mono', 'original'
-  prop: 'none',   // 'none', 'bunny', 'cat', 'bear', 'crown', 'ribbon', 'sunglass', 'hearts'
+  theme: 'haru_blue', // 'haru_blue', 'pink_blossom', 'y2k_lavender', 'dark_matte', 'sunset_glow', 'sage_green', 'milk_beige', 'pure_white'
+  filter: 'glow',      // 'glow', 'peach', 'film', 'mono', 'original'
   isCountingDown: false,
   countdownTimer: null,
   locationName: '오늘의 모임',
   dateText: '',
-  facingMode: 'user', // 'user' (전면 셀카) 또는 'environment' (후면 카메라)
+  facingMode: 'user',  // 'user' (전면 셀카) 또는 'environment' (후면 카메라)
   mobileView: 'camera', // 'camera' (촬영 모드) 또는 'strip' (네컷 완성본 뷰)
-  mobileToolTab: 'filter' // 'filter', 'prop', 'theme', 'text'
+  mobileToolTab: 'filter' // 'filter', 'theme', 'text'
 };
 
 // 감성 뷰티 필터 프리셋 정의 (하루필름/포토이즘 스타일 화사한 보정)
@@ -55,359 +57,148 @@ var FILTER_PRESETS = {
   }
 };
 
-// 머리띠 및 파티 소품 정의 (인생네컷 시그니처 아이템 & AR 앵커 정보)
-var PROP_DEFINITIONS = {
-  none: {
-    id: 'none',
-    name: '장식 없음',
-    svg: ''
+// 8종 프리미엄 포토부스 배경 테마 정의 (그라데이션 및 캔버스 렌더링 색상)
+var BACKGROUND_THEMES = {
+  haru_blue: {
+    id: 'haru_blue',
+    name: '☁️ 하루필름 블루',
+    gradStart: '#38bdf8',
+    gradEnd: '#0284c7',
+    bgHex: '#0284c7',
+    textHex: '#ffffff',
+    subTextHex: '#bae6fd',
+    logoBgHex: '#ffffff',
+    logoTextHex: '#0284c7',
+    qrLightHex: '#ffffff',
+    qrDarkHex: '#0284c7',
+    cssClass: 'theme-strip-haru_blue'
   },
-  bunny: {
-    id: 'bunny',
-    name: '🐰 토끼 머리띠',
-    w: 360, h: 180, x: 300, y: 30,
-    anchorType: 'head',
-    anchorOffset: 1.05,
-    trackedWidth: '56%',
-    defaultTransform: 'translate3d(50%, 15%, 0) translate3d(-50%, -50%, 0) rotate(0deg) scale(1)',
-    svg: '<svg viewBox="0 0 400 200" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full h-full drop-shadow-md">' +
-         '<path d="M 60 185 Q 200 130 340 185" stroke="#f472b6" stroke-width="12" stroke-linecap="round" fill="none"/>' +
-         '<path d="M 120 160 C 80 120 70 30 115 15 C 160 0 170 100 140 155 Z" fill="#ffffff" stroke="#f472b6" stroke-width="6"/>' +
-         '<path d="M 122 145 C 95 110 88 45 118 35 C 145 25 150 95 136 142 Z" fill="#fbcfe8"/>' +
-         '<path d="M 260 155 C 230 100 240 0 285 15 C 330 30 320 120 280 160 Z" fill="#ffffff" stroke="#f472b6" stroke-width="6"/>' +
-         '<path d="M 264 142 C 250 95 255 25 282 35 C 312 45 305 110 278 145 Z" fill="#fbcfe8"/>' +
-         '<circle cx="200" cy="148" r="14" fill="#fb7185"/><circle cx="200" cy="148" r="6" fill="#ffffff"/>' +
-         '</svg>'
+  pink_blossom: {
+    id: 'pink_blossom',
+    name: '🌸 핑크 블라썸',
+    gradStart: '#fbcfe8',
+    gradEnd: '#f472b6',
+    bgHex: '#f472b6',
+    textHex: '#831843',
+    subTextHex: '#9d174d',
+    logoBgHex: '#831843',
+    logoTextHex: '#fdf2f8',
+    qrLightHex: '#ffffff',
+    qrDarkHex: '#831843',
+    cssClass: 'theme-strip-pink_blossom'
   },
-  cat: {
-    id: 'cat',
-    name: '🐱 냥이 귀',
-    w: 340, h: 160, x: 310, y: 35,
-    anchorType: 'head',
-    anchorOffset: 0.95,
-    trackedWidth: '52%',
-    defaultTransform: 'translate3d(50%, 15%, 0) translate3d(-50%, -50%, 0) rotate(0deg) scale(1)',
-    svg: '<svg viewBox="0 0 400 180" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full h-full drop-shadow-md">' +
-         '<path d="M 70 165 Q 200 125 330 165" stroke="#18181b" stroke-width="10" stroke-linecap="round" fill="none"/>' +
-         '<polygon points="90,150 140,40 175,135" fill="#18181b" stroke="#f43f5e" stroke-width="5"/>' +
-         '<polygon points="105,140 140,65 162,130" fill="#fda4af"/>' +
-         '<polygon points="225,135 260,40 310,150" fill="#18181b" stroke="#f43f5e" stroke-width="5"/>' +
-         '<polygon points="238,130 260,65 295,140" fill="#fda4af"/>' +
-         '<path d="M 190 140 L 175 125 L 175 145 Z M 210 140 L 225 125 L 225 145 Z" fill="#f43f5e"/>' +
-         '<circle cx="200" cy="138" r="6" fill="#f43f5e"/>' +
-         '</svg>'
+  y2k_lavender: {
+    id: 'y2k_lavender',
+    name: '💜 Y2K 라벤더',
+    gradStart: '#e9d5ff',
+    gradEnd: '#c084fc',
+    bgHex: '#c084fc',
+    textHex: '#581c87',
+    subTextHex: '#6b21a8',
+    logoBgHex: '#581c87',
+    logoTextHex: '#f3e8ff',
+    qrLightHex: '#ffffff',
+    qrDarkHex: '#581c87',
+    cssClass: 'theme-strip-y2k_lavender'
   },
-  bear: {
-    id: 'bear',
-    name: '🐻 곰돌이 귀',
-    w: 360, h: 160, x: 300, y: 35,
-    anchorType: 'head',
-    anchorOffset: 0.95,
-    trackedWidth: '55%',
-    defaultTransform: 'translate3d(50%, 15%, 0) translate3d(-50%, -50%, 0) rotate(0deg) scale(1)',
-    svg: '<svg viewBox="0 0 400 180" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full h-full drop-shadow-md">' +
-         '<path d="M 70 165 Q 200 120 330 165" stroke="#78350f" stroke-width="12" stroke-linecap="round" fill="none"/>' +
-         '<circle cx="125" cy="95" r="48" fill="#b45309" stroke="#78350f" stroke-width="6"/>' +
-         '<circle cx="125" cy="95" r="26" fill="#fde68a"/>' +
-         '<circle cx="275" cy="95" r="48" fill="#b45309" stroke="#78350f" stroke-width="6"/>' +
-         '<circle cx="275" cy="95" r="26" fill="#fde68a"/>' +
-         '</svg>'
+  dark_matte: {
+    id: 'dark_matte',
+    name: '🖤 힙 매트블랙',
+    gradStart: '#27272a',
+    gradEnd: '#09090b',
+    bgHex: '#18181b',
+    textHex: '#ffffff',
+    subTextHex: '#a1a1aa',
+    logoBgHex: '#ffffff',
+    logoTextHex: '#09090b',
+    qrLightHex: '#ffffff',
+    qrDarkHex: '#09090b',
+    cssClass: 'theme-strip-dark_matte'
   },
-  crown: {
-    id: 'crown',
-    name: '👑 골드 왕관',
-    w: 300, h: 180, x: 330, y: 30,
-    anchorType: 'head',
-    anchorOffset: 0.85,
-    trackedWidth: '45%',
-    defaultTransform: 'translate3d(50%, 14%, 0) translate3d(-50%, -50%, 0) rotate(0deg) scale(1)',
-    svg: '<svg viewBox="0 0 320 200" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full h-full drop-shadow-md">' +
-         '<path d="M 40 170 L 60 70 L 115 120 L 160 40 L 205 120 L 260 70 L 280 170 Z" fill="#fbbf24" stroke="#d97706" stroke-width="8" stroke-linejoin="round"/>' +
-         '<circle cx="60" cy="65" r="14" fill="#ef4444" stroke="#ffffff" stroke-width="3"/>' +
-         '<circle cx="160" cy="35" r="18" fill="#38bdf8" stroke="#ffffff" stroke-width="4"/>' +
-         '<circle cx="260" cy="65" r="14" fill="#a855f7" stroke="#ffffff" stroke-width="3"/>' +
-         '<rect x="36" y="160" width="248" height="26" rx="10" fill="#f59e0b" stroke="#d97706" stroke-width="4"/>' +
-         '<circle cx="160" cy="173" r="7" fill="#ef4444"/><circle cx="105" cy="173" r="6" fill="#ffffff"/><circle cx="215" cy="173" r="6" fill="#ffffff"/>' +
-         '</svg>'
+  sunset_glow: {
+    id: 'sunset_glow',
+    name: '🌅 선셋 웜글로우',
+    gradStart: '#fed7aa',
+    gradEnd: '#fb923c',
+    bgHex: '#fb923c',
+    textHex: '#7c2d12',
+    subTextHex: '#9a3412',
+    logoBgHex: '#7c2d12',
+    logoTextHex: '#fff7ed',
+    qrLightHex: '#ffffff',
+    qrDarkHex: '#7c2d12',
+    cssClass: 'theme-strip-sunset_glow'
   },
-  ribbon: {
-    id: 'ribbon',
-    name: '🎀 빅 리본',
-    w: 340, h: 180, x: 310, y: 35,
-    anchorType: 'head',
-    anchorOffset: 0.95,
-    trackedWidth: '52%',
-    defaultTransform: 'translate3d(50%, 15%, 0) translate3d(-50%, -50%, 0) rotate(0deg) scale(1)',
-    svg: '<svg viewBox="0 0 380 200" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full h-full drop-shadow-md">' +
-         '<path d="M 80 185 Q 190 140 300 185" stroke="#e11d48" stroke-width="10" stroke-linecap="round" fill="none"/>' +
-         '<path d="M 230 135 C 160 90 150 40 220 50 C 270 58 240 120 230 135 Z" fill="#f43f5e" stroke="#be123c" stroke-width="6"/>' +
-         '<path d="M 250 135 C 320 90 330 40 260 50 C 210 58 240 120 250 135 Z" fill="#f43f5e" stroke="#be123c" stroke-width="6"/>' +
-         '<path d="M 230 145 Q 210 185 195 200 L 220 195 Q 235 170 240 145 Z" fill="#be123c"/>' +
-         '<path d="M 250 145 Q 270 185 285 200 L 260 195 Q 245 170 240 145 Z" fill="#be123c"/>' +
-         '<ellipse cx="240" cy="130" rx="18" ry="16" fill="#fda4af" stroke="#be123c" stroke-width="5"/>' +
-         '</svg>'
+  sage_green: {
+    id: 'sage_green',
+    name: '🌿 세이지 민트',
+    gradStart: '#dcfce7',
+    gradEnd: '#86efac',
+    bgHex: '#86efac',
+    textHex: '#14532d',
+    subTextHex: '#166534',
+    logoBgHex: '#14532d',
+    logoTextHex: '#f0fdf4',
+    qrLightHex: '#ffffff',
+    qrDarkHex: '#14532d',
+    cssClass: 'theme-strip-sage_green'
   },
-  sunglass: {
-    id: 'sunglass',
-    name: '🕶️ 선글라스',
-    w: 340, h: 130, x: 310, y: 250,
-    anchorType: 'eyes',
-    anchorOffset: 0,
-    trackedWidth: '52%',
-    defaultTransform: 'translate3d(50%, 42%, 0) translate3d(-50%, -50%, 0) rotate(0deg) scale(1)',
-    svg: '<svg viewBox="0 0 360 140" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full h-full drop-shadow-lg">' +
-         '<rect x="25" y="25" width="135" height="85" rx="24" fill="#09090b" stroke="#ffffff" stroke-width="5"/>' +
-         '<rect x="200" y="25" width="135" height="85" rx="24" fill="#09090b" stroke="#ffffff" stroke-width="5"/>' +
-         '<rect x="155" y="45" width="50" height="12" rx="6" fill="#09090b"/>' +
-         '<path d="M 45 40 L 75 40 L 40 85 L 35 85 Z" fill="#ffffff" opacity="0.35"/>' +
-         '<path d="M 220 40 L 250 40 L 215 85 L 210 85 Z" fill="#ffffff" opacity="0.35"/>' +
-         '</svg>'
+  milk_beige: {
+    id: 'milk_beige',
+    name: '🥛 밀크 베이지',
+    gradStart: '#fefce8',
+    gradEnd: '#fef08a',
+    bgHex: '#fef08a',
+    textHex: '#451a03',
+    subTextHex: '#713f12',
+    logoBgHex: '#451a03',
+    logoTextHex: '#fefce8',
+    qrLightHex: '#fffbeb',
+    qrDarkHex: '#451a03',
+    cssClass: 'theme-strip-milk_beige'
   },
-  hearts: {
-    id: 'hearts',
-    name: '💖 러브 볼하트',
-    w: 480, h: 320, x: 240, y: 120,
-    anchorType: 'cheeks',
-    anchorOffset: 0.45,
-    trackedWidth: '68%',
-    defaultTransform: 'translate3d(50%, 48%, 0) translate3d(-50%, -50%, 0) rotate(0deg) scale(1)',
-    svg: '<svg viewBox="0 0 460 300" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full h-full drop-shadow-md">' +
-         '<path d="M 90 190 C 90 170 70 160 55 175 C 40 160 20 170 20 190 C 20 215 55 235 55 240 C 55 235 90 215 90 190 Z" fill="#f43f5e" opacity="0.9"/>' +
-         '<ellipse cx="55" cy="210" rx="40" ry="22" fill="#fda4af" opacity="0.5"/>' +
-         '<path d="M 440 190 C 440 170 420 160 405 175 C 390 160 370 170 370 190 C 370 215 405 235 405 240 C 405 235 440 215 440 190 Z" fill="#f43f5e" opacity="0.9"/>' +
-         '<ellipse cx="405" cy="210" rx="40" ry="22" fill="#fda4af" opacity="0.5"/>' +
-         '<circle cx="160" cy="50" r="14" fill="#f43f5e"/><circle cx="300" cy="40" r="18" fill="#fb7185"/>' +
-         '<path d="M 230 20 L 234 32 L 246 36 L 234 40 L 230 52 L 226 40 L 214 36 L 226 32 Z" fill="#fde047"/>' +
-         '<path d="M 110 90 L 113 100 L 123 103 L 113 106 L 110 116 L 107 106 L 97 103 L 107 100 Z" fill="#fde047"/>' +
-         '<path d="M 350 85 L 353 95 L 363 98 L 353 101 L 350 111 L 347 101 L 337 98 L 347 95 Z" fill="#fde047"/>' +
-         '</svg>'
+  pure_white: {
+    id: 'pure_white',
+    name: '🤍 퓨어 화이트',
+    gradStart: '#ffffff',
+    gradEnd: '#f8fafc',
+    bgHex: '#ffffff',
+    textHex: '#0f172a',
+    subTextHex: '#64748b',
+    logoBgHex: '#0f172a',
+    logoTextHex: '#ffffff',
+    qrLightHex: '#f1f5f9',
+    qrDarkHex: '#0f172a',
+    cssClass: 'theme-strip-pure_white'
   }
 };
 
-// 캔버스 합성을 위한 사전 로드된 소품 이미지 캐시
-var PROP_IMAGE_CACHE = {};
-function preloadPropImages() {
-  Object.keys(PROP_DEFINITIONS).forEach(function(key) {
-    var def = PROP_DEFINITIONS[key];
-    if (def.svg) {
-      var img = new Image();
-      img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(def.svg);
-      PROP_IMAGE_CACHE[key] = img;
-    }
-  });
-}
-preloadPropImages();
+// 기존 테마 코드 하위 호환 매핑
+BACKGROUND_THEMES.blue = BACKGROUND_THEMES.haru_blue;
+BACKGROUND_THEMES.pink = BACKGROUND_THEMES.pink_blossom;
+BACKGROUND_THEMES.black = BACKGROUND_THEMES.dark_matte;
+BACKGROUND_THEMES.white = BACKGROUND_THEMES.pure_white;
+BACKGROUND_THEMES.cream = BACKGROUND_THEMES.milk_beige;
 
-// ========================================================
-// AR 실시간 얼굴 인식 & 소품 자동 트래킹 엔진 (BlazeFace AI)
-// ========================================================
-var faceTracker = {
-  model: null,
-  loadingPromise: null,
-  active: false,
-  rafId: null,
-  isTracking: false,
-  lostCount: 0,
-  smoothedFace: null, // { anchorX, anchorY, scale, rollDeg }
-  lastTrackTime: 0
-};
-
-function initFaceTracker() {
-  if (faceTracker.model) return Promise.resolve(faceTracker.model);
-  if (faceTracker.loadingPromise) return faceTracker.loadingPromise;
-
-  if (typeof blazeface === 'undefined') {
-    return Promise.reject('BlazeFace AI 라이브러리가 아직 로드되지 않았습니다.');
+/**
+ * 모바일/데스크톱 크로스 브라우저 호환 라운드 렉트 헬퍼 함수
+ */
+function drawRoundedRect(ctx, x, y, w, h, r) {
+  if (typeof r === 'undefined') r = 0;
+  if (ctx.roundRect) {
+    ctx.beginPath();
+    ctx.roundRect(x, y, w, h, r);
+    return;
   }
-
-  faceTracker.loadingPromise = blazeface.load().then(function(model) {
-    faceTracker.model = model;
-    return model;
-  }).catch(function(err) {
-    console.warn('Face tracker model load failed:', err);
-    faceTracker.loadingPromise = null;
-    throw err;
-  });
-
-  return faceTracker.loadingPromise;
-}
-
-function startFaceTrackingLoop() {
-  if (faceTracker.active) return;
-  faceTracker.active = true;
-
-  var video = document.getElementById('life4CutVideo');
-  var trackInterval = 1000 / 30; // 30 FPS 부드러운 트래킹
-
-  function loop(timestamp) {
-    if (!faceTracker.active || !video || video.paused || video.ended) {
-      faceTracker.active = false;
-      return;
-    }
-
-    if (timestamp - faceTracker.lastTrackTime >= trackInterval) {
-      faceTracker.lastTrackTime = timestamp;
-
-      if (faceTracker.model && video.readyState >= 2 && video.videoWidth > 0) {
-        faceTracker.model.estimateFaces(video, false).then(function(predictions) {
-          if (predictions && predictions.length > 0) {
-            processFacePrediction(predictions[0], video);
-          } else {
-            handleFaceLost();
-          }
-        }).catch(function() {
-          handleFaceLost();
-        });
-      }
-    }
-
-    faceTracker.rafId = requestAnimationFrame(loop);
-  }
-
-  initFaceTracker().then(function() {
-    if (faceTracker.active) {
-      faceTracker.rafId = requestAnimationFrame(loop);
-    }
-  }).catch(function(err) {
-    console.log('Face tracker waiting for camera frame:', err);
-  });
-}
-
-function stopFaceTrackingLoop() {
-  faceTracker.active = false;
-  if (faceTracker.rafId) {
-    cancelAnimationFrame(faceTracker.rafId);
-    faceTracker.rafId = null;
-  }
-  var badge = document.getElementById('life4CutFaceTrackingBadge');
-  if (badge) badge.classList.add('hidden');
-}
-
-function processFacePrediction(prediction, video) {
-  var vw = video.videoWidth || 640;
-  var vh = video.videoHeight || 480;
-  var targetAspect = 4 / 3;
-  var videoAspect = vw / vh;
-
-  var cropX = 0, cropY = 0, cropW = vw, cropH = vh;
-  if (videoAspect > targetAspect) {
-    cropW = vh * targetAspect;
-    cropX = (vw - cropW) / 2;
-  } else {
-    cropH = vw / targetAspect;
-    cropY = (vh - cropH) / 2;
-  }
-
-  var landmarks = prediction.landmarks;
-  if (!landmarks || landmarks.length < 2) return;
-
-  var rightEye = landmarks[0]; // [x, y] in video pixels
-  var leftEye = landmarks[1];
-
-  // 1) 비디오 좌표 -> 4:3 컨테이너 정규화 (0.0 ~ 1.0)
-  var reNormX = (rightEye[0] - cropX) / cropW;
-  var reNormY = (rightEye[1] - cropY) / cropH;
-  var leNormX = (leftEye[0] - cropX) / cropW;
-  var leNormY = (leftEye[1] - cropY) / cropH;
-
-  // 2) 셀카 미러 모드 (scaleX(-1)) 반영
-  var mReX = 1 - reNormX;
-  var mLeX = 1 - leNormX;
-
-  var eyeCenterX = (mReX + mLeX) / 2;
-  var eyeCenterY = (reNormY + leNormY) / 2;
-
-  // 3) 눈 간격 거리 및 각도 (고개 갸우뚱 기울기 Roll Angle)
-  var dx = mLeX - mReX; // 좌우 반전 공간
-  var dy = leNormY - reNormY;
-  var rollRad = Math.atan2(dy, dx);
-  var rollDeg = rollRad * (180 / Math.PI);
-  var eyeDist = Math.hypot(dx, dy);
-
-  // 4) 카메라 거리 비례 스케일 (기본 셀카 거리: 0.18)
-  var rawScale = Math.min(Math.max(eyeDist / 0.18, 0.55), 2.2);
-
-  // 5) 소품 종류별 부착 지점(앵커) 계산
-  var propDef = PROP_DEFINITIONS[life4CutState.prop] || PROP_DEFINITIONS.bunny;
-  var anchorType = propDef.anchorType || 'head';
-  var offsetMultiplier = (typeof propDef.anchorOffset === 'number') ? propDef.anchorOffset : 0.95;
-
-  var anchorX = eyeCenterX;
-  var anchorY = eyeCenterY;
-
-  if (anchorType === 'head') {
-    // 머리 위 (눈 중심에서 머리 위쪽 수직 벡터 방향으로 오프셋)
-    var headOffset = eyeDist * offsetMultiplier;
-    anchorX = eyeCenterX + Math.sin(rollRad) * headOffset;
-    anchorY = eyeCenterY - Math.cos(rollRad) * headOffset;
-  } else if (anchorType === 'cheeks') {
-    // 볼 (눈 중심에서 아래쪽 방향)
-    var cheekOffset = eyeDist * offsetMultiplier;
-    anchorX = eyeCenterX - Math.sin(rollRad) * cheekOffset;
-    anchorY = eyeCenterY + Math.cos(rollRad) * cheekOffset;
-  }
-  // eyes 타입(선글라스)은 눈 중심에 정확히 안착
-
-  // 6) 지터 방지 EMA 스무딩 (부드럽고 쫀득한 트래킹)
-  if (!faceTracker.smoothedFace) {
-    faceTracker.smoothedFace = {
-      anchorX: anchorX,
-      anchorY: anchorY,
-      scale: rawScale,
-      rollDeg: rollDeg
-    };
-  } else {
-    var alpha = 0.38;
-    faceTracker.smoothedFace.anchorX += (anchorX - faceTracker.smoothedFace.anchorX) * alpha;
-    faceTracker.smoothedFace.anchorY += (anchorY - faceTracker.smoothedFace.anchorY) * alpha;
-    faceTracker.smoothedFace.scale += (rawScale - faceTracker.smoothedFace.scale) * alpha;
-
-    var diffAngle = rollDeg - faceTracker.smoothedFace.rollDeg;
-    while (diffAngle < -180) diffAngle += 360;
-    while (diffAngle > 180) diffAngle -= 360;
-    faceTracker.smoothedFace.rollDeg += diffAngle * alpha;
-  }
-
-  faceTracker.lostCount = 0;
-  faceTracker.isTracking = true;
-
-  // 7) 뷰파인더 소품 위치 & 회전 & 크기 실시간 동기화
-  updateTrackedPropDOM();
-
-  var badge = document.getElementById('life4CutFaceTrackingBadge');
-  if (badge && life4CutState.prop !== 'none') {
-    badge.classList.remove('hidden');
-  }
-}
-
-function handleFaceLost() {
-  faceTracker.lostCount++;
-  if (faceTracker.lostCount > 10) {
-    faceTracker.isTracking = false;
-    var badge = document.getElementById('life4CutFaceTrackingBadge');
-    if (badge) badge.classList.add('hidden');
-
-    if (faceTracker.smoothedFace) {
-      faceTracker.smoothedFace.anchorX += (0.5 - faceTracker.smoothedFace.anchorX) * 0.1;
-      faceTracker.smoothedFace.anchorY += (0.16 - faceTracker.smoothedFace.anchorY) * 0.1;
-      faceTracker.smoothedFace.rollDeg += (0 - faceTracker.smoothedFace.rollDeg) * 0.1;
-      faceTracker.smoothedFace.scale += (1 - faceTracker.smoothedFace.scale) * 0.1;
-      updateTrackedPropDOM();
-    }
-  }
-}
-
-function updateTrackedPropDOM() {
-  var propEl = document.getElementById('life4CutTrackedProp');
-  if (!propEl || !faceTracker.smoothedFace || life4CutState.prop === 'none') return;
-
-  var sf = faceTracker.smoothedFace;
-  var px = (sf.anchorX * 100).toFixed(2);
-  var py = (sf.anchorY * 100).toFixed(2);
-  var rot = sf.rollDeg.toFixed(2);
-  var sc = sf.scale.toFixed(3);
-
-  propEl.style.transform = 'translate3d(' + px + '%, ' + py + '%, 0) translate3d(-50%, -50%, 0) rotate(' + rot + 'deg) scale(' + sc + ')';
+  if (w < 2 * r) r = w / 2;
+  if (h < 2 * r) r = h / 2;
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y + w, y, r);
+  ctx.closePath();
 }
 
 // 1. 인생네컷 스튜디오 모달 열기
@@ -439,12 +230,12 @@ window.openLife4CutStudio = function() {
   window.setLife4CutMobileView('camera');
   window.setLife4CutMobileToolTab('filter');
 
-  // 깨끗한 슬롯 렌더링 & 기본 뽀샤시 필터 및 소품 세팅
+  // 슬롯 렌더링 & 기본 필터 및 테마 세팅
   renderLife4CutStrip();
   window.setLife4CutFilter(life4CutState.filter || 'glow');
-  window.setLife4CutProp(life4CutState.prop || 'none');
+  window.setLife4CutTheme(life4CutState.theme || 'haru_blue');
 
-  // 웹캠 시작 시도
+  // 웹캠 시작
   startWebcam();
 
   if (window.lucide) lucide.createIcons();
@@ -454,11 +245,10 @@ window.openLife4CutStudio = function() {
 window.closeLife4CutStudio = function() {
   var modal = document.getElementById('life4CutModal');
   if (modal) modal.classList.add('hidden');
-  stopFaceTrackingLoop();
   stopWebcam();
 };
 
-// 3. 웹캠 스트림 시작 (전면 셀카 좌우 반전 미러 모드 / 후면 카메라 정방향 & 필터 실시간 연동)
+// 3. 웹캠 스트림 시작
 function startWebcam() {
   var video = document.getElementById('life4CutVideo');
   var videoPlaceholder = document.getElementById('life4CutVideoPlaceholder');
@@ -481,12 +271,6 @@ function startWebcam() {
     video.srcObject = stream;
     video.play();
     video.style.transform = (life4CutState.facingMode === 'environment') ? 'none' : 'scaleX(-1)';
-
-    video.onloadeddata = function() {
-      if (life4CutState.prop !== 'none') {
-        startFaceTrackingLoop();
-      }
-    };
     
     // 현재 선택된 필터 실시간 비디오에 즉시 반영
     var filterDef = FILTER_PRESETS[life4CutState.filter] || FILTER_PRESETS.glow;
@@ -510,7 +294,6 @@ function stopWebcam() {
 // 4-B. 전면/후면 카메라 플립 전환
 window.toggleLife4CutCameraFacing = function() {
   life4CutState.facingMode = (life4CutState.facingMode === 'user') ? 'environment' : 'user';
-  stopFaceTrackingLoop();
   stopWebcam();
   startWebcam();
   if (navigator.vibrate) navigator.vibrate(40);
@@ -546,10 +329,10 @@ window.setLife4CutMobileView = function(view) {
   }
 };
 
-// 4-D. 모바일 도구 카테고리 탭 전환 (필터 / 소품 / 테마 / 문구)
+// 4-D. 모바일 도구 카테고리 탭 전환 (필터 / 배경 테마 / 문구)
 window.setLife4CutMobileToolTab = function(tab) {
   life4CutState.mobileToolTab = tab || 'filter';
-  var tabs = ['filter', 'prop', 'theme', 'text'];
+  var tabs = ['filter', 'theme', 'text'];
   tabs.forEach(function(t) {
     var btn = document.getElementById('mobileToolTab_' + t);
     var panel = document.getElementById('mobileToolPanel_' + t);
@@ -574,56 +357,7 @@ window.handleMobileShutterTap = function() {
   window.startLife4CutAutoCapture();
 };
 
-// 5. 머리띠 & 촬영 소품 선택
-window.setLife4CutProp = function(propId) {
-  if (!PROP_DEFINITIONS[propId]) propId = 'none';
-  life4CutState.prop = propId;
-  var def = PROP_DEFINITIONS[propId];
-
-  // 1) 뷰파인더 라이브 오버레이 업데이트
-  var propEl = document.getElementById('life4CutTrackedProp');
-  var badge = document.getElementById('life4CutFaceTrackingBadge');
-
-  if (propEl) {
-    if (def.svg) {
-      propEl.innerHTML = def.svg;
-      propEl.style.width = def.trackedWidth || '52%';
-      propEl.style.display = 'block';
-
-      if (faceTracker.smoothedFace && faceTracker.isTracking) {
-        updateTrackedPropDOM();
-      } else {
-        var defT = def.defaultTransform || 'translate3d(50%, 15%, 0) translate3d(-50%, -50%, 0) rotate(0deg) scale(1)';
-        propEl.style.transform = defT;
-      }
-
-      startFaceTrackingLoop();
-    } else {
-      propEl.innerHTML = '';
-      propEl.style.display = 'none';
-      if (badge) badge.classList.add('hidden');
-    }
-  }
-
-  // 2) 소품 버튼 활성화 토글
-  var btns = document.querySelectorAll('.prop-btn');
-  btns.forEach(function(b) {
-    if (b.getAttribute('data-prop') === propId) {
-      b.classList.add('active');
-      b.classList.remove('text-zinc-400');
-      b.classList.add('text-white');
-    } else {
-      b.classList.remove('active');
-      b.classList.add('text-zinc-400');
-      b.classList.remove('text-white');
-    }
-  });
-
-  var nameEl = document.getElementById('life4CutPropName');
-  if (nameEl) nameEl.textContent = def.name;
-};
-
-// 6. 감성 뷰티 필터 변경 (웹캠 & 슬롯 프리뷰 & 캔버스 동시 적용)
+// 5. 감성 뷰티 필터 변경 (웹캠 & 슬롯 프리뷰 & 캔버스 동시 적용)
 window.setLife4CutFilter = function(filterId) {
   if (!FILTER_PRESETS[filterId]) filterId = 'glow';
   life4CutState.filter = filterId;
@@ -658,45 +392,37 @@ window.setLife4CutFilter = function(filterId) {
   if (nameEl) nameEl.textContent = filterDef.name;
 };
 
-// 7. 프레임 테마 변경
+// 6. 감성 배경 테마 변경 (8종 포토부스 배경)
 window.setLife4CutTheme = function(themeName) {
+  if (!BACKGROUND_THEMES[themeName]) themeName = 'haru_blue';
   life4CutState.theme = themeName;
+  var themeDef = BACKGROUND_THEMES[themeName];
+
   var strip = document.getElementById('life4CutStrip');
-  if (!strip) return;
+  if (strip) {
+    strip.className = 'life4cut-strip transition-all duration-300 ' + (themeDef.cssClass || ('theme-strip-' + themeName));
+  }
 
-  // 모든 테마 클래스 제거 후 신규 적용
-  strip.className = 'life4cut-strip transition-all duration-300 ' + getThemeClass(themeName);
-
-  // 버튼 활성화 스타일 업데이트
+  // 테마 버튼 활성화 스타일 업데이트
   var btns = document.querySelectorAll('.theme-btn');
   btns.forEach(function(b) {
     if (b.getAttribute('data-theme') === themeName) {
-      b.classList.add('ring-2', 'ring-offset-2', 'ring-[#0284c7]', 'scale-105');
+      b.classList.add('active');
     } else {
-      b.classList.remove('ring-2', 'ring-offset-2', 'ring-[#0284c7]', 'scale-105');
+      b.classList.remove('active');
     }
   });
+
+  var nameEl = document.getElementById('life4CutThemeName');
+  if (nameEl) nameEl.textContent = themeDef.name;
 
   renderLife4CutStrip();
 };
 
-function getThemeClass(theme) {
-  switch (theme) {
-    case 'blue':
-      return 'theme-strip-blue';
-    case 'white':
-      return 'theme-strip-white';
-    case 'cream':
-      return 'theme-strip-cream';
-    case 'pink':
-      return 'theme-strip-pink';
-    case 'black':
-    default:
-      return 'theme-strip-black';
-  }
-}
+// 소품 제거 관련 안전 빈 함수 (호환용)
+window.setLife4CutProp = function() {};
 
-// 8. 4컷 자동 연속 촬영 (3초 카운트다운 x 4회)
+// 7. 4컷 자동 연속 촬영 (3초 카운트다운 x 4회)
 window.startLife4CutAutoCapture = function() {
   if (life4CutState.isCountingDown) return;
   var video = document.getElementById('life4CutVideo');
@@ -734,7 +460,6 @@ window.startLife4CutAutoCapture = function() {
         showCountdownOverlay(countdown);
       } else {
         clearInterval(life4CutState.countdownTimer);
-        // 찰칵 효과 및 무왜곡 4:3 캡처 + 소품 합성
         flashShutterEffect();
         if (navigator.vibrate) navigator.vibrate(35);
         captureCurrentFrameToSlot(shotIndex);
@@ -747,7 +472,7 @@ window.startLife4CutAutoCapture = function() {
   takeNextShot();
 };
 
-// 9. 단일 컷 수동 촬영 / 교체
+// 8. 단일 컷 수동 촬영 / 교체
 window.captureSingleShot = function(slotIdx) {
   var video = document.getElementById('life4CutVideo');
   if (!life4CutState.stream || !video) {
@@ -762,7 +487,7 @@ window.captureSingleShot = function(slotIdx) {
 };
 
 /**
- * 10. 무왜곡 4:3 센터크롭 캡처 & 선택된 머리띠 소품 합성
+ * 9. 무왜곡 4:3 센터크롭 캡처
  */
 function captureCurrentFrameToSlot(slotIdx) {
   var video = document.getElementById('life4CutVideo');
@@ -797,33 +522,7 @@ function captureCurrentFrameToSlot(slotIdx) {
     ctx.translate(canvas.width, 0);
     ctx.scale(-1, 1);
     ctx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, targetW, targetH);
-    ctx.setTransform(1, 0, 0, 1, 0, 0); // 복원
-  }
-
-  // 선택된 머리띠 / 파티 소품 합성 (실시간 얼굴 추적 좌표 & 기울기 각도 & 스케일 반영)
-  var propDef = PROP_DEFINITIONS[life4CutState.prop];
-  if (propDef && propDef.svg) {
-    var cachedImg = PROP_IMAGE_CACHE[life4CutState.prop];
-    if (cachedImg && cachedImg.complete) {
-      if (faceTracker.isTracking && faceTracker.smoothedFace) {
-        var sf = faceTracker.smoothedFace;
-        var cx = sf.anchorX * targetW;
-        var cy = sf.anchorY * targetH;
-        var baseW = propDef.w * 0.9;
-        var baseH = propDef.h * 0.9;
-        var pw = baseW * sf.scale;
-        var ph = baseH * sf.scale;
-        var rad = sf.rollDeg * (Math.PI / 180);
-
-        ctx.save();
-        ctx.translate(cx, cy);
-        ctx.rotate(rad);
-        ctx.drawImage(cachedImg, -pw / 2, -ph / 2, pw, ph);
-        ctx.restore();
-      } else {
-        ctx.drawImage(cachedImg, propDef.x, propDef.y, propDef.w, propDef.h);
-      }
-    }
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
   }
 
   var dataUrl = canvas.toDataURL('image/jpeg', 0.95);
@@ -856,7 +555,7 @@ function hideCountdownOverlay() {
   if (overlay) overlay.classList.add('hidden');
 }
 
-// 11. 4컷 스트립 UI 렌더링 (필터 실시간 반영 및 모바일 슬롯 동기화)
+// 10. 인생네컷 스트립 실시간 프리뷰 렌더링
 function renderLife4CutStrip() {
   var filterDef = FILTER_PRESETS[life4CutState.filter] || FILTER_PRESETS.glow;
   var filterCss = (filterDef && filterDef.css !== 'none') ? filterDef.css : '';
@@ -920,6 +619,13 @@ function renderLife4CutStrip() {
   if (dateEl) dateEl.textContent = life4CutState.dateText;
 }
 
+// 11. 장소명 실시간 입력 반영
+window.updateLife4CutPlace = function(val) {
+  life4CutState.locationName = val || '반띵 모임';
+  var placeEl = document.getElementById('life4CutPlaceText');
+  if (placeEl) placeEl.textContent = life4CutState.locationName;
+};
+
 // 12. 모든 슬롯 비우기 및 새로 촬영
 window.resetLife4CutShots = function() {
   life4CutState.shots = [null, null, null, null];
@@ -979,25 +685,11 @@ function cropImageTo43(dataUrl, callback) {
     ctx.drawImage(img, cropX, cropY, cropW, cropH, 0, 0, targetW, targetH);
     callback(canvas.toDataURL('image/jpeg', 0.95));
   };
-  img.onerror = function() {
-    callback(dataUrl);
-  };
   img.src = dataUrl;
 }
 
-// 14. 장소명 커스텀 입력 반영
-window.updateLife4CutPlace = function(val) {
-  life4CutState.locationName = val || '반띵 모임';
-  var dInput = document.getElementById('life4CutPlaceInput');
-  var mInput = document.getElementById('life4CutPlaceInputMobile');
-  if (dInput && dInput.value !== val) dInput.value = val;
-  if (mInput && mInput.value !== val) mInput.value = val;
-  var placeEl = document.getElementById('life4CutPlaceText');
-  if (placeEl) placeEl.textContent = life4CutState.locationName;
-};
-
 /**
- * 물리적 픽셀 필터 처리 엔진 (100% 브라우저 호환 - 저장되는 파일에 필터 영구 합성)
+ * 물리적 픽셀 필터 처리 엔진 (저장되는 파일에 필터 영구 합성)
  */
 function applyPixelFilterToContext(ctx, x, y, w, h, filterId) {
   if (!filterId || filterId === 'original') return;
@@ -1016,7 +708,6 @@ function applyPixelFilterToContext(ctx, x, y, w, h, filterId) {
         d[i + 2] = gray;
       }
     } else if (filterId === 'glow') {
-      // 맑은 뽀샤시: 톤업 하이라이트 + 맑은 피부톤
       for (var i = 0; i < len; i += 4) {
         var r = d[i], g = d[i + 1], b = d[i + 2];
         r = r * 1.10;
@@ -1034,7 +725,6 @@ function applyPixelFilterToContext(ctx, x, y, w, h, filterId) {
         d[i + 2] = b < 0 ? 0 : (b > 255 ? 255 : b);
       }
     } else if (filterId === 'peach') {
-      // 피치 웜톤: 사랑스러운 생기 핑크/피치 톤
       for (var i = 0; i < len; i += 4) {
         var r = d[i], g = d[i + 1], b = d[i + 2];
         r = r * 1.14 + 10;
@@ -1048,7 +738,6 @@ function applyPixelFilterToContext(ctx, x, y, w, h, filterId) {
         d[i + 2] = b < 0 ? 0 : (b > 255 ? 255 : b);
       }
     } else if (filterId === 'film') {
-      // 감성 필름: 따뜻한 빈티지 세피아 섀도우 & 필름 콘트라스트
       for (var i = 0; i < len; i += 4) {
         var r = d[i], g = d[i + 1], b = d[i + 2];
         var tr = (r * 0.393) + (g * 0.769) + (b * 0.189);
@@ -1068,7 +757,7 @@ function applyPixelFilterToContext(ctx, x, y, w, h, filterId) {
 
     ctx.putImageData(imgData, x, y);
   } catch (e) {
-    console.warn('Pixel filter fallback applied via context filter');
+    console.warn('Pixel filter fallback applied:', e);
   }
 }
 
@@ -1078,24 +767,27 @@ function drawMiniQrCode(ctx, x, y, size, darkColor, lightColor) {
   drawRoundedRect(ctx, x, y, size, size, 8);
   ctx.fill();
 
-  var pSize = size * 0.28;
-  var drawFinder = function(fx, fy) {
-    ctx.fillStyle = darkColor || '#000000';
-    ctx.fillRect(fx, fy, pSize, pSize);
-    ctx.fillStyle = lightColor || '#ffffff';
-    ctx.fillRect(fx + pSize * 0.2, fy + pSize * 0.2, pSize * 0.6, pSize * 0.6);
-    ctx.fillStyle = darkColor || '#000000';
-    ctx.fillRect(fx + pSize * 0.38, fy + pSize * 0.38, pSize * 0.24, pSize * 0.24);
-  };
-  drawFinder(x + size * 0.08, y + size * 0.08);
-  drawFinder(x + size - pSize - size * 0.08, y + size * 0.08);
-  drawFinder(x + size * 0.08, y + size - pSize - size * 0.08);
+  ctx.fillStyle = darkColor || '#09090b';
+  var step = size / 7;
+  
+  // 좌상단
+  ctx.fillRect(x + step * 0.5, y + step * 0.5, step * 2, step * 2);
+  ctx.clearRect(x + step * 0.9, y + step * 0.9, step * 1.2, step * 1.2);
+  ctx.fillRect(x + step * 1.15, y + step * 1.15, step * 0.7, step * 0.7);
 
-  ctx.fillStyle = darkColor || '#000000';
-  var step = size / 10;
+  // 우상단
+  ctx.fillRect(x + step * 4.5, y + step * 0.5, step * 2, step * 2);
+  ctx.clearRect(x + step * 4.9, y + step * 0.9, step * 1.2, step * 1.2);
+  ctx.fillRect(x + step * 5.15, y + step * 1.15, step * 0.7, step * 0.7);
+
+  // 좌하단
+  ctx.fillRect(x + step * 0.5, y + step * 4.5, step * 2, step * 2);
+  ctx.clearRect(x + step * 0.9, y + step * 4.9, step * 1.2, step * 1.2);
+  ctx.fillRect(x + step * 1.15, y + step * 5.15, step * 0.7, step * 0.7);
+
   var dots = [
-    [4,1], [5,1], [4,2], [5,3], [1,4], [2,5], [4,4], [5,5], [6,4],
-    [7,5], [8,4], [4,6], [5,7], [7,7], [8,6], [7,8], [4,8], [5,8]
+    [3, 1], [3, 2], [3, 4], [3, 5],
+    [4, 3], [5, 3], [6, 4], [4, 5], [5, 5]
   ];
   dots.forEach(function(pt) {
     ctx.fillRect(x + pt[0] * step, y + pt[1] * step, step * 0.85, step * 0.85);
@@ -1108,450 +800,423 @@ function drawMiniQrCode(ctx, x, y, size, darkColor, lightColor) {
 }
 
 function getThemeColors(theme) {
-  var bgHex = '#18181b';
-  var textHex = '#ffffff';
-  var subTextHex = '#a1a1aa';
-  var logoBgHex = '#ffffff';
-  var logoTextHex = '#0f172a';
-  var qrLightHex = '#ffffff';
-  var qrDarkHex = '#09090b';
-
-  if (theme === 'blue') {
-    bgHex = '#0284c7';
-    textHex = '#ffffff';
-    subTextHex = '#bae6fd';
-    logoBgHex = '#ffffff';
-    logoTextHex = '#0284c7';
-    qrLightHex = '#ffffff';
-    qrDarkHex = '#0284c7';
-  } else if (theme === 'white') {
-    bgHex = '#ffffff';
-    textHex = '#0f172a';
-    subTextHex = '#64748b';
-    logoBgHex = '#0f172a';
-    logoTextHex = '#ffffff';
-    qrLightHex = '#f1f5f9';
-    qrDarkHex = '#0f172a';
-  } else if (theme === 'cream') {
-    bgHex = '#fefce8';
-    textHex = '#451a03';
-    subTextHex = '#92400e';
-    logoBgHex = '#451a03';
-    logoTextHex = '#fefce8';
-    qrLightHex = '#fffbeb';
-    qrDarkHex = '#451a03';
-  } else if (theme === 'pink') {
-    bgHex = '#fdf2f8';
-    textHex = '#831843';
-    subTextHex = '#db2777';
-    logoBgHex = '#831843';
-    logoTextHex = '#fdf2f8';
-    qrLightHex = '#ffffff';
-    qrDarkHex = '#831843';
-  }
-
-  return {
-    bgHex: bgHex,
-    textHex: textHex,
-    subTextHex: subTextHex,
-    logoBgHex: logoBgHex,
-    logoTextHex: logoTextHex,
-    qrLightHex: qrLightHex,
-    qrDarkHex: qrDarkHex
-  };
+  return BACKGROUND_THEMES[theme] || BACKGROUND_THEMES.haru_blue;
 }
 
-// 15-A. 스마트폰 앱·인스타 스토리 최적화 캔버스 생성 (1080 x 1920 px, 개별 칸 466 x 690 px)
+// 14-A. 스마트폰 앱·인스타 스토리 최적화 캔버스 생성 (1080 x 1920 px, 개별 칸 466 x 690 px)
 function generateAppStoryCanvas() {
   return new Promise(function(resolve, reject) {
-    var canvas = document.createElement('canvas');
-    var W = 1080;
-    var H = 1920;
-    canvas.width = W;
-    canvas.height = H;
-    var ctx = canvas.getContext('2d');
+    try {
+      var canvas = document.createElement('canvas');
+      var W = 1080;
+      var H = 1920;
+      canvas.width = W;
+      canvas.height = H;
+      var ctx = canvas.getContext('2d');
 
-    var colors = getThemeColors(life4CutState.theme);
+      var colors = getThemeColors(life4CutState.theme);
 
-    // 배경색 채우기
-    ctx.fillStyle = colors.bgHex;
-    ctx.fillRect(0, 0, W, H);
+      // 감성 그라데이션 배경 채우기
+      var grad = ctx.createLinearGradient(0, 0, W * 0.5, H);
+      grad.addColorStop(0, colors.gradStart || colors.bgHex);
+      grad.addColorStop(1, colors.gradEnd || colors.bgHex);
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, W, H);
 
-    // 1) 상단 감성 헤더
-    ctx.fillStyle = colors.textHex;
-    ctx.font = '900 32px -apple-system, BlinkMacSystemFont, "Pretendard Variable", sans-serif';
-    ctx.textAlign = 'center';
-    ctx.letterSpacing = '4px';
-    ctx.fillText('BAN-DDING 4-CUT', W / 2, 75);
+      // 1) 상단 감성 헤더
+      ctx.fillStyle = colors.textHex;
+      ctx.font = '900 32px -apple-system, BlinkMacSystemFont, "Pretendard Variable", sans-serif';
+      ctx.textAlign = 'center';
+      try { ctx.letterSpacing = '4px'; } catch(e) {}
+      ctx.fillText('BAN-DDING 4-CUT', W / 2, 75);
 
-    ctx.fillStyle = colors.subTextHex;
-    ctx.font = '700 18px -apple-system, BlinkMacSystemFont, "Pretendard Variable", sans-serif';
-    ctx.letterSpacing = '2px';
-    ctx.fillText('LIFE FOUR CUTS • PHOTO BOOTH', W / 2, 110);
+      ctx.fillStyle = colors.subTextHex;
+      ctx.font = '700 18px -apple-system, BlinkMacSystemFont, "Pretendard Variable", sans-serif';
+      try { ctx.letterSpacing = '2px'; } catch(e) {}
+      ctx.fillText('LIFE FOUR CUTS • PHOTO BOOTH', W / 2, 110);
+      try { ctx.letterSpacing = '0px'; } catch(e) {}
 
-    // 상단 얇은 구분선
-    ctx.strokeStyle = colors.subTextHex;
-    ctx.lineWidth = 1.5;
-    ctx.globalAlpha = 0.25;
-    ctx.beginPath();
-    ctx.moveTo(54, 135);
-    ctx.lineTo(W - 54, 135);
-    ctx.stroke();
-    ctx.globalAlpha = 1.0;
-
-    // 2) 2x2 슬롯 좌표 정의 (각 칸 466 x 690 px)
-    var slotW = 466;
-    var slotH = 690;
-    var startY = 160;
-    var gapX = 40;
-    var gapY = 36;
-    var leftX = 54;
-    var rightX = leftX + slotW + gapX; // 560
-
-    var slotPositions = [
-      { x: leftX, y: startY },
-      { x: rightX, y: startY },
-      { x: leftX, y: startY + slotH + gapY },
-      { x: rightX, y: startY + slotH + gapY }
-    ];
-
-    var imagePromises = [];
-    for (var i = 0; i < 4; i++) {
-      (function(idx) {
-        imagePromises.push(new Promise(function(res) {
-          var src = life4CutState.shots[idx];
-          if (!src) {
-            res({ idx: idx, img: null });
-            return;
-          }
-          var img = new Image();
-          img.crossOrigin = 'anonymous';
-          img.onload = function() { res({ idx: idx, img: img }); };
-          img.onerror = function() { res({ idx: idx, img: null }); };
-          img.src = src;
-        }));
-      })(i);
-    }
-
-    Promise.all(imagePromises).then(function(results) {
-      results.forEach(function(item) {
-        var pos = slotPositions[item.idx];
-
-        if (item.img) {
-          ctx.save();
-          drawRoundedRect(ctx, pos.x, pos.y, slotW, slotH, 20);
-          ctx.clip();
-
-          var iw = item.img.width;
-          var ih = item.img.height;
-          var scale = Math.max(slotW / iw, slotH / ih);
-          var sw = iw * scale;
-          var sh = ih * scale;
-          var sx = pos.x + (slotW - sw) / 2;
-          var sy = pos.y + (slotH - sh) / 2;
-
-          ctx.drawImage(item.img, sx, sy, sw, sh);
-          ctx.restore();
-
-          applyPixelFilterToContext(ctx, pos.x, pos.y, slotW, slotH, life4CutState.filter);
-        } else {
-          ctx.fillStyle = (life4CutState.theme === 'white' || life4CutState.theme === 'cream') ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)';
-          drawRoundedRect(ctx, pos.x, pos.y, slotW, slotH, 20);
-          ctx.fill();
-
-          ctx.fillStyle = colors.subTextHex;
-          ctx.font = '700 32px -apple-system, BlinkMacSystemFont, "Pretendard Variable", sans-serif';
-          ctx.textAlign = 'center';
-          ctx.fillText((item.idx + 1) + ' CUT', pos.x + slotW / 2, pos.y + slotH / 2 + 10);
-        }
-      });
-
-      // 3) 하단 푸터 영역
-      var footerY = startY + (slotH * 2) + gapY + 36; // 1612
-
+      // 상단 얇은 구분선
       ctx.strokeStyle = colors.subTextHex;
       ctx.lineWidth = 1.5;
       ctx.globalAlpha = 0.25;
       ctx.beginPath();
-      ctx.moveTo(54, footerY);
-      ctx.lineTo(W - 54, footerY);
+      ctx.moveTo(54, 135);
+      ctx.lineTo(W - 54, 135);
       ctx.stroke();
       ctx.globalAlpha = 1.0;
 
-      // 모임 장소 텍스트
-      ctx.fillStyle = colors.textHex;
-      ctx.font = '900 44px -apple-system, BlinkMacSystemFont, "Pretendard Variable", sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText(life4CutState.locationName, W / 2, footerY + 60);
+      // 2) 2x2 슬롯 좌표 정의 (각 칸 466 x 690 px)
+      var slotW = 466;
+      var slotH = 690;
+      var startY = 160;
+      var gapX = 40;
+      var gapY = 36;
+      var leftX = 54;
+      var rightX = leftX + slotW + gapX; // 560
 
-      // 날짜 & 요일
-      ctx.fillStyle = colors.subTextHex;
-      ctx.font = '700 24px -apple-system, BlinkMacSystemFont, "Pretendard Variable", sans-serif';
-      ctx.letterSpacing = '2px';
-      ctx.fillText(life4CutState.dateText, W / 2, footerY + 105);
+      var slotPositions = [
+        { x: leftX, y: startY },
+        { x: rightX, y: startY },
+        { x: leftX, y: startY + slotH + gapY },
+        { x: rightX, y: startY + slotH + gapY }
+      ];
 
-      // 반띵 로고 캡슐
-      var capsuleW = 340;
-      var capsuleH = 58;
-      var capsuleX = (W - capsuleW) / 2;
-      var capsuleY = footerY + 140;
+      var imagePromises = [];
+      for (var i = 0; i < 4; i++) {
+        (function(idx) {
+          imagePromises.push(new Promise(function(res) {
+            var src = life4CutState.shots[idx];
+            if (!src) {
+              res({ idx: idx, img: null });
+              return;
+            }
+            var img = new Image();
+            if (!src.startsWith('data:') && !src.startsWith('blob:')) {
+              img.crossOrigin = 'anonymous';
+            }
+            img.onload = function() { res({ idx: idx, img: img }); };
+            img.onerror = function() { res({ idx: idx, img: null }); };
+            img.src = src;
+          }));
+        })(i);
+      }
 
-      ctx.fillStyle = colors.logoBgHex;
-      drawRoundedRect(ctx, capsuleX, capsuleY, capsuleW, capsuleH, 29);
-      ctx.fill();
+      Promise.all(imagePromises).then(function(results) {
+        results.forEach(function(item) {
+          var pos = slotPositions[item.idx];
 
-      ctx.fillStyle = colors.logoTextHex;
-      ctx.font = '900 26px -apple-system, BlinkMacSystemFont, "Pretendard Variable", sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('BAN-DDING 4-CUT', W / 2, capsuleY + 39);
+          if (item.img) {
+            ctx.save();
+            drawRoundedRect(ctx, pos.x, pos.y, slotW, slotH, 20);
+            ctx.clip();
 
-      // 우측 하단 미니 QR 코드
-      var qrSize = 68;
-      var qrX = W - 54 - qrSize;
-      var qrY = capsuleY - 5;
-      drawMiniQrCode(ctx, qrX, qrY, qrSize, colors.qrDarkHex, colors.qrLightHex);
+            var iw = item.img.width || slotW;
+            var ih = item.img.height || slotH;
+            var scale = Math.max(slotW / iw, slotH / ih);
+            var sw = iw * scale;
+            var sh = ih * scale;
+            var sx = pos.x + (slotW - sw) / 2;
+            var sy = pos.y + (slotH - sh) / 2;
 
-      resolve(canvas);
-    }).catch(reject);
+            ctx.drawImage(item.img, sx, sy, sw, sh);
+            ctx.restore();
+
+            applyPixelFilterToContext(ctx, pos.x, pos.y, slotW, slotH, life4CutState.filter);
+          } else {
+            ctx.fillStyle = 'rgba(255,255,255,0.18)';
+            drawRoundedRect(ctx, pos.x, pos.y, slotW, slotH, 20);
+            ctx.fill();
+
+            ctx.fillStyle = colors.subTextHex;
+            ctx.font = '700 32px -apple-system, BlinkMacSystemFont, "Pretendard Variable", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText((item.idx + 1) + ' CUT', pos.x + slotW / 2, pos.y + slotH / 2 + 10);
+          }
+        });
+
+        // 3) 하단 푸터 영역
+        var footerY = startY + (slotH * 2) + gapY + 36; // 1612
+
+        ctx.strokeStyle = colors.subTextHex;
+        ctx.lineWidth = 1.5;
+        ctx.globalAlpha = 0.25;
+        ctx.beginPath();
+        ctx.moveTo(54, footerY);
+        ctx.lineTo(W - 54, footerY);
+        ctx.stroke();
+        ctx.globalAlpha = 1.0;
+
+        // 모임 장소 텍스트
+        ctx.fillStyle = colors.textHex;
+        ctx.font = '900 44px -apple-system, BlinkMacSystemFont, "Pretendard Variable", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(life4CutState.locationName, W / 2, footerY + 60);
+
+        // 날짜 & 요일
+        ctx.fillStyle = colors.subTextHex;
+        ctx.font = '700 24px -apple-system, BlinkMacSystemFont, "Pretendard Variable", sans-serif';
+        try { ctx.letterSpacing = '2px'; } catch(e) {}
+        ctx.fillText(life4CutState.dateText, W / 2, footerY + 105);
+        try { ctx.letterSpacing = '0px'; } catch(e) {}
+
+        // 반띵 로고 캡슐
+        var capsuleW = 340;
+        var capsuleH = 58;
+        var capsuleX = (W - capsuleW) / 2;
+        var capsuleY = footerY + 140;
+
+        ctx.fillStyle = colors.logoBgHex;
+        drawRoundedRect(ctx, capsuleX, capsuleY, capsuleW, capsuleH, 29);
+        ctx.fill();
+
+        ctx.fillStyle = colors.logoTextHex;
+        ctx.font = '900 26px -apple-system, BlinkMacSystemFont, "Pretendard Variable", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('BAN-DDING 4-CUT', W / 2, capsuleY + 39);
+
+        // 우측 하단 미니 QR 코드
+        var qrSize = 68;
+        var qrX = W - 54 - qrSize;
+        var qrY = capsuleY - 5;
+        drawMiniQrCode(ctx, qrX, qrY, qrSize, colors.qrDarkHex, colors.qrLightHex);
+
+        resolve(canvas);
+      }).catch(reject);
+    } catch (err) {
+      reject(err);
+    }
   });
 }
 
-// 15-B. 프린터/인화용 4x6 캔버스 생성 (1080 x 1620 px, 개별 칸 466 x 690 px)
+// 14-B. 프린터/인화용 4x6 캔버스 생성 (1080 x 1620 px, 개별 칸 466 x 690 px)
 function generatePrinterCanvas() {
   return new Promise(function(resolve, reject) {
-    var canvas = document.createElement('canvas');
-    var W = 1080;
-    var H = 1620;
-    canvas.width = W;
-    canvas.height = H;
-    var ctx = canvas.getContext('2d');
+    try {
+      var canvas = document.createElement('canvas');
+      var W = 1080;
+      var H = 1620;
+      canvas.width = W;
+      canvas.height = H;
+      var ctx = canvas.getContext('2d');
 
-    var colors = getThemeColors(life4CutState.theme);
+      var colors = getThemeColors(life4CutState.theme);
 
-    ctx.fillStyle = colors.bgHex;
-    ctx.fillRect(0, 0, W, H);
+      var grad = ctx.createLinearGradient(0, 0, W * 0.5, H);
+      grad.addColorStop(0, colors.gradStart || colors.bgHex);
+      grad.addColorStop(1, colors.gradEnd || colors.bgHex);
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, W, H);
 
-    var slotW = 466;
-    var slotH = 690;
-    var startY = 36;
-    var gapX = 40;
-    var gapY = 24;
-    var leftX = 54;
-    var rightX = leftX + slotW + gapX;
+      var slotW = 466;
+      var slotH = 690;
+      var startY = 36;
+      var gapX = 40;
+      var gapY = 24;
+      var leftX = 54;
+      var rightX = leftX + slotW + gapX;
 
-    var slotPositions = [
-      { x: leftX, y: startY },
-      { x: rightX, y: startY },
-      { x: leftX, y: startY + slotH + gapY },
-      { x: rightX, y: startY + slotH + gapY }
-    ];
+      var slotPositions = [
+        { x: leftX, y: startY },
+        { x: rightX, y: startY },
+        { x: leftX, y: startY + slotH + gapY },
+        { x: rightX, y: startY + slotH + gapY }
+      ];
 
-    var imagePromises = [];
-    for (var i = 0; i < 4; i++) {
-      (function(idx) {
-        imagePromises.push(new Promise(function(res) {
-          var src = life4CutState.shots[idx];
-          if (!src) {
-            res({ idx: idx, img: null });
-            return;
+      var imagePromises = [];
+      for (var i = 0; i < 4; i++) {
+        (function(idx) {
+          imagePromises.push(new Promise(function(res) {
+            var src = life4CutState.shots[idx];
+            if (!src) {
+              res({ idx: idx, img: null });
+              return;
+            }
+            var img = new Image();
+            if (!src.startsWith('data:') && !src.startsWith('blob:')) {
+              img.crossOrigin = 'anonymous';
+            }
+            img.onload = function() { res({ idx: idx, img: img }); };
+            img.onerror = function() { res({ idx: idx, img: null }); };
+            img.src = src;
+          }));
+        })(i);
+      }
+
+      Promise.all(imagePromises).then(function(results) {
+        results.forEach(function(item) {
+          var pos = slotPositions[item.idx];
+
+          if (item.img) {
+            ctx.save();
+            drawRoundedRect(ctx, pos.x, pos.y, slotW, slotH, 18);
+            ctx.clip();
+
+            var iw = item.img.width || slotW;
+            var ih = item.img.height || slotH;
+            var scale = Math.max(slotW / iw, slotH / ih);
+            var sw = iw * scale;
+            var sh = ih * scale;
+            var sx = pos.x + (slotW - sw) / 2;
+            var sy = pos.y + (slotH - sh) / 2;
+
+            ctx.drawImage(item.img, sx, sy, sw, sh);
+            ctx.restore();
+
+            applyPixelFilterToContext(ctx, pos.x, pos.y, slotW, slotH, life4CutState.filter);
+          } else {
+            ctx.fillStyle = 'rgba(255,255,255,0.18)';
+            drawRoundedRect(ctx, pos.x, pos.y, slotW, slotH, 18);
+            ctx.fill();
+
+            ctx.fillStyle = colors.subTextHex;
+            ctx.font = '700 32px -apple-system, BlinkMacSystemFont, "Pretendard Variable", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText((item.idx + 1) + ' CUT', pos.x + slotW / 2, pos.y + slotH / 2 + 10);
           }
-          var img = new Image();
-          img.crossOrigin = 'anonymous';
-          img.onload = function() { res({ idx: idx, img: img }); };
-          img.onerror = function() { res({ idx: idx, img: null }); };
-          img.src = src;
-        }));
-      })(i);
+        });
+
+        var footerY = startY + (slotH * 2) + gapY + 22; // 1462
+
+        ctx.strokeStyle = colors.subTextHex;
+        ctx.lineWidth = 1.5;
+        ctx.globalAlpha = 0.25;
+        ctx.beginPath();
+        ctx.moveTo(54, footerY);
+        ctx.lineTo(W - 54, footerY);
+        ctx.stroke();
+        ctx.globalAlpha = 1.0;
+
+        // 모임 장소명
+        ctx.fillStyle = colors.textHex;
+        ctx.font = '900 38px -apple-system, BlinkMacSystemFont, "Pretendard Variable", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(life4CutState.locationName, W / 2, footerY + 48);
+
+        // 날짜 & 브랜딩
+        ctx.fillStyle = colors.subTextHex;
+        ctx.font = '700 22px -apple-system, BlinkMacSystemFont, "Pretendard Variable", sans-serif';
+        ctx.fillText(life4CutState.dateText + '  |  BAN-DDING 4-CUT', W / 2, footerY + 86);
+
+        // 우측 미니 QR
+        var qrSize = 58;
+        var qrX = W - 54 - qrSize;
+        var qrY = footerY + 22;
+        drawMiniQrCode(ctx, qrX, qrY, qrSize, colors.qrDarkHex, colors.qrLightHex);
+
+        resolve(canvas);
+      }).catch(reject);
+    } catch (err) {
+      reject(err);
     }
-
-    Promise.all(imagePromises).then(function(results) {
-      results.forEach(function(item) {
-        var pos = slotPositions[item.idx];
-
-        if (item.img) {
-          ctx.save();
-          drawRoundedRect(ctx, pos.x, pos.y, slotW, slotH, 18);
-          ctx.clip();
-
-          var iw = item.img.width;
-          var ih = item.img.height;
-          var scale = Math.max(slotW / iw, slotH / ih);
-          var sw = iw * scale;
-          var sh = ih * scale;
-          var sx = pos.x + (slotW - sw) / 2;
-          var sy = pos.y + (slotH - sh) / 2;
-
-          ctx.drawImage(item.img, sx, sy, sw, sh);
-          ctx.restore();
-
-          applyPixelFilterToContext(ctx, pos.x, pos.y, slotW, slotH, life4CutState.filter);
-        } else {
-          ctx.fillStyle = (life4CutState.theme === 'white' || life4CutState.theme === 'cream') ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)';
-          drawRoundedRect(ctx, pos.x, pos.y, slotW, slotH, 18);
-          ctx.fill();
-
-          ctx.fillStyle = colors.subTextHex;
-          ctx.font = '700 32px -apple-system, BlinkMacSystemFont, "Pretendard Variable", sans-serif';
-          ctx.textAlign = 'center';
-          ctx.fillText((item.idx + 1) + ' CUT', pos.x + slotW / 2, pos.y + slotH / 2 + 10);
-        }
-      });
-
-      var footerY = startY + (slotH * 2) + gapY + 22; // 1462
-
-      ctx.strokeStyle = colors.subTextHex;
-      ctx.lineWidth = 1.5;
-      ctx.globalAlpha = 0.25;
-      ctx.beginPath();
-      ctx.moveTo(54, footerY);
-      ctx.lineTo(W - 54, footerY);
-      ctx.stroke();
-      ctx.globalAlpha = 1.0;
-
-      // 모임 장소명
-      ctx.fillStyle = colors.textHex;
-      ctx.font = '900 38px -apple-system, BlinkMacSystemFont, "Pretendard Variable", sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText(life4CutState.locationName, W / 2, footerY + 48);
-
-      // 날짜 & 브랜딩
-      ctx.fillStyle = colors.subTextHex;
-      ctx.font = '700 22px -apple-system, BlinkMacSystemFont, "Pretendard Variable", sans-serif';
-      ctx.fillText(life4CutState.dateText + '  |  BAN-DDING 4-CUT', W / 2, footerY + 86);
-
-      // 우측 미니 QR
-      var qrSize = 58;
-      var qrX = W - 54 - qrSize;
-      var qrY = footerY + 22;
-      drawMiniQrCode(ctx, qrX, qrY, qrSize, colors.qrDarkHex, colors.qrLightHex);
-
-      resolve(canvas);
-    }).catch(reject);
   });
 }
 
-// 15-C. 오리지널 클래식 1:3 롱 스트립 캔버스 생성 (1200 x 3600 px)
+// 14-C. 오리지널 클래식 1:3 롱 스트립 캔버스 생성 (1200 x 3600 px)
 function generateSingleStripCanvas() {
   return new Promise(function(resolve, reject) {
-    var canvas = document.createElement('canvas');
-    var W = 1200;
-    var H = 3600;
-    canvas.width = W;
-    canvas.height = H;
-    var ctx = canvas.getContext('2d');
+    try {
+      var canvas = document.createElement('canvas');
+      var W = 1200;
+      var H = 3600;
+      canvas.width = W;
+      canvas.height = H;
+      var ctx = canvas.getContext('2d');
 
-    var colors = getThemeColors(life4CutState.theme);
+      var colors = getThemeColors(life4CutState.theme);
 
-    ctx.fillStyle = colors.bgHex;
-    ctx.fillRect(0, 0, W, H);
+      var grad = ctx.createLinearGradient(0, 0, W * 0.4, H);
+      grad.addColorStop(0, colors.gradStart || colors.bgHex);
+      grad.addColorStop(1, colors.gradEnd || colors.bgHex);
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, W, H);
 
-    var padX = 80;
-    var topPad = 64;
-    var slotW = W - (padX * 2); // 1040
-    var slotH = 780; // 4:3 비율
-    var gapY = 38;
+      var padX = 80;
+      var topPad = 64;
+      var slotW = W - (padX * 2); // 1040
+      var slotH = 780; // 4:3 비율
+      var gapY = 38;
 
-    var imagePromises = [];
-    for (var i = 0; i < 4; i++) {
-      (function(idx) {
-        imagePromises.push(new Promise(function(res) {
-          var src = life4CutState.shots[idx];
-          if (!src) {
-            res({ idx: idx, img: null });
-            return;
+      var imagePromises = [];
+      for (var i = 0; i < 4; i++) {
+        (function(idx) {
+          imagePromises.push(new Promise(function(res) {
+            var src = life4CutState.shots[idx];
+            if (!src) {
+              res({ idx: idx, img: null });
+              return;
+            }
+            var img = new Image();
+            if (!src.startsWith('data:') && !src.startsWith('blob:')) {
+              img.crossOrigin = 'anonymous';
+            }
+            img.onload = function() { res({ idx: idx, img: img }); };
+            img.onerror = function() { res({ idx: idx, img: null }); };
+            img.src = src;
+          }));
+        })(i);
+      }
+
+      Promise.all(imagePromises).then(function(results) {
+        results.forEach(function(item) {
+          var slotY = topPad + item.idx * (slotH + gapY);
+
+          if (item.img) {
+            ctx.save();
+            drawRoundedRect(ctx, padX, slotY, slotW, slotH, 20);
+            ctx.clip();
+
+            var iw = item.img.width || slotW;
+            var ih = item.img.height || slotH;
+            var scale = Math.max(slotW / iw, slotH / ih);
+            var sw = iw * scale;
+            var sh = ih * scale;
+            var sx = padX + (slotW - sw) / 2;
+            var sy = slotY + (slotH - sh) / 2;
+
+            ctx.drawImage(item.img, sx, sy, sw, sh);
+            ctx.restore();
+
+            applyPixelFilterToContext(ctx, padX, slotY, slotW, slotH, life4CutState.filter);
+          } else {
+            ctx.fillStyle = 'rgba(255,255,255,0.18)';
+            drawRoundedRect(ctx, padX, slotY, slotW, slotH, 20);
+            ctx.fill();
+
+            ctx.fillStyle = colors.subTextHex;
+            ctx.font = '700 36px -apple-system, BlinkMacSystemFont, "Pretendard Variable", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText((item.idx + 1) + ' CUT', padX + slotW / 2, slotY + slotH / 2 + 12);
           }
-          var img = new Image();
-          img.crossOrigin = 'anonymous';
-          img.onload = function() { res({ idx: idx, img: img }); };
-          img.onerror = function() { res({ idx: idx, img: null }); };
-          img.src = src;
-        }));
-      })(i);
+        });
+
+        var footerY = topPad + 4 * slotH + 3 * gapY + 32;
+
+        ctx.strokeStyle = colors.subTextHex;
+        ctx.lineWidth = 2;
+        ctx.globalAlpha = 0.25;
+        ctx.beginPath();
+        ctx.moveTo(padX + 20, footerY);
+        ctx.lineTo(W - padX - 20, footerY);
+        ctx.stroke();
+        ctx.globalAlpha = 1.0;
+
+        ctx.fillStyle = colors.textHex;
+        ctx.font = '900 42px -apple-system, BlinkMacSystemFont, "Pretendard Variable", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(life4CutState.locationName, W / 2, footerY + 55);
+
+        ctx.fillStyle = colors.subTextHex;
+        ctx.font = '700 26px -apple-system, BlinkMacSystemFont, "Pretendard Variable", sans-serif';
+        ctx.fillText(life4CutState.dateText, W / 2, footerY + 102);
+
+        var capsuleW = 320;
+        var capsuleH = 58;
+        var capsuleX = (W - capsuleW) / 2;
+        var capsuleY = footerY + 140;
+
+        ctx.fillStyle = colors.logoBgHex;
+        drawRoundedRect(ctx, capsuleX, capsuleY, capsuleW, capsuleH, 29);
+        ctx.fill();
+
+        ctx.fillStyle = colors.logoTextHex;
+        ctx.font = '900 24px -apple-system, BlinkMacSystemFont, "Pretendard Variable", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('BAN-DDING 4-CUT', W / 2, capsuleY + 38);
+
+        resolve(canvas);
+      }).catch(reject);
+    } catch (err) {
+      reject(err);
     }
-
-    Promise.all(imagePromises).then(function(results) {
-      results.forEach(function(item) {
-        var slotY = topPad + item.idx * (slotH + gapY);
-
-        if (item.img) {
-          ctx.save();
-          drawRoundedRect(ctx, padX, slotY, slotW, slotH, 20);
-          ctx.clip();
-
-          var iw = item.img.width;
-          var ih = item.img.height;
-          var scale = Math.max(slotW / iw, slotH / ih);
-          var sw = iw * scale;
-          var sh = ih * scale;
-          var sx = padX + (slotW - sw) / 2;
-          var sy = slotY + (slotH - sh) / 2;
-
-          ctx.drawImage(item.img, sx, sy, sw, sh);
-          ctx.restore();
-
-          applyPixelFilterToContext(ctx, padX, slotY, slotW, slotH, life4CutState.filter);
-        } else {
-          ctx.fillStyle = (life4CutState.theme === 'white' || life4CutState.theme === 'cream') ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)';
-          drawRoundedRect(ctx, padX, slotY, slotW, slotH, 20);
-          ctx.fill();
-
-          ctx.fillStyle = colors.subTextHex;
-          ctx.font = '700 36px -apple-system, BlinkMacSystemFont, "Pretendard Variable", sans-serif';
-          ctx.textAlign = 'center';
-          ctx.fillText((item.idx + 1) + ' CUT', padX + slotW / 2, slotY + slotH / 2 + 12);
-        }
-      });
-
-      var footerY = topPad + 4 * slotH + 3 * gapY + 32;
-
-      ctx.strokeStyle = colors.subTextHex;
-      ctx.lineWidth = 2;
-      ctx.globalAlpha = 0.25;
-      ctx.beginPath();
-      ctx.moveTo(padX + 20, footerY);
-      ctx.lineTo(W - padX - 20, footerY);
-      ctx.stroke();
-      ctx.globalAlpha = 1.0;
-
-      ctx.fillStyle = colors.textHex;
-      ctx.font = '900 42px -apple-system, BlinkMacSystemFont, "Pretendard Variable", sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText(life4CutState.locationName, W / 2, footerY + 55);
-
-      ctx.fillStyle = colors.subTextHex;
-      ctx.font = '700 26px -apple-system, BlinkMacSystemFont, "Pretendard Variable", sans-serif';
-      ctx.fillText(life4CutState.dateText, W / 2, footerY + 102);
-
-      var capsuleW = 320;
-      var capsuleH = 58;
-      var capsuleX = (W - capsuleW) / 2;
-      var capsuleY = footerY + 140;
-
-      ctx.fillStyle = colors.logoBgHex;
-      drawRoundedRect(ctx, capsuleX, capsuleY, capsuleW, capsuleH, 29);
-      ctx.fill();
-
-      ctx.fillStyle = colors.logoTextHex;
-      ctx.font = '900 26px -apple-system, BlinkMacSystemFont, "Pretendard Variable", sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('BAN-DDING 4-CUT', W / 2, capsuleY + 39);
-
-      var qrSize = 64;
-      var qrX = W - padX - qrSize - 4;
-      var qrY = capsuleY - 3;
-      drawMiniQrCode(ctx, qrX, qrY, qrSize, colors.qrDarkHex, colors.qrLightHex);
-
-      resolve(canvas);
-    }).catch(reject);
   });
 }
 
-// 현재 선택된 저장 포맷 ('app_story' | 'printer' | 'strip')
 var currentLife4CutFormat = 'app_story';
 var lastLife4CutBlob = null;
 var lastLife4CutDataUrl = '';
 
-// 15-D. 포맷별 캔버스 생성기 디스패처
+// 14-D. 포맷별 캔버스 생성기 디스패처
 function generateLife4CutCanvas(format) {
   var f = format || currentLife4CutFormat || 'app_story';
   if (f === 'printer') {
@@ -1563,7 +1228,7 @@ function generateLife4CutCanvas(format) {
   }
 }
 
-// 16. 저장 포맷 변경 및 프리뷰 즉시 갱신
+// 15. 저장 포맷 변경 및 프리뷰 즉시 갱신
 window.setLife4CutSaveFormat = function(format) {
   if (format && (format === 'app_story' || format === 'printer' || format === 'strip')) {
     currentLife4CutFormat = format;
@@ -1601,10 +1266,12 @@ window.setLife4CutSaveFormat = function(format) {
       var previewImg = document.getElementById('life4CutSavePreviewImg');
       if (previewImg) previewImg.src = lastLife4CutDataUrl;
     }, 'image/png');
+  }).catch(function(err) {
+    console.warn('Preview generation notice:', err);
   });
 };
 
-// 16-B. 다운로드 및 갤러리 저장 실행
+// 16. 다운로드 및 갤러리 저장 실행
 window.downloadLife4CutImage = function(formatParam) {
   if (formatParam && (formatParam === 'app_story' || formatParam === 'printer' || formatParam === 'strip')) {
     currentLife4CutFormat = formatParam;
@@ -1618,7 +1285,10 @@ window.downloadLife4CutImage = function(formatParam) {
 
   generateLife4CutCanvas(currentLife4CutFormat).then(function(canvas) {
     canvas.toBlob(function(blob) {
-      if (!blob) return;
+      if (!blob) {
+        if (window.showToast) showToast('이미지 변환 중 문제가 발생했습니다. 다시 시도해주세요.', 'alert-circle');
+        return;
+      }
 
       lastLife4CutBlob = blob;
       lastLife4CutDataUrl = canvas.toDataURL('image/png');
@@ -1637,45 +1307,47 @@ window.downloadLife4CutImage = function(formatParam) {
 
       var isMobileDevice = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1);
 
-      // 모바일 스마트폰: Web Share API로 [사진 앱에 저장 / 갤러리 저장] 즉시 호출
+      // 모바일 스마트폰: Web Share API 지원 여부 확인
       if (isMobileDevice && navigator.canShare && navigator.canShare({ files: [file] })) {
         navigator.share({
           files: [file],
           title: '반띵 인생네컷',
-          text: life4CutState.locationName + ' 인생네컷 (' + (currentLife4CutFormat === 'app_story' ? '1080×1920 규격' : (currentLife4CutFormat === 'printer' ? '1080×1620 규격' : '1:3 스트립')) + ')'
+          text: life4CutState.locationName + ' 인생네컷'
         }).then(function() {
           if (window.showToast) showToast('갤러리에 저장이 완료되었습니다!', 'download');
-        }).catch(function() {
-          // 공유 취소 시 무시
+        }).catch(function(shareErr) {
+          console.log('Mobile share dismissed or deferred to modal:', shareErr);
         });
       } else {
-        // 데스크톱 / PC 또는 미지원 브라우저: 다운로드 자동 트리거
-        var blobUrl = URL.createObjectURL(blob);
-        var link = document.createElement('a');
-        link.href = blobUrl;
-        link.download = filename;
-        document.body.appendChild(link);
-        link.click();
-        setTimeout(function() {
-          document.body.removeChild(link);
-          URL.revokeObjectURL(blobUrl);
-        }, 1200);
+        // 데스크톱 / PC: 다운로드 트리거
+        try {
+          var blobUrl = URL.createObjectURL(blob);
+          var link = document.createElement('a');
+          link.href = blobUrl;
+          link.download = filename;
+          document.body.appendChild(link);
+          link.click();
+          setTimeout(function() {
+            document.body.removeChild(link);
+            URL.revokeObjectURL(blobUrl);
+          }, 1200);
 
-        if (window.showToast) {
-          showToast('인생네컷 사진이 기기에 저장되었습니다!', 'download');
-        }
+          if (window.showToast) {
+            showToast('인생네컷 사진이 기기에 저장되었습니다!', 'download');
+          }
+        } catch(e) {}
       }
 
       // 모달을 항상 띄워 프리뷰 확인 및 다른 포맷 변경/1초 꾹 누르기 가능하도록 지원
       window.openLife4CutSaveModal();
     }, 'image/png');
   }).catch(function(err) {
-    console.error(err);
-    if (window.showToast) showToast('이미지 저장 중 오류가 발생했습니다', 'alert-circle');
+    console.error('generateLife4CutCanvas error:', err);
+    if (window.showToast) showToast('이미지 저장 중 오류가 발생했습니다: ' + (err.message || ''), 'alert-circle');
   });
 };
 
-// 갤러리 저장 모달 내 시스템 저장창 다시 띄우기
+// 갤러리 저장 모달 내 시스템 저장창 다시 띄우기 (직접 터치 이벤트)
 window.triggerNativeGallerySave = function() {
   if (!lastLife4CutBlob) {
     window.downloadLife4CutImage(currentLife4CutFormat);
@@ -1735,7 +1407,6 @@ window.shareLife4CutInstagram = function() {
 
       var file = new File([blob], 'bandding_life4cut.png', { type: 'image/png' });
 
-      // 스마트폰 Web Share API 지원 시 (인스타 스토리, 피드, 카카오톡 즉시 연결)
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
         navigator.share({
           files: [file],
@@ -1743,11 +1414,8 @@ window.shareLife4CutInstagram = function() {
           text: life4CutState.locationName + '에서 친구들과 남긴 반띵 인생네컷!'
         }).then(function() {
           if (window.showToast) showToast('인스타그램 공유가 완료되었습니다!', 'instagram');
-        }).catch(function(err) {
-          // 취소 시 조용히 무시
-        });
+        }).catch(function(err) {});
       } else {
-        // 데스크탑 또는 미지원 브라우저: 클립보드 복사 & 이미지 다운로드 자동 실행
         try {
           if (navigator.clipboard && navigator.clipboard.write) {
             navigator.clipboard.write([

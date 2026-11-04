@@ -1033,82 +1033,175 @@ body {
   background: #27272a;
 }
 
-.theme-strip-black {
-  background: #18181b;
-  color: #ffffff;
+/* 테마 버튼 공통 */
+.theme-btn {
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+  user-select: none;
 }
-.theme-strip-black .life4cut-slot {
-  background: #27272a;
+.theme-btn:hover {
+  transform: scale(1.06);
 }
-.theme-strip-black .strip-sub {
-  color: #a1a1aa;
-}
-.theme-strip-black .strip-badge {
-  background: #ffffff;
-  color: #09090b;
+.theme-btn.active {
+  box-shadow: 0 0 0 2px #09090b, 0 0 0 4px #f43f5e !important;
+  transform: scale(1.08);
 }
 
+/* 1. ☁️ 하루필름 스카이블루 */
+.theme-strip-haru_blue,
 .theme-strip-blue {
-  background: #0284c7;
+  background: linear-gradient(160deg, #38bdf8 0%, #0284c7 100%);
   color: #ffffff;
 }
+.theme-strip-haru_blue .life4cut-slot,
 .theme-strip-blue .life4cut-slot {
-  background: #0369a1;
+  background: rgba(2, 132, 199, 0.35);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.25);
 }
+.theme-strip-haru_blue .strip-sub,
 .theme-strip-blue .strip-sub {
   color: #bae6fd;
 }
+.theme-strip-haru_blue .strip-badge,
 .theme-strip-blue .strip-badge {
   background: #ffffff;
   color: #0284c7;
 }
 
-.theme-strip-white {
-  background: #ffffff;
-  color: #09090b;
-  box-shadow: 0 16px 36px -10px rgba(15, 23, 42, 0.18), 0 0 0 1px rgba(226, 232, 240, 0.9);
+/* 2. 🌸 핑크 블라썸 */
+.theme-strip-pink_blossom,
+.theme-strip-pink {
+  background: linear-gradient(160deg, #fbcfe8 0%, #f472b6 100%);
+  color: #831843;
 }
-.theme-strip-white .life4cut-slot {
-  background: #f1f5f9;
+.theme-strip-pink_blossom .life4cut-slot,
+.theme-strip-pink .life4cut-slot {
+  background: rgba(244, 114, 182, 0.3);
+  box-shadow: inset 0 0 0 1px rgba(131, 24, 67, 0.2);
 }
-.theme-strip-white .strip-sub {
-  color: #64748b;
+.theme-strip-pink_blossom .strip-sub,
+.theme-strip-pink .strip-sub {
+  color: #9d174d;
 }
-.theme-strip-white .strip-badge {
-  background: #09090b;
-  color: #ffffff;
+.theme-strip-pink_blossom .strip-badge,
+.theme-strip-pink .strip-badge {
+  background: #831843;
+  color: #fdf2f8;
 }
 
+/* 3. 💜 Y2K 라벤더 펄 */
+.theme-strip-y2k_lavender {
+  background: linear-gradient(160deg, #e9d5ff 0%, #c084fc 100%);
+  color: #581c87;
+}
+.theme-strip-y2k_lavender .life4cut-slot {
+  background: rgba(192, 132, 252, 0.3);
+  box-shadow: inset 0 0 0 1px rgba(88, 28, 135, 0.2);
+}
+.theme-strip-y2k_lavender .strip-sub {
+  color: #6b21a8;
+}
+.theme-strip-y2k_lavender .strip-badge {
+  background: #581c87;
+  color: #f3e8ff;
+}
+
+/* 4. 🖤 모던 힙 매트블랙 */
+.theme-strip-dark_matte,
+.theme-strip-black {
+  background: linear-gradient(160deg, #27272a 0%, #09090b 100%);
+  color: #ffffff;
+}
+.theme-strip-dark_matte .life4cut-slot,
+.theme-strip-black .life4cut-slot {
+  background: #18181b;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+}
+.theme-strip-dark_matte .strip-sub,
+.theme-strip-black .strip-sub {
+  color: #a1a1aa;
+}
+.theme-strip-dark_matte .strip-badge,
+.theme-strip-black .strip-badge {
+  background: #ffffff;
+  color: #09090b;
+}
+
+/* 5. 🌅 선셋 웜글로우 */
+.theme-strip-sunset_glow {
+  background: linear-gradient(160deg, #fed7aa 0%, #fb923c 100%);
+  color: #7c2d12;
+}
+.theme-strip-sunset_glow .life4cut-slot {
+  background: rgba(251, 146, 60, 0.3);
+  box-shadow: inset 0 0 0 1px rgba(124, 45, 18, 0.2);
+}
+.theme-strip-sunset_glow .strip-sub {
+  color: #9a3412;
+}
+.theme-strip-sunset_glow .strip-badge {
+  background: #7c2d12;
+  color: #fff7ed;
+}
+
+/* 6. 🌿 세이지 민트 */
+.theme-strip-sage_green {
+  background: linear-gradient(160deg, #dcfce7 0%, #86efac 100%);
+  color: #14532d;
+}
+.theme-strip-sage_green .life4cut-slot {
+  background: rgba(134, 239, 172, 0.3);
+  box-shadow: inset 0 0 0 1px rgba(20, 83, 45, 0.2);
+}
+.theme-strip-sage_green .strip-sub {
+  color: #166534;
+}
+.theme-strip-sage_green .strip-badge {
+  background: #14532d;
+  color: #f0fdf4;
+}
+
+/* 7. 🥛 버터 밀크 베이지 */
+.theme-strip-milk_beige,
 .theme-strip-cream {
-  background: #fefce8;
+  background: linear-gradient(160deg, #fefce8 0%, #fef08a 100%);
   color: #451a03;
-  box-shadow: 0 16px 36px -10px rgba(69, 26, 3, 0.16), 0 0 0 1px rgba(254, 240, 138, 0.8);
 }
+.theme-strip-milk_beige .life4cut-slot,
 .theme-strip-cream .life4cut-slot {
-  background: #fef9c3;
+  background: rgba(254, 240, 138, 0.35);
+  box-shadow: inset 0 0 0 1px rgba(69, 26, 3, 0.2);
 }
+.theme-strip-milk_beige .strip-sub,
 .theme-strip-cream .strip-sub {
-  color: #92400e;
+  color: #713f12;
 }
+.theme-strip-milk_beige .strip-badge,
 .theme-strip-cream .strip-badge {
   background: #451a03;
   color: #fefce8;
 }
 
-.theme-strip-pink {
-  background: #fdf2f8;
-  color: #831843;
-  box-shadow: 0 16px 36px -10px rgba(131, 24, 67, 0.16), 0 0 0 1px rgba(251, 207, 232, 0.8);
+/* 8. 🤍 스튜디오 퓨어 화이트 */
+.theme-strip-pure_white,
+.theme-strip-white {
+  background: #ffffff;
+  color: #0f172a;
+  box-shadow: 0 16px 36px -10px rgba(15, 23, 42, 0.18), 0 0 0 1px rgba(226, 232, 240, 0.9);
 }
-.theme-strip-pink .life4cut-slot {
-  background: #fce7f3;
+.theme-strip-pure_white .life4cut-slot,
+.theme-strip-white .life4cut-slot {
+  background: #f1f5f9;
+  box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.08);
 }
-.theme-strip-pink .strip-sub {
-  color: #db2777;
+.theme-strip-pure_white .strip-sub,
+.theme-strip-white .strip-sub {
+  color: #64748b;
 }
-.theme-strip-pink .strip-badge {
-  background: #831843;
-  color: #fdf2f8;
+.theme-strip-pure_white .strip-badge,
+.theme-strip-white .strip-badge {
+  background: #0f172a;
+  color: #ffffff;
 }
 
 /* ==========================================================================

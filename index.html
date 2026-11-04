@@ -1674,17 +1674,6 @@
           <div class="relative w-full aspect-[4/3] rounded-2xl overflow-hidden bg-black border border-zinc-800 shadow-inner flex items-center justify-center">
             <video id="life4CutVideo" autoplay playsinline muted class="w-full h-full object-cover"></video>
             
-            <!-- 머리띠 & 촬영 소품 실시간 라이브 오버레이 (AR 얼굴 추적) -->
-            <div id="life4CutPropOverlay" class="pointer-events-none absolute inset-0 z-10 overflow-hidden">
-              <div id="life4CutTrackedProp" class="absolute pointer-events-none transition-transform duration-75 ease-out" style="top: 0; left: 0; width: 55%; transform-origin: center center; display: none;"></div>
-            </div>
-            
-            <!-- AR 얼굴 인식 트래킹 상태 뱃지 -->
-            <div id="life4CutFaceTrackingBadge" class="hidden pointer-events-none absolute top-2.5 left-2.5 z-20 px-2.5 py-1 rounded-full bg-black/70 backdrop-blur-md border border-emerald-500/50 flex items-center gap-1.5 text-[10.5px] font-extrabold text-emerald-400 shadow-lg">
-              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-              <span>얼굴 인식 트래킹</span>
-            </div>
-
             <!-- 모바일 촬영 진행 상태 배지 (우측 상단 플로팅) -->
             <div class="sm:hidden absolute top-2.5 right-2.5 z-20">
               <div id="life4CutMobileProgressBadge" class="px-2.5 py-1 rounded-full bg-zinc-800/80 backdrop-blur-md text-zinc-300 border border-zinc-700 text-[10.5px] font-bold flex items-center gap-1.5 shadow-sm">
@@ -1742,13 +1731,10 @@
           <div class="sm:hidden w-full flex flex-col gap-1.5 pt-1">
             <div class="flex items-center gap-1 p-0.5 rounded-xl bg-zinc-900 border border-zinc-800">
               <button type="button" id="mobileToolTab_filter" onclick="window.setLife4CutMobileToolTab('filter')" class="press flex-1 py-1 px-1 rounded-lg bg-zinc-800 text-white font-extrabold text-[10.5px] border border-zinc-700 shadow-xs flex items-center justify-center gap-1 transition-all">
-                <span>✨ 필터</span>
-              </button>
-              <button type="button" id="mobileToolTab_prop" onclick="window.setLife4CutMobileToolTab('prop')" class="press flex-1 py-1 px-1 rounded-lg bg-transparent text-zinc-500 font-bold text-[10.5px] flex items-center justify-center gap-1 transition-all">
-                <span>🎀 소품</span>
+                <span>✨ 뷰티 필터</span>
               </button>
               <button type="button" id="mobileToolTab_theme" onclick="window.setLife4CutMobileToolTab('theme')" class="press flex-1 py-1 px-1 rounded-lg bg-transparent text-zinc-500 font-bold text-[10.5px] flex items-center justify-center gap-1 transition-all">
-                <span>🎨 프레임</span>
+                <span>🎨 감성 배경</span>
               </button>
               <button type="button" id="mobileToolTab_text" onclick="window.setLife4CutMobileToolTab('text')" class="press flex-1 py-1 px-1 rounded-lg bg-transparent text-zinc-500 font-bold text-[10.5px] flex items-center justify-center gap-1 transition-all">
                 <span>✏️ 문구</span>
@@ -1764,34 +1750,49 @@
               <button type="button" onclick="window.setLife4CutFilter('original')" data-filter="original" class="filter-btn shrink-0 py-1.5 px-3 rounded-xl bg-zinc-800 text-[11px] font-bold text-zinc-400 text-center border border-zinc-700">🌿 원본</button>
             </div>
 
-            <!-- 모바일 패널 2: 소품 가로 스크롤 -->
-            <div id="mobileToolPanel_prop" class="hidden flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
-              <button type="button" onclick="window.setLife4CutProp('none')" data-prop="none" class="prop-btn active shrink-0 py-1.5 px-2.5 rounded-xl bg-zinc-800 text-[11px] font-bold text-white text-center border border-zinc-700">❌ 없음</button>
-              <button type="button" onclick="window.setLife4CutProp('bunny')" data-prop="bunny" class="prop-btn shrink-0 py-1.5 px-2.5 rounded-xl bg-zinc-800 text-[11px] font-bold text-zinc-400 text-center border border-zinc-700">🐰 토끼</button>
-              <button type="button" onclick="window.setLife4CutProp('cat')" data-prop="cat" class="prop-btn shrink-0 py-1.5 px-2.5 rounded-xl bg-zinc-800 text-[11px] font-bold text-zinc-400 text-center border border-zinc-700">🐱 냥이 귀</button>
-              <button type="button" onclick="window.setLife4CutProp('bear')" data-prop="bear" class="prop-btn shrink-0 py-1.5 px-2.5 rounded-xl bg-zinc-800 text-[11px] font-bold text-zinc-400 text-center border border-zinc-700">🐻 곰돌이</button>
-              <button type="button" onclick="window.setLife4CutProp('crown')" data-prop="crown" class="prop-btn shrink-0 py-1.5 px-2.5 rounded-xl bg-zinc-800 text-[11px] font-bold text-zinc-400 text-center border border-zinc-700">👑 골드 왕관</button>
-              <button type="button" onclick="window.setLife4CutProp('ribbon')" data-prop="ribbon" class="prop-btn shrink-0 py-1.5 px-2.5 rounded-xl bg-zinc-800 text-[11px] font-bold text-zinc-400 text-center border border-zinc-700">🎀 빅 리본</button>
-              <button type="button" onclick="window.setLife4CutProp('sunglass')" data-prop="sunglass" class="prop-btn shrink-0 py-1.5 px-2.5 rounded-xl bg-zinc-800 text-[11px] font-bold text-zinc-400 text-center border border-zinc-700">🕶️ 선글라스</button>
-              <button type="button" onclick="window.setLife4CutProp('hearts')" data-prop="hearts" class="prop-btn shrink-0 py-1.5 px-2.5 rounded-xl bg-zinc-800 text-[11px] font-bold text-zinc-400 text-center border border-zinc-700">💖 볼하트</button>
+            <!-- 모바일 패널 2: 감성 배경 8종 가로 스크롤 캐러셀 -->
+            <div id="mobileToolPanel_theme" class="hidden flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
+              <button type="button" onclick="window.setLife4CutTheme('haru_blue')" data-theme="haru_blue" class="theme-btn active shrink-0 py-1.5 px-2.5 rounded-xl bg-zinc-800 border border-zinc-700 text-[10.5px] font-bold text-white flex items-center gap-1.5">
+                <span class="w-3 h-3 rounded-full shrink-0" style="background: linear-gradient(135deg, #38bdf8, #0284c7)"></span>
+                <span>하루 블루</span>
+              </button>
+              <button type="button" onclick="window.setLife4CutTheme('pink_blossom')" data-theme="pink_blossom" class="theme-btn shrink-0 py-1.5 px-2.5 rounded-xl bg-zinc-800 border border-zinc-700 text-[10.5px] font-bold text-zinc-300 flex items-center gap-1.5">
+                <span class="w-3 h-3 rounded-full shrink-0" style="background: linear-gradient(135deg, #fbcfe8, #f472b6)"></span>
+                <span>핑크 블라썸</span>
+              </button>
+              <button type="button" onclick="window.setLife4CutTheme('y2k_lavender')" data-theme="y2k_lavender" class="theme-btn shrink-0 py-1.5 px-2.5 rounded-xl bg-zinc-800 border border-zinc-700 text-[10.5px] font-bold text-zinc-300 flex items-center gap-1.5">
+                <span class="w-3 h-3 rounded-full shrink-0" style="background: linear-gradient(135deg, #e9d5ff, #c084fc)"></span>
+                <span>Y2K 라벤더</span>
+              </button>
+              <button type="button" onclick="window.setLife4CutTheme('dark_matte')" data-theme="dark_matte" class="theme-btn shrink-0 py-1.5 px-2.5 rounded-xl bg-zinc-800 border border-zinc-700 text-[10.5px] font-bold text-zinc-300 flex items-center gap-1.5">
+                <span class="w-3 h-3 rounded-full shrink-0" style="background: linear-gradient(135deg, #27272a, #09090b)"></span>
+                <span>힙 매트블랙</span>
+              </button>
+              <button type="button" onclick="window.setLife4CutTheme('sunset_glow')" data-theme="sunset_glow" class="theme-btn shrink-0 py-1.5 px-2.5 rounded-xl bg-zinc-800 border border-zinc-700 text-[10.5px] font-bold text-zinc-300 flex items-center gap-1.5">
+                <span class="w-3 h-3 rounded-full shrink-0" style="background: linear-gradient(135deg, #fed7aa, #fb923c)"></span>
+                <span>선셋 글로우</span>
+              </button>
+              <button type="button" onclick="window.setLife4CutTheme('sage_green')" data-theme="sage_green" class="theme-btn shrink-0 py-1.5 px-2.5 rounded-xl bg-zinc-800 border border-zinc-700 text-[10.5px] font-bold text-zinc-300 flex items-center gap-1.5">
+                <span class="w-3 h-3 rounded-full shrink-0" style="background: linear-gradient(135deg, #dcfce7, #86efac)"></span>
+                <span>세이지 민트</span>
+              </button>
+              <button type="button" onclick="window.setLife4CutTheme('milk_beige')" data-theme="milk_beige" class="theme-btn shrink-0 py-1.5 px-2.5 rounded-xl bg-zinc-800 border border-zinc-700 text-[10.5px] font-bold text-zinc-300 flex items-center gap-1.5">
+                <span class="w-3 h-3 rounded-full shrink-0" style="background: linear-gradient(135deg, #fefce8, #fef08a)"></span>
+                <span>밀크 베이지</span>
+              </button>
+              <button type="button" onclick="window.setLife4CutTheme('pure_white')" data-theme="pure_white" class="theme-btn shrink-0 py-1.5 px-2.5 rounded-xl bg-zinc-800 border border-zinc-700 text-[10.5px] font-bold text-zinc-300 flex items-center gap-1.5">
+                <span class="w-3 h-3 rounded-full shrink-0 bg-white border border-zinc-400"></span>
+                <span>퓨어 화이트</span>
+              </button>
             </div>
 
-            <!-- 모바일 패널 3: 프레임 색상 가로 칩 -->
-            <div id="mobileToolPanel_theme" class="hidden flex items-center justify-around py-1.5 px-2 rounded-xl bg-zinc-900 border border-zinc-800">
-              <button type="button" onclick="window.setLife4CutTheme('black')" data-theme="black" class="theme-btn w-7 h-7 rounded-full bg-zinc-900 border border-zinc-600 ring-2 ring-offset-2 ring-[#0284c7]" title="딥 블랙"></button>
-              <button type="button" onclick="window.setLife4CutTheme('blue')" data-theme="blue" class="theme-btn w-7 h-7 rounded-full bg-[#0284c7] border border-sky-400" title="반띵 블루"></button>
-              <button type="button" onclick="window.setLife4CutTheme('white')" data-theme="white" class="theme-btn w-7 h-7 rounded-full bg-white border border-slate-300" title="클래식 화이트"></button>
-              <button type="button" onclick="window.setLife4CutTheme('cream')" data-theme="cream" class="theme-btn w-7 h-7 rounded-full bg-[#fefce8] border border-amber-300" title="버터 크림"></button>
-              <button type="button" onclick="window.setLife4CutTheme('pink')" data-theme="pink" class="theme-btn w-7 h-7 rounded-full bg-[#fdf2f8] border border-pink-300" title="로맨틱 핑크"></button>
-            </div>
-
-            <!-- 모바일 패널 4: 문구 입력 -->
+            <!-- 모바일 패널 3: 문구 입력 -->
             <div id="mobileToolPanel_text" class="hidden flex flex-col gap-1 py-1">
               <input type="text" id="life4CutPlaceInputMobile" oninput="window.updateLife4CutPlace(this.value)" placeholder="예: 온달집 강남역점" class="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-700 text-[12px] font-bold text-white focus:outline-none focus:border-rose-500" />
             </div>
           </div>
 
-          <!-- 데스크탑 전용: 컨트롤 버튼군 & 필터/소품/테마/문구 풀 목록 (hidden sm:flex) -->
+          <!-- 데스크탑 전용: 컨트롤 버튼군 & 필터/배경/문구 풀 목록 (hidden sm:flex) -->
           <div class="hidden sm:flex flex-col gap-3">
             <!-- 데스크탑 촬영 버튼 -->
             <div class="flex flex-col gap-1.5">
@@ -1829,36 +1830,48 @@
               </div>
             </div>
 
-            <!-- 데스크탑 머리띠 & 소품 -->
+            <!-- 데스크탑 감성 배경 테마 선택 (8종 포토부스 배경) -->
             <div class="pt-2 border-t border-zinc-800 flex flex-col gap-1.5">
               <div class="flex items-center justify-between">
                 <label class="text-[11px] font-bold text-zinc-400 flex items-center gap-1">
-                  <i data-lucide="smile" class="w-3.5 h-3.5 text-amber-400"></i>
-                  <span>머리띠 & 촬영 소품</span>
+                  <i data-lucide="palette" class="w-3.5 h-3.5 text-sky-400"></i>
+                  <span>감성 배경 테마</span>
                 </label>
-                <span id="life4CutPropName" class="text-[10.5px] font-extrabold text-amber-400">장식 없음</span>
+                <span id="life4CutThemeName" class="text-[10.5px] font-extrabold text-sky-400">☁️ 하루필름 블루</span>
               </div>
-              <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
-                <button type="button" onclick="window.setLife4CutProp('none')" data-prop="none" class="prop-btn active shrink-0 py-1.5 px-2.5 rounded-lg bg-zinc-800 text-[10.5px] font-bold text-white text-center border border-zinc-700">❌ 없음</button>
-                <button type="button" onclick="window.setLife4CutProp('bunny')" data-prop="bunny" class="prop-btn shrink-0 py-1.5 px-2.5 rounded-lg bg-zinc-800 text-[10.5px] font-bold text-zinc-400 text-center border border-zinc-700">🐰 토끼 머리띠</button>
-                <button type="button" onclick="window.setLife4CutProp('cat')" data-prop="cat" class="prop-btn shrink-0 py-1.5 px-2.5 rounded-lg bg-zinc-800 text-[10.5px] font-bold text-zinc-400 text-center border border-zinc-700">🐱 냥이 귀</button>
-                <button type="button" onclick="window.setLife4CutProp('bear')" data-prop="bear" class="prop-btn shrink-0 py-1.5 px-2.5 rounded-lg bg-zinc-800 text-[10.5px] font-bold text-zinc-400 text-center border border-zinc-700">🐻 곰돌이 귀</button>
-                <button type="button" onclick="window.setLife4CutProp('crown')" data-prop="crown" class="prop-btn shrink-0 py-1.5 px-2.5 rounded-lg bg-zinc-800 text-[10.5px] font-bold text-zinc-400 text-center border border-zinc-700">👑 골드 왕관</button>
-                <button type="button" onclick="window.setLife4CutProp('ribbon')" data-prop="ribbon" class="prop-btn shrink-0 py-1.5 px-2.5 rounded-lg bg-zinc-800 text-[10.5px] font-bold text-zinc-400 text-center border border-zinc-700">🎀 빅 리본</button>
-                <button type="button" onclick="window.setLife4CutProp('sunglass')" data-prop="sunglass" class="prop-btn shrink-0 py-1.5 px-2.5 rounded-lg bg-zinc-800 text-[10.5px] font-bold text-zinc-400 text-center border border-zinc-700">🕶️ 선글라스</button>
-                <button type="button" onclick="window.setLife4CutProp('hearts')" data-prop="hearts" class="prop-btn shrink-0 py-1.5 px-2.5 rounded-lg bg-zinc-800 text-[10.5px] font-bold text-zinc-400 text-center border border-zinc-700">💖 러브 볼하트</button>
-              </div>
-            </div>
-
-            <!-- 데스크탑 프레임 테마 -->
-            <div class="pt-2 border-t border-zinc-800 flex flex-col gap-1.5">
-              <label class="text-[11px] font-bold text-zinc-400">프레임 색상 선택</label>
-              <div class="flex items-center gap-2">
-                <button type="button" onclick="window.setLife4CutTheme('black')" data-theme="black" class="theme-btn w-6 h-6 rounded-full bg-zinc-900 border border-zinc-600 ring-2 ring-offset-2 ring-[#0284c7]" title="딥 블랙"></button>
-                <button type="button" onclick="window.setLife4CutTheme('blue')" data-theme="blue" class="theme-btn w-6 h-6 rounded-full bg-[#0284c7] border border-sky-400" title="반띵 블루"></button>
-                <button type="button" onclick="window.setLife4CutTheme('white')" data-theme="white" class="theme-btn w-6 h-6 rounded-full bg-white border border-slate-300" title="클래식 화이트"></button>
-                <button type="button" onclick="window.setLife4CutTheme('cream')" data-theme="cream" class="theme-btn w-6 h-6 rounded-full bg-[#fefce8] border border-amber-300" title="버터 크림"></button>
-                <button type="button" onclick="window.setLife4CutTheme('pink')" data-theme="pink" class="theme-btn w-6 h-6 rounded-full bg-[#fdf2f8] border border-pink-300" title="로맨틱 핑크"></button>
+              <div class="grid grid-cols-4 gap-1.5">
+                <button type="button" onclick="window.setLife4CutTheme('haru_blue')" data-theme="haru_blue" class="theme-btn active py-1.5 px-2 rounded-xl bg-zinc-800 border border-zinc-700 text-[10.5px] font-bold text-white flex items-center gap-1.5 justify-center">
+                  <span class="w-3 h-3 rounded-full shrink-0" style="background: linear-gradient(135deg, #38bdf8, #0284c7)"></span>
+                  <span class="truncate">하루 블루</span>
+                </button>
+                <button type="button" onclick="window.setLife4CutTheme('pink_blossom')" data-theme="pink_blossom" class="theme-btn py-1.5 px-2 rounded-xl bg-zinc-800 border border-zinc-700 text-[10.5px] font-bold text-zinc-300 flex items-center gap-1.5 justify-center">
+                  <span class="w-3 h-3 rounded-full shrink-0" style="background: linear-gradient(135deg, #fbcfe8, #f472b6)"></span>
+                  <span class="truncate">핑크 블라썸</span>
+                </button>
+                <button type="button" onclick="window.setLife4CutTheme('y2k_lavender')" data-theme="y2k_lavender" class="theme-btn py-1.5 px-2 rounded-xl bg-zinc-800 border border-zinc-700 text-[10.5px] font-bold text-zinc-300 flex items-center gap-1.5 justify-center">
+                  <span class="w-3 h-3 rounded-full shrink-0" style="background: linear-gradient(135deg, #e9d5ff, #c084fc)"></span>
+                  <span class="truncate">Y2K 라벤더</span>
+                </button>
+                <button type="button" onclick="window.setLife4CutTheme('dark_matte')" data-theme="dark_matte" class="theme-btn py-1.5 px-2 rounded-xl bg-zinc-800 border border-zinc-700 text-[10.5px] font-bold text-zinc-300 flex items-center gap-1.5 justify-center">
+                  <span class="w-3 h-3 rounded-full shrink-0" style="background: linear-gradient(135deg, #27272a, #09090b)"></span>
+                  <span class="truncate">힙 매트블랙</span>
+                </button>
+                <button type="button" onclick="window.setLife4CutTheme('sunset_glow')" data-theme="sunset_glow" class="theme-btn py-1.5 px-2 rounded-xl bg-zinc-800 border border-zinc-700 text-[10.5px] font-bold text-zinc-300 flex items-center gap-1.5 justify-center">
+                  <span class="w-3 h-3 rounded-full shrink-0" style="background: linear-gradient(135deg, #fed7aa, #fb923c)"></span>
+                  <span class="truncate">선셋 글로우</span>
+                </button>
+                <button type="button" onclick="window.setLife4CutTheme('sage_green')" data-theme="sage_green" class="theme-btn py-1.5 px-2 rounded-xl bg-zinc-800 border border-zinc-700 text-[10.5px] font-bold text-zinc-300 flex items-center gap-1.5 justify-center">
+                  <span class="w-3 h-3 rounded-full shrink-0" style="background: linear-gradient(135deg, #dcfce7, #86efac)"></span>
+                  <span class="truncate">세이지 민트</span>
+                </button>
+                <button type="button" onclick="window.setLife4CutTheme('milk_beige')" data-theme="milk_beige" class="theme-btn py-1.5 px-2 rounded-xl bg-zinc-800 border border-zinc-700 text-[10.5px] font-bold text-zinc-300 flex items-center gap-1.5 justify-center">
+                  <span class="w-3 h-3 rounded-full shrink-0" style="background: linear-gradient(135deg, #fefce8, #fef08a)"></span>
+                  <span class="truncate">밀크 베이지</span>
+                </button>
+                <button type="button" onclick="window.setLife4CutTheme('pure_white')" data-theme="pure_white" class="theme-btn py-1.5 px-2 rounded-xl bg-zinc-800 border border-zinc-700 text-[10.5px] font-bold text-zinc-300 flex items-center gap-1.5 justify-center">
+                  <span class="w-3 h-3 rounded-full shrink-0 bg-white border border-zinc-400"></span>
+                  <span class="truncate">퓨어 화이트</span>
+                </button>
               </div>
             </div>
 
@@ -2153,22 +2166,18 @@
   </div>
 </div>
 
-<!-- AR 얼굴 인식 트래킹 (TensorFlow.js + BlazeFace) -->
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.18.0/dist/tf.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/blazeface@0.0.7/dist/blazeface.min.js"></script>
-
 <!-- 기능별 모듈 스크립트 분리 (Clean Modular Architecture) -->
-<script src="js/config.js?v=73"></script>
-<script src="js/state.js?v=73"></script>
-<script src="js/map.js?v=73"></script>
-<script src="js/mobility.js?v=73"></script>
-<script src="js/places.js?v=73"></script>
-<script src="js/weather.js?v=73"></script>
-<script src="js/care.js?v=73"></script>
-<script src="js/game.js?v=73"></script>
-<script src="js/chat.js?v=73"></script>
-<script src="js/ui.js?v=73"></script>
-<script src="js/memory.js?v=73"></script>
-<script src="js/life4cut.js?v=74"></script>
+<script src="js/config.js?v=75"></script>
+<script src="js/state.js?v=75"></script>
+<script src="js/map.js?v=75"></script>
+<script src="js/mobility.js?v=75"></script>
+<script src="js/places.js?v=75"></script>
+<script src="js/weather.js?v=75"></script>
+<script src="js/care.js?v=75"></script>
+<script src="js/game.js?v=75"></script>
+<script src="js/chat.js?v=75"></script>
+<script src="js/ui.js?v=75"></script>
+<script src="js/memory.js?v=75"></script>
+<script src="js/life4cut.js?v=75"></script>
 </body>
 </html>
