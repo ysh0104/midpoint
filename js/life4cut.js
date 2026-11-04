@@ -221,7 +221,10 @@ window.startLife4CutAutoCapture = function() {
     if (shotIndex >= 4) {
       life4CutState.isCountingDown = false;
       hideCountdownOverlay();
-      if (window.showToast) showToast('반띵 인생네컷 4장이 모두 완성되었습니다!', 'check');
+      if (window.showToast) showToast('반띵 인생네컷 4컷 완성! 갤러리에 저장합니다', 'check');
+      setTimeout(function() {
+        window.downloadLife4CutImage(true);
+      }, 500);
       return;
     }
 
@@ -601,27 +604,115 @@ function drawRoundedRect(ctx, x, y, width, height, radius) {
   ctx.closePath();
 }
 
-// 15. 인생네컷 이미지 기기 다운로드
-window.downloadLife4CutImage = function() {
-  if (window.showToast) showToast('고화질 인생네컷 이미지를 인쇄 중입니다...', 'loader');
+// 15. 인생네컷 이미지 스마트폰 갤러리 & 기기 저장
+var lastLife4CutBlob = null;
+var lastLife4CutDataUrl = null;
+
+window.downloadLife4CutImage = function(isAutoTriggered) {
+  if (window.showToast) showToast('고화질 인생네컷 이미지를 준비하고 있습니다...', 'loader');
 
   generateLife4CutCanvas().then(function(canvas) {
-    var dataUrl = canvas.toDataURL('image/png');
-    var link = document.createElement('a');
-    var filename = 'bandding_4cut_' + Date.now() + '.png';
-    link.download = filename;
-    link.href = dataUrl;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    canvas.toBlob(function(blob) {
+      if (!blob) return;
 
-    if (window.showToast) {
-      showToast('인생네컷이 갤러리에 저장되었습니다!', 'download');
-    }
+      lastLife4CutBlob = blob;
+      lastLife4CutDataUrl = canvas.toDataURL('image/png');
+
+      var filename = 'bandding_4cut_' + Date.now() + '.png';
+      var file = new File([blob], filename, { type: 'image/png' });
+
+      // 모달에 고화질 프리뷰 이미지 세팅
+      var previewImg = document.getElementById('life4CutSavePreviewImg');
+      if (previewImg) {
+        previewImg.src = lastLife4CutDataUrl;
+      }
+
+      var isMobileDevice = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1);
+
+      // 모바일 스마트폰: Web Share API로 [사진 앱에 저장 / 갤러리 저장] 즉시 실행
+      if (isMobileDevice && navigator.canShare && navigator.canShare({ files: [file] })) {
+        navigator.share({
+          files: [file],
+          title: '반띵 인생네컷',
+          text: life4CutState.locationName + ' 인생네컷'
+        }).then(function() {
+          if (window.showToast) showToast('갤러리에 저장이 완료되었습니다!', 'download');
+        }).catch(function(err) {
+          // 사용자가 취소했거나 시트를 닫았을 때: 꾹 누르기 저장 모달 오픈
+          window.openLife4CutSaveModal();
+        });
+      } else {
+        // PC 브라우저 또는 파일 다운로드 처리
+        var blobUrl = URL.createObjectURL(blob);
+        var link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        setTimeout(function() {
+          document.body.removeChild(link);
+          URL.revokeObjectURL(blobUrl);
+        }, 1200);
+
+        if (window.showToast) {
+          showToast('인생네컷 사진이 기기에 저장되었습니다!', 'download');
+        }
+
+        // 모바일 기기라면 길게 꾹 누르기 저장 모달도 함께 오픈
+        if (isMobileDevice) {
+          window.openLife4CutSaveModal();
+        }
+      }
+    }, 'image/png');
   }).catch(function(err) {
     console.error(err);
     if (window.showToast) showToast('이미지 저장 중 오류가 발생했습니다', 'alert-circle');
   });
+};
+
+// 갤러리 저장 모달 내 시스템 저장창 다시 띄우기
+window.triggerNativeGallerySave = function() {
+  if (!lastLife4CutBlob) {
+    window.downloadLife4CutImage();
+    return;
+  }
+
+  var file = new File([lastLife4CutBlob], 'bandding_4cut_' + Date.now() + '.png', { type: 'image/png' });
+
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    navigator.share({
+      files: [file],
+      title: '반띵 인생네컷',
+      text: life4CutState.locationName + ' 인생네컷'
+    }).then(function() {
+      if (window.showToast) showToast('갤러리에 저장이 완료되었습니다!', 'download');
+    }).catch(function() {});
+  } else {
+    var blobUrl = URL.createObjectURL(lastLife4CutBlob);
+    var link = document.createElement('a');
+    link.href = blobUrl;
+    link.download = 'bandding_4cut_' + Date.now() + '.png';
+    document.body.appendChild(link);
+    link.click();
+    setTimeout(function() {
+      document.body.removeChild(link);
+      URL.revokeObjectURL(blobUrl);
+    }, 1200);
+    if (window.showToast) showToast('사진이 다운로드되었습니다. 사진을 1초간 길게 눌러 사진첩에 저장할 수도 있습니다!', 'download');
+  }
+};
+
+window.openLife4CutSaveModal = function() {
+  var modal = document.getElementById('life4CutSaveModal');
+  if (modal) {
+    modal.classList.remove('hidden');
+    if (window.lucide) lucide.createIcons();
+  }
+};
+
+window.closeLife4CutSaveModal = function() {
+  var modal = document.getElementById('life4CutSaveModal');
+  if (modal) modal.classList.add('hidden');
 };
 
 // 16. 인스타그램 스토리 / SNS Web Share 연동

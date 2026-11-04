@@ -55,7 +55,7 @@
 <!-- Lucide Icons -->
 <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
 
-<link rel="stylesheet" href="css/style.css?v=67" />
+<link rel="stylesheet" href="css/style.css?v=68" />
 </head>
 <body class="bg-slate-100 text-slate-900 antialiased h-[100dvh] w-full flex justify-center items-center overflow-hidden">
 
@@ -1777,9 +1777,9 @@
 
       <!-- 하단 액션 버튼 바 (저장, 인스타그램 공유, 지도 추억 등록) -->
       <div class="p-3.5 bg-zinc-950 border-t border-zinc-800 flex items-center gap-2 shrink-0">
-        <button type="button" onclick="window.downloadLife4CutImage()" class="press flex-1 py-2.5 px-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white font-extrabold text-[12px] flex items-center justify-center gap-1.5 transition-all" title="기기에 사진 저장">
+        <button type="button" onclick="window.downloadLife4CutImage()" class="press flex-1 py-2.5 px-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-extrabold text-[12px] flex items-center justify-center gap-1.5 shadow-sm transition-all" title="스마트폰 갤러리 / 기기에 사진 저장">
           <i data-lucide="download" class="w-3.5 h-3.5"></i>
-          <span>이미지 저장</span>
+          <span>갤러리 저장</span>
         </button>
         <button type="button" onclick="window.shareLife4CutInstagram()" class="press flex-1 py-2.5 px-3 rounded-xl bg-gradient-to-r from-pink-500 via-rose-500 to-amber-500 hover:opacity-90 text-white font-extrabold text-[12px] shadow-sm flex items-center justify-center gap-1.5 transition-all" title="인스타그램 스토리 / 피드 공유">
           <i data-lucide="instagram" class="w-3.5 h-3.5"></i>
@@ -1789,6 +1789,60 @@
           <i data-lucide="map-pin" class="w-3.5 h-3.5"></i>
           <span>지도 등록</span>
         </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 14-1. 인생네컷 갤러리 저장 완료 & 사진첩 저장 안내 모달 -->
+  <div id="life4CutSaveModal" class="hidden fixed inset-0 z-[70] bg-black/90 backdrop-blur-md flex flex-col items-center justify-center p-3 sm:p-5 select-none animate-fadeIn" onclick="if(event.target === this) window.closeLife4CutSaveModal()">
+    <div class="relative w-full max-w-[380px] max-h-[92vh] bg-zinc-900 border border-zinc-800 rounded-3xl shadow-2xl flex flex-col overflow-hidden text-white">
+      
+      <!-- 상단 헤더 -->
+      <div class="flex items-center justify-between px-4 py-3 border-b border-zinc-800 bg-zinc-950 shrink-0">
+        <div class="flex items-center gap-2">
+          <span class="w-6 h-6 rounded-lg bg-gradient-to-tr from-emerald-500 to-teal-500 flex items-center justify-center text-white">
+            <i data-lucide="check" class="w-3.5 h-3.5"></i>
+          </span>
+          <span class="font-extrabold text-[13.5px] text-white">인생네컷 갤러리 저장</span>
+        </div>
+        <button type="button" onclick="window.closeLife4CutSaveModal()" class="press w-7 h-7 rounded-full bg-zinc-800 text-zinc-400 hover:text-white flex items-center justify-center">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <!-- 본문: 완성된 네컷 이미지 & 꾹 누르기 안내 -->
+      <div class="flex-1 overflow-y-auto no-scrollbar p-3.5 flex flex-col items-center gap-3">
+        <!-- 모바일 갤러리 저장 안내 팁 배너 -->
+        <div class="w-full p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-[11px] leading-snug flex items-start gap-2">
+          <i data-lucide="smartphone" class="w-4 h-4 text-emerald-400 shrink-0 mt-0.5"></i>
+          <div>
+            <strong class="text-white font-bold">스마트폰 갤러리에 바로 저장하는 법:</strong><br/>
+            아래 사진을 <span class="text-emerald-300 font-extrabold underline decoration-emerald-400">1초간 꾹 길게 눌러서</span> <strong>[사진 앱에 저장]</strong> 또는 <strong>[이미지 다운로드]</strong>를 탭하세요!
+          </div>
+        </div>
+
+        <!-- 렌더링된 고화질 이미지 프리뷰 (길게 탭 가능) -->
+        <div class="w-full flex justify-center py-1">
+          <img id="life4CutSavePreviewImg" src="" alt="반띵 인생네컷" class="max-h-[50vh] w-auto rounded-xl shadow-2xl border border-white/10 select-auto" />
+        </div>
+      </div>
+
+      <!-- 하단 액션 버튼군 -->
+      <div class="p-3 bg-zinc-950 border-t border-zinc-800 flex flex-col gap-2 shrink-0">
+        <button type="button" onclick="window.triggerNativeGallerySave()" class="press w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-extrabold text-[12.5px] flex items-center justify-center gap-2 shadow-sm transition-all">
+          <i data-lucide="download" class="w-4 h-4"></i>
+          <span>스마트폰 갤러리에 저장 (공유창)</span>
+        </button>
+        <div class="grid grid-cols-2 gap-2">
+          <button type="button" onclick="window.saveLife4CutToMapMemory()" class="press py-2 px-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-[11.5px] flex items-center justify-center gap-1.5 transition-all">
+            <i data-lucide="map-pin" class="w-3.5 h-3.5"></i>
+            <span>지도 추억 등록</span>
+          </button>
+          <button type="button" onclick="window.closeLife4CutSaveModal()" class="press py-2 px-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold text-[11.5px] transition-all">
+            닫기
+          </button>
+        </div>
       </div>
 
     </div>
@@ -1891,17 +1945,17 @@
 </div>
 
 <!-- 기능별 모듈 스크립트 분리 (Clean Modular Architecture) -->
-<script src="js/config.js?v=67"></script>
-<script src="js/state.js?v=67"></script>
-<script src="js/map.js?v=67"></script>
-<script src="js/mobility.js?v=67"></script>
-<script src="js/places.js?v=67"></script>
-<script src="js/weather.js?v=67"></script>
-<script src="js/care.js?v=67"></script>
-<script src="js/game.js?v=67"></script>
-<script src="js/chat.js?v=67"></script>
-<script src="js/ui.js?v=67"></script>
-<script src="js/memory.js?v=67"></script>
-<script src="js/life4cut.js?v=67"></script>
+<script src="js/config.js?v=68"></script>
+<script src="js/state.js?v=68"></script>
+<script src="js/map.js?v=68"></script>
+<script src="js/mobility.js?v=68"></script>
+<script src="js/places.js?v=68"></script>
+<script src="js/weather.js?v=68"></script>
+<script src="js/care.js?v=68"></script>
+<script src="js/game.js?v=68"></script>
+<script src="js/chat.js?v=68"></script>
+<script src="js/ui.js?v=68"></script>
+<script src="js/memory.js?v=68"></script>
+<script src="js/life4cut.js?v=68"></script>
 </body>
 </html>
