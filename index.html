@@ -55,7 +55,7 @@
 <!-- Lucide Icons -->
 <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
 
-<link rel="stylesheet" href="css/style.css?v=68" />
+<link rel="stylesheet" href="css/style.css?v=70" />
 </head>
 <body class="bg-slate-100 text-slate-900 antialiased h-[100dvh] w-full flex justify-center items-center overflow-hidden">
 
@@ -1648,6 +1648,9 @@
           <div class="relative w-full aspect-[4/3] rounded-2xl overflow-hidden bg-black border border-zinc-800 shadow-inner flex items-center justify-center">
             <video id="life4CutVideo" autoplay playsinline muted class="w-full h-full object-cover"></video>
             
+            <!-- 머리띠 & 촬영 소품 실시간 라이브 오버레이 -->
+            <div id="life4CutPropOverlay" class="pointer-events-none absolute inset-0 z-10 flex items-center justify-center"></div>
+            
             <!-- 카메라 미지원 시 플레이스홀더 -->
             <div id="life4CutVideoPlaceholder" class="hidden absolute inset-0 flex flex-col items-center justify-center gap-2 bg-zinc-900 text-zinc-400 p-4 text-center">
               <i data-lucide="camera-off" class="w-8 h-8 text-zinc-500"></i>
@@ -1707,6 +1710,43 @@
               </button>
               <button type="button" onclick="window.setLife4CutFilter('original')" data-filter="original" class="filter-btn py-1.5 px-1 rounded-lg bg-zinc-800 text-[10.5px] font-bold text-zinc-400 text-center border border-zinc-700">
                 🌿 원본
+              </button>
+            </div>
+          </div>
+
+          <!-- 머리띠 & 촬영 소품 장식 선택 바 -->
+          <div class="pt-2 border-t border-zinc-800 flex flex-col gap-1.5">
+            <div class="flex items-center justify-between">
+              <label class="text-[11px] font-bold text-zinc-400 flex items-center gap-1">
+                <i data-lucide="smile" class="w-3.5 h-3.5 text-amber-400"></i>
+                <span>머리띠 & 촬영 소품</span>
+              </label>
+              <span id="life4CutPropName" class="text-[10.5px] font-extrabold text-amber-400">장식 없음</span>
+            </div>
+            <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+              <button type="button" onclick="window.setLife4CutProp('none')" data-prop="none" class="prop-btn active shrink-0 py-1.5 px-2.5 rounded-lg bg-zinc-800 text-[10.5px] font-bold text-white text-center border border-zinc-700">
+                ❌ 없음
+              </button>
+              <button type="button" onclick="window.setLife4CutProp('bunny')" data-prop="bunny" class="prop-btn shrink-0 py-1.5 px-2.5 rounded-lg bg-zinc-800 text-[10.5px] font-bold text-zinc-400 text-center border border-zinc-700">
+                🐰 토끼 머리띠
+              </button>
+              <button type="button" onclick="window.setLife4CutProp('cat')" data-prop="cat" class="prop-btn shrink-0 py-1.5 px-2.5 rounded-lg bg-zinc-800 text-[10.5px] font-bold text-zinc-400 text-center border border-zinc-700">
+                🐱 냥이 귀
+              </button>
+              <button type="button" onclick="window.setLife4CutProp('bear')" data-prop="bear" class="prop-btn shrink-0 py-1.5 px-2.5 rounded-lg bg-zinc-800 text-[10.5px] font-bold text-zinc-400 text-center border border-zinc-700">
+                🐻 곰돌이 귀
+              </button>
+              <button type="button" onclick="window.setLife4CutProp('crown')" data-prop="crown" class="prop-btn shrink-0 py-1.5 px-2.5 rounded-lg bg-zinc-800 text-[10.5px] font-bold text-zinc-400 text-center border border-zinc-700">
+                👑 골드 왕관
+              </button>
+              <button type="button" onclick="window.setLife4CutProp('ribbon')" data-prop="ribbon" class="prop-btn shrink-0 py-1.5 px-2.5 rounded-lg bg-zinc-800 text-[10.5px] font-bold text-zinc-400 text-center border border-zinc-700">
+                🎀 빅 리본
+              </button>
+              <button type="button" onclick="window.setLife4CutProp('sunglass')" data-prop="sunglass" class="prop-btn shrink-0 py-1.5 px-2.5 rounded-lg bg-zinc-800 text-[10.5px] font-bold text-zinc-400 text-center border border-zinc-700">
+                🕶️ 선글라스
+              </button>
+              <button type="button" onclick="window.setLife4CutProp('hearts')" data-prop="hearts" class="prop-btn shrink-0 py-1.5 px-2.5 rounded-lg bg-zinc-800 text-[10.5px] font-bold text-zinc-400 text-center border border-zinc-700">
+                💖 러브 볼하트
               </button>
             </div>
           </div>
@@ -1945,17 +1985,17 @@
 </div>
 
 <!-- 기능별 모듈 스크립트 분리 (Clean Modular Architecture) -->
-<script src="js/config.js?v=68"></script>
-<script src="js/state.js?v=68"></script>
-<script src="js/map.js?v=68"></script>
-<script src="js/mobility.js?v=68"></script>
-<script src="js/places.js?v=68"></script>
-<script src="js/weather.js?v=68"></script>
-<script src="js/care.js?v=68"></script>
-<script src="js/game.js?v=68"></script>
-<script src="js/chat.js?v=68"></script>
-<script src="js/ui.js?v=68"></script>
-<script src="js/memory.js?v=68"></script>
-<script src="js/life4cut.js?v=68"></script>
+<script src="js/config.js?v=70"></script>
+<script src="js/state.js?v=70"></script>
+<script src="js/map.js?v=70"></script>
+<script src="js/mobility.js?v=70"></script>
+<script src="js/places.js?v=70"></script>
+<script src="js/weather.js?v=70"></script>
+<script src="js/care.js?v=70"></script>
+<script src="js/game.js?v=70"></script>
+<script src="js/chat.js?v=70"></script>
+<script src="js/ui.js?v=70"></script>
+<script src="js/memory.js?v=70"></script>
+<script src="js/life4cut.js?v=70"></script>
 </body>
 </html>

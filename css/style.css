@@ -992,6 +992,27 @@ body {
   font-weight: 800;
 }
 
+.prop-btn {
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+  user-select: none;
+}
+.prop-btn:hover {
+  background: #3f3f46;
+  color: #ffffff;
+}
+.prop-btn.active {
+  background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+  color: #ffffff !important;
+  border-color: #fbbf24 !important;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.35);
+  font-weight: 800;
+}
+
+#life4CutPropOverlay {
+  transition: opacity 0.2s ease;
+}
+
 .life4cut-strip {
   width: 176px;
   border-radius: 14px;
