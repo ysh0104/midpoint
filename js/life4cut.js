@@ -979,68 +979,113 @@ function drawMiniQrCode(ctx, x, y, size, darkColor, lightColor) {
   ctx.restore();
 }
 
-// 15. Canvas 초고화질 합성 생성 (실제 인생네컷 규격: 1:3 세로 스트립 1200 x 3600 px 및 4x6인치 2장 세트 2400 x 3600 px)
-function generateSingleStripCanvas() {
+function getThemeColors(theme) {
+  var bgHex = '#18181b';
+  var textHex = '#ffffff';
+  var subTextHex = '#a1a1aa';
+  var logoBgHex = '#ffffff';
+  var logoTextHex = '#0f172a';
+  var qrLightHex = '#ffffff';
+  var qrDarkHex = '#09090b';
+
+  if (theme === 'blue') {
+    bgHex = '#0284c7';
+    textHex = '#ffffff';
+    subTextHex = '#bae6fd';
+    logoBgHex = '#ffffff';
+    logoTextHex = '#0284c7';
+    qrLightHex = '#ffffff';
+    qrDarkHex = '#0284c7';
+  } else if (theme === 'white') {
+    bgHex = '#ffffff';
+    textHex = '#0f172a';
+    subTextHex = '#64748b';
+    logoBgHex = '#0f172a';
+    logoTextHex = '#ffffff';
+    qrLightHex = '#f1f5f9';
+    qrDarkHex = '#0f172a';
+  } else if (theme === 'cream') {
+    bgHex = '#fefce8';
+    textHex = '#451a03';
+    subTextHex = '#92400e';
+    logoBgHex = '#451a03';
+    logoTextHex = '#fefce8';
+    qrLightHex = '#fffbeb';
+    qrDarkHex = '#451a03';
+  } else if (theme === 'pink') {
+    bgHex = '#fdf2f8';
+    textHex = '#831843';
+    subTextHex = '#db2777';
+    logoBgHex = '#831843';
+    logoTextHex = '#fdf2f8';
+    qrLightHex = '#ffffff';
+    qrDarkHex = '#831843';
+  }
+
+  return {
+    bgHex: bgHex,
+    textHex: textHex,
+    subTextHex: subTextHex,
+    logoBgHex: logoBgHex,
+    logoTextHex: logoTextHex,
+    qrLightHex: qrLightHex,
+    qrDarkHex: qrDarkHex
+  };
+}
+
+// 15-A. 스마트폰 앱·인스타 스토리 최적화 캔버스 생성 (1080 x 1920 px, 개별 칸 466 x 690 px)
+function generateAppStoryCanvas() {
   return new Promise(function(resolve, reject) {
     var canvas = document.createElement('canvas');
-    var W = 1200;
-    var H = 3600;
+    var W = 1080;
+    var H = 1920;
     canvas.width = W;
     canvas.height = H;
     var ctx = canvas.getContext('2d');
 
-    // 1) 배경색 결정
-    var bgHex = '#18181b'; // black
-    var textHex = '#ffffff';
-    var subTextHex = '#a1a1aa';
-    var logoBgHex = '#ffffff';
-    var logoTextHex = '#0f172a';
-    var qrLightHex = '#ffffff';
-    var qrDarkHex = '#09090b';
+    var colors = getThemeColors(life4CutState.theme);
 
-    if (life4CutState.theme === 'blue') {
-      bgHex = '#0284c7';
-      textHex = '#ffffff';
-      subTextHex = '#bae6fd';
-      logoBgHex = '#ffffff';
-      logoTextHex = '#0284c7';
-      qrLightHex = '#ffffff';
-      qrDarkHex = '#0284c7';
-    } else if (life4CutState.theme === 'white') {
-      bgHex = '#ffffff';
-      textHex = '#0f172a';
-      subTextHex = '#64748b';
-      logoBgHex = '#0f172a';
-      logoTextHex = '#ffffff';
-      qrLightHex = '#f1f5f9';
-      qrDarkHex = '#0f172a';
-    } else if (life4CutState.theme === 'cream') {
-      bgHex = '#fefce8';
-      textHex = '#451a03';
-      subTextHex = '#92400e';
-      logoBgHex = '#451a03';
-      logoTextHex = '#fefce8';
-      qrLightHex = '#fffbeb';
-      qrDarkHex = '#451a03';
-    } else if (life4CutState.theme === 'pink') {
-      bgHex = '#fdf2f8';
-      textHex = '#831843';
-      subTextHex = '#db2777';
-      logoBgHex = '#831843';
-      logoTextHex = '#fdf2f8';
-      qrLightHex = '#ffffff';
-      qrDarkHex = '#831843';
-    }
-
-    ctx.fillStyle = bgHex;
+    // 배경색 채우기
+    ctx.fillStyle = colors.bgHex;
     ctx.fillRect(0, 0, W, H);
 
-    // 2) 4개 슬롯 레이아웃 계산 (완벽한 4:3 가로 비율: 1040 x 780, 실제 인생네컷 1:3 프레임 매칭)
-    var padX = 80;
-    var topPad = 64;
-    var slotW = W - (padX * 2); // 1040
-    var slotH = 780; // 1040 * 3/4 = 780 (정확한 4:3 비율)
-    var gapY = 38;
+    // 1) 상단 감성 헤더
+    ctx.fillStyle = colors.textHex;
+    ctx.font = '900 32px -apple-system, BlinkMacSystemFont, "Pretendard Variable", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.letterSpacing = '4px';
+    ctx.fillText('BAN-DDING 4-CUT', W / 2, 75);
+
+    ctx.fillStyle = colors.subTextHex;
+    ctx.font = '700 18px -apple-system, BlinkMacSystemFont, "Pretendard Variable", sans-serif';
+    ctx.letterSpacing = '2px';
+    ctx.fillText('LIFE FOUR CUTS • PHOTO BOOTH', W / 2, 110);
+
+    // 상단 얇은 구분선
+    ctx.strokeStyle = colors.subTextHex;
+    ctx.lineWidth = 1.5;
+    ctx.globalAlpha = 0.25;
+    ctx.beginPath();
+    ctx.moveTo(54, 135);
+    ctx.lineTo(W - 54, 135);
+    ctx.stroke();
+    ctx.globalAlpha = 1.0;
+
+    // 2) 2x2 슬롯 좌표 정의 (각 칸 466 x 690 px)
+    var slotW = 466;
+    var slotH = 690;
+    var startY = 160;
+    var gapX = 40;
+    var gapY = 36;
+    var leftX = 54;
+    var rightX = leftX + slotW + gapX; // 560
+
+    var slotPositions = [
+      { x: leftX, y: startY },
+      { x: rightX, y: startY },
+      { x: leftX, y: startY + slotH + gapY },
+      { x: rightX, y: startY + slotH + gapY }
+    ];
 
     var imagePromises = [];
     for (var i = 0; i < 4; i++) {
@@ -1061,13 +1106,12 @@ function generateSingleStripCanvas() {
     }
 
     Promise.all(imagePromises).then(function(results) {
-      // 이미지 그리기
       results.forEach(function(item) {
-        var slotY = topPad + item.idx * (slotH + gapY);
+        var pos = slotPositions[item.idx];
 
         if (item.img) {
           ctx.save();
-          drawRoundedRect(ctx, padX, slotY, slotW, slotH, 20);
+          drawRoundedRect(ctx, pos.x, pos.y, slotW, slotH, 20);
           ctx.clip();
 
           var iw = item.img.width;
@@ -1075,272 +1119,190 @@ function generateSingleStripCanvas() {
           var scale = Math.max(slotW / iw, slotH / ih);
           var sw = iw * scale;
           var sh = ih * scale;
-          var sx = padX + (slotW - sw) / 2;
-          var sy = slotY + (slotH - sh) / 2;
+          var sx = pos.x + (slotW - sw) / 2;
+          var sy = pos.y + (slotH - sh) / 2;
 
           ctx.drawImage(item.img, sx, sy, sw, sh);
           ctx.restore();
 
-          // 물리적 픽셀 필터 적용 (저장 이미지에 필터 영구 합성)
-          applyPixelFilterToContext(ctx, padX, slotY, slotW, slotH, life4CutState.filter);
+          applyPixelFilterToContext(ctx, pos.x, pos.y, slotW, slotH, life4CutState.filter);
         } else {
           ctx.fillStyle = (life4CutState.theme === 'white' || life4CutState.theme === 'cream') ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)';
-          drawRoundedRect(ctx, padX, slotY, slotW, slotH, 20);
+          drawRoundedRect(ctx, pos.x, pos.y, slotW, slotH, 20);
           ctx.fill();
 
-          ctx.fillStyle = subTextHex;
-          ctx.font = '700 36px -apple-system, BlinkMacSystemFont, "Pretendard Variable", sans-serif';
+          ctx.fillStyle = colors.subTextHex;
+          ctx.font = '700 32px -apple-system, BlinkMacSystemFont, "Pretendard Variable", sans-serif';
           ctx.textAlign = 'center';
-          ctx.fillText((item.idx + 1) + ' CUT', padX + slotW / 2, slotY + slotH / 2 + 12);
+          ctx.fillText((item.idx + 1) + ' CUT', pos.x + slotW / 2, pos.y + slotH / 2 + 10);
         }
       });
 
-      // 3) 하단 푸터 브랜딩 텍스트 & 날짜 & 로고 & 미니 QR 스탬프 (실물 인생네컷 싱크로율 100%)
-      var footerY = topPad + 4 * slotH + 3 * gapY + 32;
+      // 3) 하단 푸터 영역
+      var footerY = startY + (slotH * 2) + gapY + 36; // 1612
 
-      // 구분 라인
-      ctx.strokeStyle = subTextHex;
-      ctx.lineWidth = 2;
+      ctx.strokeStyle = colors.subTextHex;
+      ctx.lineWidth = 1.5;
       ctx.globalAlpha = 0.25;
       ctx.beginPath();
-      ctx.moveTo(padX + 20, footerY);
-      ctx.lineTo(W - padX - 20, footerY);
+      ctx.moveTo(54, footerY);
+      ctx.lineTo(W - 54, footerY);
       ctx.stroke();
       ctx.globalAlpha = 1.0;
 
       // 모임 장소 텍스트
-      ctx.fillStyle = textHex;
-      ctx.font = '900 42px -apple-system, BlinkMacSystemFont, "Pretendard Variable", sans-serif';
+      ctx.fillStyle = colors.textHex;
+      ctx.font = '900 44px -apple-system, BlinkMacSystemFont, "Pretendard Variable", sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText(life4CutState.locationName, W / 2, footerY + 55);
+      ctx.fillText(life4CutState.locationName, W / 2, footerY + 60);
 
       // 날짜 & 요일
-      ctx.fillStyle = subTextHex;
-      ctx.font = '700 26px -apple-system, BlinkMacSystemFont, "Pretendard Variable", sans-serif';
+      ctx.fillStyle = colors.subTextHex;
+      ctx.font = '700 24px -apple-system, BlinkMacSystemFont, "Pretendard Variable", sans-serif';
       ctx.letterSpacing = '2px';
-      ctx.fillText(life4CutState.dateText, W / 2, footerY + 102);
+      ctx.fillText(life4CutState.dateText, W / 2, footerY + 105);
 
       // 반띵 로고 캡슐
-      var capsuleW = 320;
+      var capsuleW = 340;
       var capsuleH = 58;
       var capsuleX = (W - capsuleW) / 2;
       var capsuleY = footerY + 140;
 
-      ctx.fillStyle = logoBgHex;
+      ctx.fillStyle = colors.logoBgHex;
       drawRoundedRect(ctx, capsuleX, capsuleY, capsuleW, capsuleH, 29);
       ctx.fill();
 
-      ctx.fillStyle = logoTextHex;
+      ctx.fillStyle = colors.logoTextHex;
       ctx.font = '900 26px -apple-system, BlinkMacSystemFont, "Pretendard Variable", sans-serif';
       ctx.textAlign = 'center';
       ctx.fillText('BAN-DDING 4-CUT', W / 2, capsuleY + 39);
 
-      // 실제 인생네컷의 상징: 우측 하단 미니 QR 코드 스탬프
-      var qrSize = 64;
-      var qrX = W - padX - qrSize - 4;
-      var qrY = capsuleY - 3;
-      drawMiniQrCode(ctx, qrX, qrY, qrSize, qrDarkHex, qrLightHex);
+      // 우측 하단 미니 QR 코드
+      var qrSize = 68;
+      var qrX = W - 54 - qrSize;
+      var qrY = capsuleY - 5;
+      drawMiniQrCode(ctx, qrX, qrY, qrSize, colors.qrDarkHex, colors.qrLightHex);
 
       resolve(canvas);
     }).catch(reject);
   });
 }
 
-function generateTwinStripCanvas() {
+// 15-B. 프린터/인화용 4x6 캔버스 생성 (1080 x 1620 px, 개별 칸 466 x 690 px)
+function generatePrinterCanvas() {
   return new Promise(function(resolve, reject) {
-    generateSingleStripCanvas().then(function(singleCanvas) {
-      var twinCanvas = document.createElement('canvas');
-      var W = 2400; // 4x6 인치 (2:3 비율)
-      var H = 3600;
-      twinCanvas.width = W;
-      twinCanvas.height = H;
-      var ctx = twinCanvas.getContext('2d');
+    var canvas = document.createElement('canvas');
+    var W = 1080;
+    var H = 1620;
+    canvas.width = W;
+    canvas.height = H;
+    var ctx = canvas.getContext('2d');
 
-      // 좌측 스트립 복사
-      ctx.drawImage(singleCanvas, 0, 0);
-      // 우측 스트립 복사
-      ctx.drawImage(singleCanvas, 1200, 0);
+    var colors = getThemeColors(life4CutState.theme);
 
-      // 중앙 절취 점선 (실제 인생네컷 인화지 2컷 분리선)
-      ctx.save();
-      ctx.strokeStyle = 'rgba(128, 128, 128, 0.45)';
-      ctx.lineWidth = 3;
-      ctx.setLineDash([16, 12]);
+    ctx.fillStyle = colors.bgHex;
+    ctx.fillRect(0, 0, W, H);
+
+    var slotW = 466;
+    var slotH = 690;
+    var startY = 36;
+    var gapX = 40;
+    var gapY = 24;
+    var leftX = 54;
+    var rightX = leftX + slotW + gapX;
+
+    var slotPositions = [
+      { x: leftX, y: startY },
+      { x: rightX, y: startY },
+      { x: leftX, y: startY + slotH + gapY },
+      { x: rightX, y: startY + slotH + gapY }
+    ];
+
+    var imagePromises = [];
+    for (var i = 0; i < 4; i++) {
+      (function(idx) {
+        imagePromises.push(new Promise(function(res) {
+          var src = life4CutState.shots[idx];
+          if (!src) {
+            res({ idx: idx, img: null });
+            return;
+          }
+          var img = new Image();
+          img.crossOrigin = 'anonymous';
+          img.onload = function() { res({ idx: idx, img: img }); };
+          img.onerror = function() { res({ idx: idx, img: null }); };
+          img.src = src;
+        }));
+      })(i);
+    }
+
+    Promise.all(imagePromises).then(function(results) {
+      results.forEach(function(item) {
+        var pos = slotPositions[item.idx];
+
+        if (item.img) {
+          ctx.save();
+          drawRoundedRect(ctx, pos.x, pos.y, slotW, slotH, 18);
+          ctx.clip();
+
+          var iw = item.img.width;
+          var ih = item.img.height;
+          var scale = Math.max(slotW / iw, slotH / ih);
+          var sw = iw * scale;
+          var sh = ih * scale;
+          var sx = pos.x + (slotW - sw) / 2;
+          var sy = pos.y + (slotH - sh) / 2;
+
+          ctx.drawImage(item.img, sx, sy, sw, sh);
+          ctx.restore();
+
+          applyPixelFilterToContext(ctx, pos.x, pos.y, slotW, slotH, life4CutState.filter);
+        } else {
+          ctx.fillStyle = (life4CutState.theme === 'white' || life4CutState.theme === 'cream') ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)';
+          drawRoundedRect(ctx, pos.x, pos.y, slotW, slotH, 18);
+          ctx.fill();
+
+          ctx.fillStyle = colors.subTextHex;
+          ctx.font = '700 32px -apple-system, BlinkMacSystemFont, "Pretendard Variable", sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText((item.idx + 1) + ' CUT', pos.x + slotW / 2, pos.y + slotH / 2 + 10);
+        }
+      });
+
+      var footerY = startY + (slotH * 2) + gapY + 22; // 1462
+
+      ctx.strokeStyle = colors.subTextHex;
+      ctx.lineWidth = 1.5;
+      ctx.globalAlpha = 0.25;
       ctx.beginPath();
-      ctx.moveTo(1200, 40);
-      ctx.lineTo(1200, 3560);
+      ctx.moveTo(54, footerY);
+      ctx.lineTo(W - 54, footerY);
       ctx.stroke();
+      ctx.globalAlpha = 1.0;
 
-      // 상단 / 하단 가위 자르기 안내 마크
-      ctx.font = '36px -apple-system, sans-serif';
+      // 모임 장소명
+      ctx.fillStyle = colors.textHex;
+      ctx.font = '900 38px -apple-system, BlinkMacSystemFont, "Pretendard Variable", sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillStyle = 'rgba(128, 128, 128, 0.7)';
-      ctx.fillText('✂️ CUT', 1200, 100);
-      ctx.fillText('✂️ CUT', 1200, 3520);
-      ctx.restore();
+      ctx.fillText(life4CutState.locationName, W / 2, footerY + 48);
 
-      resolve(twinCanvas);
+      // 날짜 & 브랜딩
+      ctx.fillStyle = colors.subTextHex;
+      ctx.font = '700 22px -apple-system, BlinkMacSystemFont, "Pretendard Variable", sans-serif';
+      ctx.fillText(life4CutState.dateText + '  |  BAN-DDING 4-CUT', W / 2, footerY + 86);
+
+      // 우측 미니 QR
+      var qrSize = 58;
+      var qrX = W - 54 - qrSize;
+      var qrY = footerY + 22;
+      drawMiniQrCode(ctx, qrX, qrY, qrSize, colors.qrDarkHex, colors.qrLightHex);
+
+      resolve(canvas);
     }).catch(reject);
   });
 }
 
-function generateLife4CutCanvas(format) {
-  if (format === 'twin') {
-    return generateTwinStripCanvas();
-  }
-  return generateSingleStripCanvas();
-}
 
-function drawRoundedRect(ctx, x, y, width, height, radius) {
-  ctx.beginPath();
-  ctx.moveTo(x + radius, y);
-  ctx.lineTo(x + width - radius, y);
-  ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
-  ctx.lineTo(x + width, y + height - radius);
-  ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
-  ctx.lineTo(x + radius, y + height);
-  ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
-  ctx.lineTo(x, y + radius);
-  ctx.quadraticCurveTo(x, y, x + radius, y);
-  ctx.closePath();
-}
-
-// 16. 인생네컷 이미지 스마트폰 갤러리 & 기기 저장 (1:3 스트립 및 2:3 2장 세트 지원)
-var lastLife4CutBlob = null;
-var lastLife4CutDataUrl = null;
-var currentLife4CutFormat = 'single'; // 'single' (1:3 / 1200x3600) or 'twin' (2:3 / 2400x3600)
-
-window.setLife4CutSaveFormat = function(format) {
-  currentLife4CutFormat = format || 'single';
-
-  // 버튼 활성화 상태 업데이트
-  var btnSingle = document.getElementById('saveFormatSingleBtn');
-  var btnTwin = document.getElementById('saveFormatTwinBtn');
-  var formatInfo = document.getElementById('life4CutFormatInfo');
-
-  if (btnSingle && btnTwin) {
-    if (currentLife4CutFormat === 'single') {
-      btnSingle.className = 'press flex-1 py-1.5 px-2 rounded-xl bg-rose-500 text-white font-extrabold text-[11px] shadow-sm';
-      btnTwin.className = 'press flex-1 py-1.5 px-2 rounded-xl bg-zinc-800 text-zinc-400 font-bold text-[11px] border border-zinc-700';
-      if (formatInfo) {
-        formatInfo.innerHTML = '📏 실제 인생네컷 공식 규격: <strong>1:3 세로 비율 (2×6인치 / 1200 × 3600 px)</strong>';
-      }
-    } else {
-      btnTwin.className = 'press flex-1 py-1.5 px-2 rounded-xl bg-rose-500 text-white font-extrabold text-[11px] shadow-sm';
-      btnSingle.className = 'press flex-1 py-1.5 px-2 rounded-xl bg-zinc-800 text-zinc-400 font-bold text-[11px] border border-zinc-700';
-      if (formatInfo) {
-        formatInfo.innerHTML = '👯 실제 매장 인화지 규격: <strong>2장 트윈 세트 (4×6인치 / 2400 × 3600 px)</strong>';
-      }
-    }
-  }
-
-  // 프리뷰 및 blob 갱신
-  generateLife4CutCanvas(currentLife4CutFormat).then(function(canvas) {
-    canvas.toBlob(function(blob) {
-      if (!blob) return;
-      lastLife4CutBlob = blob;
-      lastLife4CutDataUrl = canvas.toDataURL('image/png');
-      var previewImg = document.getElementById('life4CutSavePreviewImg');
-      if (previewImg) previewImg.src = lastLife4CutDataUrl;
-    }, 'image/png');
-  });
-};
-
-window.downloadLife4CutImage = function(formatParam) {
-  if (formatParam && (formatParam === 'single' || formatParam === 'twin')) {
-    currentLife4CutFormat = formatParam;
-  }
-  if (window.showToast) showToast('실제 인생네컷 규격(1:3 비율) 이미지를 생성하고 있습니다...', 'loader');
-
-  generateLife4CutCanvas(currentLife4CutFormat).then(function(canvas) {
-    canvas.toBlob(function(blob) {
-      if (!blob) return;
-
-      lastLife4CutBlob = blob;
-      lastLife4CutDataUrl = canvas.toDataURL('image/png');
-
-      var filename = (currentLife4CutFormat === 'twin' ? 'bandding_4cut_twin_' : 'bandding_4cut_1x3_') + Date.now() + '.png';
-      var file = new File([blob], filename, { type: 'image/png' });
-
-      // 모달에 고화질 프리뷰 세팅
-      var previewImg = document.getElementById('life4CutSavePreviewImg');
-      if (previewImg) previewImg.src = lastLife4CutDataUrl;
-
-      // 모달 포맷 버튼 상태 동기화
-      window.setLife4CutSaveFormat(currentLife4CutFormat);
-
-      var isMobileDevice = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1);
-
-      // 모바일 스마트폰: Web Share API로 [사진 앱에 저장 / 갤러리 저장] 즉시 실행
-      if (isMobileDevice && navigator.canShare && navigator.canShare({ files: [file] })) {
-        navigator.share({
-          files: [file],
-          title: '반띵 인생네컷',
-          text: life4CutState.locationName + ' 인생네컷 (' + (currentLife4CutFormat === 'twin' ? '4x6 2장 세트' : '1:3 규격') + ')'
-        }).then(function() {
-          if (window.showToast) showToast('갤러리에 저장이 완료되었습니다!', 'download');
-        }).catch(function() {
-          window.openLife4CutSaveModal();
-        });
-      } else {
-        var blobUrl = URL.createObjectURL(blob);
-        var link = document.createElement('a');
-        link.href = blobUrl;
-        link.download = filename;
-        document.body.appendChild(link);
-        link.click();
-        setTimeout(function() {
-          document.body.removeChild(link);
-          URL.revokeObjectURL(blobUrl);
-        }, 1200);
-
-        if (window.showToast) {
-          showToast('인생네컷 사진이 기기에 저장되었습니다!', 'download');
-        }
-
-        if (isMobileDevice) {
-          window.openLife4CutSaveModal();
-        }
-      }
-    }, 'image/png');
-  }).catch(function(err) {
-    console.error(err);
-    if (window.showToast) showToast('이미지 저장 중 오류가 발생했습니다', 'alert-circle');
-  });
-};
-
-// 갤러리 저장 모달 내 시스템 저장창 다시 띄우기
-window.triggerNativeGallerySave = function() {
-  if (!lastLife4CutBlob) {
-    window.downloadLife4CutImage(currentLife4CutFormat);
-    return;
-  }
-
-  var filename = (currentLife4CutFormat === 'twin' ? 'bandding_4cut_twin_' : 'bandding_4cut_1x3_') + Date.now() + '.png';
-  var file = new File([lastLife4CutBlob], filename, { type: 'image/png' });
-
-  if (navigator.canShare && navigator.canShare({ files: [file] })) {
-    navigator.share({
-      files: [file],
-      title: '반띵 인생네컷',
-      text: life4CutState.locationName + ' 인생네컷'
-    }).then(function() {
-      if (window.showToast) showToast('갤러리에 저장이 완료되었습니다!', 'download');
-    }).catch(function() {});
-  } else {
-    var blobUrl = URL.createObjectURL(lastLife4CutBlob);
-    var link = document.createElement('a');
-    link.href = blobUrl;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    setTimeout(function() {
-      document.body.removeChild(link);
-      URL.revokeObjectURL(blobUrl);
-    }, 1200);
-    if (window.showToast) showToast('사진이 다운로드되었습니다. 사진을 1초간 길게 눌러 사진첩에 저장할 수도 있습니다!', 'download');
-  }
-};
 
 window.openLife4CutSaveModal = function() {
   var modal = document.getElementById('life4CutSaveModal');
