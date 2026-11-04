@@ -55,7 +55,7 @@
 <!-- Lucide Icons -->
 <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
 
-<link rel="stylesheet" href="css/style.css?v=66" />
+<link rel="stylesheet" href="css/style.css?v=67" />
 </head>
 <body class="bg-slate-100 text-slate-900 antialiased h-[100dvh] w-full flex justify-center items-center overflow-hidden">
 
@@ -1652,7 +1652,7 @@
             <div id="life4CutVideoPlaceholder" class="hidden absolute inset-0 flex flex-col items-center justify-center gap-2 bg-zinc-900 text-zinc-400 p-4 text-center">
               <i data-lucide="camera-off" class="w-8 h-8 text-zinc-500"></i>
               <p class="text-[11.5px] font-bold">카메라를 켤 수 없습니다</p>
-              <p class="text-[10px] text-zinc-500">아래의 사진 업로드 또는 감성 샘플 컷으로 인생네컷을 완성해보세요!</p>
+              <p class="text-[10px] text-zinc-500">카메라 권한을 켜거나 아래의 앨범 사진 선택으로 인생네컷을 완성해보세요!</p>
             </div>
 
             <!-- 찰칵 플래시 효과 -->
@@ -1671,16 +1671,44 @@
               <span>4컷 자동 연속 촬영 (3초 타이머)</span>
             </button>
             <div class="grid grid-cols-2 gap-1.5">
-              <button type="button" onclick="document.getElementById('life4CutFileInput').click()" class="press py-2 px-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-bold text-[11px] flex items-center justify-center gap-1 border border-zinc-700">
+              <button type="button" onclick="document.getElementById('life4CutFileInput').click()" class="press py-2 px-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-bold text-[11px] flex items-center justify-center gap-1.5 border border-zinc-700">
                 <i data-lucide="upload" class="w-3.5 h-3.5 text-sky-400"></i>
                 <span>앨범 사진 4장 선택</span>
               </button>
-              <button type="button" onclick="window.loadLife4CutSamples()" class="press py-2 px-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-bold text-[11px] flex items-center justify-center gap-1 border border-zinc-700">
-                <i data-lucide="wand-2" class="w-3.5 h-3.5 text-amber-400"></i>
-                <span>감성 샘플 채우기</span>
+              <button type="button" onclick="window.resetLife4CutShots()" class="press py-2 px-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold text-[11px] flex items-center justify-center gap-1.5 border border-zinc-700" title="모든 슬롯 비우기 및 새로 촬영">
+                <i data-lucide="rotate-ccw" class="w-3.5 h-3.5 text-zinc-400"></i>
+                <span>다시 찍기 / 비우기</span>
               </button>
             </div>
             <input type="file" id="life4CutFileInput" multiple accept="image/*" class="hidden" onchange="window.handleLife4CutFileUpload(event)" />
+          </div>
+
+          <!-- 감성 뷰티 필터 선택 바 -->
+          <div class="pt-2 border-t border-zinc-800 flex flex-col gap-1.5">
+            <div class="flex items-center justify-between">
+              <label class="text-[11px] font-bold text-zinc-400 flex items-center gap-1">
+                <i data-lucide="sparkles" class="w-3.5 h-3.5 text-rose-400"></i>
+                <span>감성 뷰티 필터</span>
+              </label>
+              <span id="life4CutFilterName" class="text-[10.5px] font-extrabold text-rose-400">✨ 맑은 뽀샤시</span>
+            </div>
+            <div class="grid grid-cols-5 gap-1.5">
+              <button type="button" onclick="window.setLife4CutFilter('glow')" data-filter="glow" class="filter-btn active py-1.5 px-1 rounded-lg bg-zinc-800 text-[10.5px] font-bold text-white text-center border border-zinc-700">
+                ✨ 뽀샤시
+              </button>
+              <button type="button" onclick="window.setLife4CutFilter('peach')" data-filter="peach" class="filter-btn py-1.5 px-1 rounded-lg bg-zinc-800 text-[10.5px] font-bold text-zinc-400 text-center border border-zinc-700">
+                🍑 피치
+              </button>
+              <button type="button" onclick="window.setLife4CutFilter('film')" data-filter="film" class="filter-btn py-1.5 px-1 rounded-lg bg-zinc-800 text-[10.5px] font-bold text-zinc-400 text-center border border-zinc-700">
+                🎞️ 필름
+              </button>
+              <button type="button" onclick="window.setLife4CutFilter('mono')" data-filter="mono" class="filter-btn py-1.5 px-1 rounded-lg bg-zinc-800 text-[10.5px] font-bold text-zinc-400 text-center border border-zinc-700">
+                🖤 흑백
+              </button>
+              <button type="button" onclick="window.setLife4CutFilter('original')" data-filter="original" class="filter-btn py-1.5 px-1 rounded-lg bg-zinc-800 text-[10.5px] font-bold text-zinc-400 text-center border border-zinc-700">
+                🌿 원본
+              </button>
+            </div>
           </div>
 
           <!-- 프레임 테마 선택 -->
@@ -1706,29 +1734,41 @@
         <!-- 우측: 세로형 인생네컷 스트립 실시간 프리뷰 -->
         <div class="flex flex-col items-center shrink-0">
           <div id="life4CutStrip" class="life4cut-strip theme-strip-black">
-            <!-- 4개 사진 슬롯 -->
-            <div id="life4CutSlot_0" class="life4cut-slot">
+            <!-- 4개 사진 슬롯 (정확한 4:3 비율) -->
+            <div id="life4CutSlot_0" onclick="window.captureSingleShot(0)" class="life4cut-slot cursor-pointer group" title="터치하여 1번 컷 촬영/교체">
               <img id="life4CutImg_0" src="" alt="1번 컷" class="hidden w-full h-full object-cover" />
-              <div id="life4CutPlaceholder_0" class="w-full h-full flex flex-col items-center justify-center text-zinc-500 text-[10px] font-bold">1 CUT</div>
+              <div id="life4CutPlaceholder_0" class="w-full h-full flex flex-col items-center justify-center text-zinc-500 text-[10px] font-bold gap-0.5 group-hover:text-rose-400 transition-colors">
+                <i data-lucide="camera" class="w-4 h-4 text-zinc-600 group-hover:text-rose-400"></i>
+                <span>1 CUT</span>
+              </div>
             </div>
-            <div id="life4CutSlot_1" class="life4cut-slot">
+            <div id="life4CutSlot_1" onclick="window.captureSingleShot(1)" class="life4cut-slot cursor-pointer group" title="터치하여 2번 컷 촬영/교체">
               <img id="life4CutImg_1" src="" alt="2번 컷" class="hidden w-full h-full object-cover" />
-              <div id="life4CutPlaceholder_1" class="w-full h-full flex flex-col items-center justify-center text-zinc-500 text-[10px] font-bold">2 CUT</div>
+              <div id="life4CutPlaceholder_1" class="w-full h-full flex flex-col items-center justify-center text-zinc-500 text-[10px] font-bold gap-0.5 group-hover:text-rose-400 transition-colors">
+                <i data-lucide="camera" class="w-4 h-4 text-zinc-600 group-hover:text-rose-400"></i>
+                <span>2 CUT</span>
+              </div>
             </div>
-            <div id="life4CutSlot_2" class="life4cut-slot">
+            <div id="life4CutSlot_2" onclick="window.captureSingleShot(2)" class="life4cut-slot cursor-pointer group" title="터치하여 3번 컷 촬영/교체">
               <img id="life4CutImg_2" src="" alt="3번 컷" class="hidden w-full h-full object-cover" />
-              <div id="life4CutPlaceholder_2" class="w-full h-full flex flex-col items-center justify-center text-zinc-500 text-[10px] font-bold">3 CUT</div>
+              <div id="life4CutPlaceholder_2" class="w-full h-full flex flex-col items-center justify-center text-zinc-500 text-[10px] font-bold gap-0.5 group-hover:text-rose-400 transition-colors">
+                <i data-lucide="camera" class="w-4 h-4 text-zinc-600 group-hover:text-rose-400"></i>
+                <span>3 CUT</span>
+              </div>
             </div>
-            <div id="life4CutSlot_3" class="life4cut-slot">
+            <div id="life4CutSlot_3" onclick="window.captureSingleShot(3)" class="life4cut-slot cursor-pointer group" title="터치하여 4번 컷 촬영/교체">
               <img id="life4CutImg_3" src="" alt="4번 컷" class="hidden w-full h-full object-cover" />
-              <div id="life4CutPlaceholder_3" class="w-full h-full flex flex-col items-center justify-center text-zinc-500 text-[10px] font-bold">4 CUT</div>
+              <div id="life4CutPlaceholder_3" class="w-full h-full flex flex-col items-center justify-center text-zinc-500 text-[10px] font-bold gap-0.5 group-hover:text-rose-400 transition-colors">
+                <i data-lucide="camera" class="w-4 h-4 text-zinc-600 group-hover:text-rose-400"></i>
+                <span>4 CUT</span>
+              </div>
             </div>
 
             <!-- 하단 브랜딩 푸터 -->
-            <div class="pt-2 pb-1 border-t border-white/10 flex flex-col items-center gap-0.5 text-center">
-              <span id="life4CutPlaceText" class="text-[11px] font-black tracking-tight truncate max-w-[170px]">반띵 모임</span>
-              <span id="life4CutDateDisplay" class="text-[8.5px] font-bold strip-sub tracking-widest">2026.10.30 FRI</span>
-              <div class="mt-1 px-2.5 py-0.5 rounded-full strip-badge text-[8.5px] font-black tracking-tighter">BAN-DDING 4-CUT</div>
+            <div class="pt-2 pb-0.5 border-t border-white/10 flex flex-col items-center gap-0.5 text-center">
+              <span id="life4CutPlaceText" class="text-[11px] font-black tracking-tight truncate max-w-[155px]">반띵 모임</span>
+              <span id="life4CutDateDisplay" class="text-[8px] font-bold strip-sub tracking-widest">2026.11.04 WED</span>
+              <div class="mt-0.5 px-2 py-0.5 rounded-full strip-badge text-[8px] font-black tracking-tight">BAN-DDING 4-CUT</div>
             </div>
           </div>
         </div>
@@ -1851,17 +1891,17 @@
 </div>
 
 <!-- 기능별 모듈 스크립트 분리 (Clean Modular Architecture) -->
-<script src="js/config.js?v=64"></script>
-<script src="js/state.js?v=64"></script>
-<script src="js/map.js?v=64"></script>
-<script src="js/mobility.js?v=64"></script>
-<script src="js/places.js?v=64"></script>
-<script src="js/weather.js?v=64"></script>
-<script src="js/care.js?v=64"></script>
-<script src="js/game.js?v=64"></script>
-<script src="js/chat.js?v=64"></script>
-<script src="js/ui.js?v=64"></script>
-<script src="js/memory.js?v=64"></script>
-<script src="js/life4cut.js?v=64"></script>
+<script src="js/config.js?v=67"></script>
+<script src="js/state.js?v=67"></script>
+<script src="js/map.js?v=67"></script>
+<script src="js/mobility.js?v=67"></script>
+<script src="js/places.js?v=67"></script>
+<script src="js/weather.js?v=67"></script>
+<script src="js/care.js?v=67"></script>
+<script src="js/game.js?v=67"></script>
+<script src="js/chat.js?v=67"></script>
+<script src="js/ui.js?v=67"></script>
+<script src="js/memory.js?v=67"></script>
+<script src="js/life4cut.js?v=67"></script>
 </body>
 </html>

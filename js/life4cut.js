@@ -1,12 +1,13 @@
 /**
  * 반띵 (Ban-Dding) - 인생네컷 (Life 4-Cut Photo Booth Studio)
  * 
- * 1. 실시간 웹캠 4컷 촬영 (3초 자동 카운트다운 타이머)
- * 2. 내 갤러리 사진 4장 업로드 & 감성 샘플 원클릭 채우기
- * 3. 인생네컷 프레임 테마 (딥블랙, 반띵블루, 클래식화이트, 버터크림, 로맨틱핑크)
- * 4. Canvas 고화질 합성 렌더링 (1200 x 3600 px) & 이미지 즉시 저장
- * 5. 인스타그램 스토리 / SNS Web Share 연동
- * 6. 현재 약속 장소의 지도 추억 폴라로이드로 즉시 자동 등록
+ * 1. 실시간 웹캠 4컷 촬영 (3초 자동 카운트다운 타이머 & 단일 컷 수동 촬영)
+ * 2. 내 갤러리 사진 4장 업로드 & 무왜곡 4:3 자동 센터크롭
+ * 3. 감성 뷰티 필터 (맑은 뽀샤시, 피치 웜톤, 감성 필름, 클래식 흑백, 내추럴 원본)
+ * 4. 인생네컷 프레임 테마 (딥블랙, 반띵블루, 클래식화이트, 버터크림, 로맨틱핑크)
+ * 5. Canvas 초고화질 합성 렌더링 (1200 x 3600 px) & 이미지 즉시 저장
+ * 6. 인스타그램 스토리 / SNS Web Share 연동
+ * 7. 현재 약속 장소의 지도 추억 폴라로이드로 즉시 자동 등록
  */
 
 var life4CutState = {
@@ -14,19 +15,41 @@ var life4CutState = {
   shots: [null, null, null, null],
   currentShotIdx: 0,
   theme: 'black', // 'black', 'blue', 'white', 'cream', 'pink'
+  filter: 'glow', // 'glow', 'peach', 'film', 'mono', 'original'
   isCountingDown: false,
   countdownTimer: null,
   locationName: '오늘의 모임',
   dateText: ''
 };
 
-// 감성 넘치는 인생네컷 기본 샘플 컷 (카메라가 없거나 빠른 시연 시 원클릭 적용)
-var SAMPLE_SHOTS = [
-  'images/ondaljib.png', // 친구들과 온달집 닭다리살 숯불구이 모임
-  'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=600&auto=format&fit=crop&q=80', // 환하게 웃는 모임 순간
-  'https://images.unsplash.com/photo-1511632765486-a01980e01a18?w=600&auto=format&fit=crop&q=80', // 따뜻한 카페/파티 조명
-  'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=600&auto=format&fit=crop&q=80'  // 인생네컷 시그니처 포즈
-];
+// 감성 뷰티 필터 프리셋 정의 (하루필름/포토이즘 스타일 화사한 보정)
+var FILTER_PRESETS = {
+  glow: {
+    id: 'glow',
+    name: '✨ 맑은 뽀샤시',
+    css: 'brightness(1.08) contrast(1.03) saturate(1.08)'
+  },
+  peach: {
+    id: 'peach',
+    name: '🍑 피치 웜톤',
+    css: 'sepia(0.08) brightness(1.06) saturate(1.18) hue-rotate(-6deg)'
+  },
+  film: {
+    id: 'film',
+    name: '🎞️ 감성 필름',
+    css: 'sepia(0.18) brightness(1.04) contrast(1.08) saturate(0.92)'
+  },
+  mono: {
+    id: 'mono',
+    name: '🖤 클래식 흑백',
+    css: 'grayscale(1) contrast(1.15) brightness(1.05)'
+  },
+  original: {
+    id: 'original',
+    name: '🌿 내추럴 원본',
+    css: 'none'
+  }
+};
 
 // 1. 인생네컷 스튜디오 모달 열기
 window.openLife4CutStudio = function() {
@@ -51,12 +74,9 @@ window.openLife4CutStudio = function() {
 
   modal.classList.remove('hidden');
 
-  // 첫 진입 시 샘플 4컷이 없으면 자동으로 예쁜 감성 컷 채워두기
-  if (!life4CutState.shots[0]) {
-    window.loadLife4CutSamples();
-  } else {
-    renderLife4CutStrip();
-  }
+  // 깨끗한 슬롯 렌더링 & 기본 뽀샤시 필터 적용
+  renderLife4CutStrip();
+  window.setLife4CutFilter(life4CutState.filter || 'glow');
 
   // 웹캠 시작 시도
   startWebcam();
@@ -71,7 +91,7 @@ window.closeLife4CutStudio = function() {
   stopWebcam();
 };
 
-// 3. 웹캠 스트림 시작
+// 3. 웹캠 스트림 시작 (좌우 반전 미러 모드 & 필터 실시간 연동)
 function startWebcam() {
   var video = document.getElementById('life4CutVideo');
   var videoPlaceholder = document.getElementById('life4CutVideoPlaceholder');
@@ -91,6 +111,12 @@ function startWebcam() {
     life4CutState.stream = stream;
     video.srcObject = stream;
     video.play();
+    video.style.transform = 'scaleX(-1)';
+    
+    // 현재 선택된 필터 실시간 비디오에 즉시 반영
+    var filterDef = FILTER_PRESETS[life4CutState.filter] || FILTER_PRESETS.glow;
+    video.style.filter = (filterDef && filterDef.css !== 'none') ? filterDef.css : '';
+
     if (videoPlaceholder) videoPlaceholder.classList.add('hidden');
   }).catch(function(err) {
     console.warn('Webcam permission denied or not available:', err);
@@ -106,7 +132,42 @@ function stopWebcam() {
   }
 }
 
-// 5. 프레임 테마 변경
+// 5. 감성 뷰티 필터 변경 (웹캠 & 슬롯 사진 & 캔버스 동시 적용)
+window.setLife4CutFilter = function(filterId) {
+  if (!FILTER_PRESETS[filterId]) filterId = 'glow';
+  life4CutState.filter = filterId;
+  var filterDef = FILTER_PRESETS[filterId];
+  var filterCss = (filterDef.css && filterDef.css !== 'none') ? filterDef.css : '';
+
+  // 1) 비디오 프리뷰에 필터 적용
+  var video = document.getElementById('life4CutVideo');
+  if (video) video.style.filter = filterCss;
+
+  // 2) 스트립 슬롯 이미지들에 필터 적용
+  for (var i = 0; i < 4; i++) {
+    var img = document.getElementById('life4CutImg_' + i);
+    if (img) img.style.filter = filterCss;
+  }
+
+  // 3) 필터 버튼 활성화 토글
+  var btns = document.querySelectorAll('.filter-btn');
+  btns.forEach(function(b) {
+    if (b.getAttribute('data-filter') === filterId) {
+      b.classList.add('active');
+      b.classList.remove('text-zinc-400');
+      b.classList.add('text-white');
+    } else {
+      b.classList.remove('active');
+      b.classList.add('text-zinc-400');
+      b.classList.remove('text-white');
+    }
+  });
+
+  var nameEl = document.getElementById('life4CutFilterName');
+  if (nameEl) nameEl.textContent = filterDef.name;
+};
+
+// 6. 프레임 테마 변경
 window.setLife4CutTheme = function(themeName) {
   life4CutState.theme = themeName;
   var strip = document.getElementById('life4CutStrip');
@@ -144,7 +205,7 @@ function getThemeClass(theme) {
   }
 }
 
-// 6. 4컷 자동 연속 촬영 (3초 카운트다운 x 4회)
+// 7. 4컷 자동 연속 촬영 (3초 카운트다운 x 4회)
 window.startLife4CutAutoCapture = function() {
   if (life4CutState.isCountingDown) return;
   var video = document.getElementById('life4CutVideo');
@@ -173,11 +234,11 @@ window.startLife4CutAutoCapture = function() {
         showCountdownOverlay(countdown);
       } else {
         clearInterval(life4CutState.countdownTimer);
-        // 찰칵 효과 및 캡처
+        // 찰칵 효과 및 무왜곡 4:3 캡처
         flashShutterEffect();
         captureCurrentFrameToSlot(shotIndex);
         shotIndex++;
-        setTimeout(takeNextShot, 1200); // 다음 컷까지 1.2초 휴식
+        setTimeout(takeNextShot, 1200); // 다음 컷까지 1.2초 포즈 변경 여유
       }
     }, 1000);
   }
@@ -185,7 +246,7 @@ window.startLife4CutAutoCapture = function() {
   takeNextShot();
 };
 
-// 7. 단일 컷 수동 촬영
+// 8. 단일 컷 수동 촬영 / 교체
 window.captureSingleShot = function(slotIdx) {
   var video = document.getElementById('life4CutVideo');
   if (!life4CutState.stream || !video) {
@@ -198,21 +259,44 @@ window.captureSingleShot = function(slotIdx) {
   if (window.showToast) showToast((slotIdx + 1) + '번째 컷이 촬영되었습니다', 'camera');
 };
 
+/**
+ * 9. 무왜곡 4:3 센터크롭 캡처 (스마트폰 세로/웹캠 가로 상관없이 왜곡/찌그러짐 방지)
+ */
 function captureCurrentFrameToSlot(slotIdx) {
   var video = document.getElementById('life4CutVideo');
   if (!video) return;
 
+  var vw = video.videoWidth || 640;
+  var vh = video.videoHeight || 480;
+
+  // 인생네컷 표준 4:3 가로 컷 비율 (960 x 720)
+  var targetW = 960;
+  var targetH = 720;
+  var targetAspect = targetW / targetH; // 1.333333
+  var videoAspect = vw / vh;
+
+  var cropX = 0, cropY = 0, cropW = vw, cropH = vh;
+  if (videoAspect > targetAspect) {
+    // 비디오가 4:3보다 가로로 넓은 경우 (16:9 등): 좌우 잘라내어 중심 맞춤
+    cropW = vh * targetAspect;
+    cropX = (vw - cropW) / 2;
+  } else {
+    // 비디오가 4:3보다 세로로 긴 경우 (스마트폰 9:16 등): 상하 잘라내어 얼굴 중심 맞춤
+    cropH = vw / targetAspect;
+    cropY = (vh - cropH) / 2;
+  }
+
   var canvas = document.createElement('canvas');
-  canvas.width = 640;
-  canvas.height = 480;
+  canvas.width = targetW;
+  canvas.height = targetH;
   var ctx = canvas.getContext('2d');
 
   // 좌우 반전 거울 모드 렌더링
   ctx.translate(canvas.width, 0);
   ctx.scale(-1, 1);
-  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  ctx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, targetW, targetH);
 
-  var dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+  var dataUrl = canvas.toDataURL('image/jpeg', 0.95);
   life4CutState.shots[slotIdx] = dataUrl;
   renderLife4CutStrip();
 }
@@ -242,8 +326,11 @@ function hideCountdownOverlay() {
   if (overlay) overlay.classList.add('hidden');
 }
 
-// 8. 4컷 스트립 UI 렌더링
+// 10. 4컷 스트립 UI 렌더링 (필터 실시간 반영)
 function renderLife4CutStrip() {
+  var filterDef = FILTER_PRESETS[life4CutState.filter] || FILTER_PRESETS.glow;
+  var filterCss = (filterDef && filterDef.css !== 'none') ? filterDef.css : '';
+
   for (var i = 0; i < 4; i++) {
     var slotEl = document.getElementById('life4CutSlot_' + i);
     var imgEl = document.getElementById('life4CutImg_' + i);
@@ -252,6 +339,7 @@ function renderLife4CutStrip() {
     if (slotEl && imgEl && placeholderEl) {
       if (life4CutState.shots[i]) {
         imgEl.src = life4CutState.shots[i];
+        imgEl.style.filter = filterCss;
         imgEl.classList.remove('hidden');
         placeholderEl.classList.add('hidden');
       } else {
@@ -268,14 +356,14 @@ function renderLife4CutStrip() {
   if (dateEl) dateEl.textContent = life4CutState.dateText;
 }
 
-// 9. 감성 샘플 컷 원클릭 로드
-window.loadLife4CutSamples = function() {
-  life4CutState.shots = SAMPLE_SHOTS.slice();
+// 11. 모든 슬롯 비우기 및 새로 촬영
+window.resetLife4CutShots = function() {
+  life4CutState.shots = [null, null, null, null];
   renderLife4CutStrip();
-  if (window.showToast) showToast('감성 인생네컷 샘플이 로드되었습니다', 'sparkles');
+  if (window.showToast) showToast('인생네컷 슬롯이 초기화되었습니다. 새로 촬영해보세요!', 'rotate-ccw');
 };
 
-// 10. 파일 업로드로 4컷 채우기
+// 12. 파일 업로드로 4컷 채우기 (무왜곡 4:3 자동 센터크롭 적용)
 window.handleLife4CutFileUpload = function(event) {
   var files = event.target.files;
   if (!files || files.length === 0) return;
@@ -287,26 +375,60 @@ window.handleLife4CutFileUpload = function(event) {
     (function(index) {
       var reader = new FileReader();
       reader.onload = function(e) {
-        life4CutState.shots[index] = e.target.result;
-        loaded++;
-        if (loaded === count) {
-          renderLife4CutStrip();
-          if (window.showToast) showToast(count + '장의 사진이 인생네컷에 등록되었습니다', 'image');
-        }
+        cropImageTo43(e.target.result, function(croppedDataUrl) {
+          life4CutState.shots[index] = croppedDataUrl;
+          loaded++;
+          if (loaded === count) {
+            renderLife4CutStrip();
+            if (window.showToast) showToast(count + '장의 사진이 인생네컷에 등록되었습니다', 'image');
+          }
+        });
       };
       reader.readAsDataURL(files[index]);
     })(i);
   }
+  event.target.value = '';
 };
 
-// 11. 장소명 커스텀 입력 반영
+// 이미지 4:3 센터크롭 유틸리티
+function cropImageTo43(dataUrl, callback) {
+  var img = new Image();
+  img.onload = function() {
+    var targetW = 960;
+    var targetH = 720;
+    var targetAspect = targetW / targetH;
+    var imgAspect = img.width / img.height;
+
+    var cropX = 0, cropY = 0, cropW = img.width, cropH = img.height;
+    if (imgAspect > targetAspect) {
+      cropW = img.height * targetAspect;
+      cropX = (img.width - cropW) / 2;
+    } else {
+      cropH = img.width / targetAspect;
+      cropY = (img.height - cropH) / 2;
+    }
+
+    var canvas = document.createElement('canvas');
+    canvas.width = targetW;
+    canvas.height = targetH;
+    var ctx = canvas.getContext('2d');
+    ctx.drawImage(img, cropX, cropY, cropW, cropH, 0, 0, targetW, targetH);
+    callback(canvas.toDataURL('image/jpeg', 0.95));
+  };
+  img.onerror = function() {
+    callback(dataUrl);
+  };
+  img.src = dataUrl;
+}
+
+// 13. 장소명 커스텀 입력 반영
 window.updateLife4CutPlace = function(val) {
   life4CutState.locationName = val || '반띵 모임';
   var placeEl = document.getElementById('life4CutPlaceText');
   if (placeEl) placeEl.textContent = life4CutState.locationName;
 };
 
-// 12. Canvas 고해상도 합성 생성 (1200 x 3600 px)
+// 14. Canvas 초고해상도 합성 생성 (1200 x 3600 px, 정확한 4:3 슬롯 및 필터 적용)
 function generateLife4CutCanvas() {
   return new Promise(function(resolve, reject) {
     var canvas = document.createElement('canvas');
@@ -352,18 +474,22 @@ function generateLife4CutCanvas() {
     ctx.fillStyle = bgHex;
     ctx.fillRect(0, 0, W, H);
 
-    // 2) 4개 슬롯 레이아웃 계산
+    // 2) 4개 슬롯 레이아웃 계산 (완벽한 4:3 가로 비율: 1040 x 780)
     var padX = 80;
-    var topPad = 80;
+    var topPad = 70;
     var slotW = W - (padX * 2); // 1040
-    var slotH = 690;
-    var gapY = 55;
+    var slotH = 780; // 1040 * 3/4 = 780 (정확한 4:3 비율)
+    var gapY = 48;
 
     var imagePromises = [];
     for (var i = 0; i < 4; i++) {
       (function(idx) {
         imagePromises.push(new Promise(function(res) {
-          var src = life4CutState.shots[idx] || SAMPLE_SHOTS[idx];
+          var src = life4CutState.shots[idx];
+          if (!src) {
+            res({ idx: idx, img: null });
+            return;
+          }
           var img = new Image();
           img.crossOrigin = 'anonymous';
           img.onload = function() { res({ idx: idx, img: img }); };
@@ -380,11 +506,19 @@ function generateLife4CutCanvas() {
 
         if (item.img) {
           ctx.save();
-          // 둥근 사각형 클리핑 (radius: 20px)
+          // 둥근 사각형 클리핑 (radius: 24px)
           drawRoundedRect(ctx, padX, slotY, slotW, slotH, 24);
           ctx.clip();
 
-          // Cover crop
+          // 뷰티 보정 필터 적용 (Canvas2D ctx.filter)
+          var filterDef = FILTER_PRESETS[life4CutState.filter] || FILTER_PRESETS.glow;
+          if (filterDef && filterDef.css && filterDef.css !== 'none') {
+            try {
+              ctx.filter = filterDef.css;
+            } catch (e) {}
+          }
+
+          // 무왜곡 Center-Crop 매핑
           var iw = item.img.width;
           var ih = item.img.height;
           var scale = Math.max(slotW / iw, slotH / ih);
@@ -396,51 +530,57 @@ function generateLife4CutCanvas() {
           ctx.drawImage(item.img, sx, sy, sw, sh);
           ctx.restore();
         } else {
-          ctx.fillStyle = '#27272a';
+          // 비어있는 슬롯은 세련된 포토부스 플레이스홀더로 채움
+          ctx.fillStyle = (life4CutState.theme === 'white' || life4CutState.theme === 'cream') ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)';
           drawRoundedRect(ctx, padX, slotY, slotW, slotH, 24);
           ctx.fill();
+
+          ctx.fillStyle = subTextHex;
+          ctx.font = '700 36px -apple-system, BlinkMacSystemFont, "Pretendard Variable", sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText((item.idx + 1) + ' CUT', padX + slotW / 2, slotY + slotH / 2 + 12);
         }
       });
 
       // 3) 하단 푸터 브랜딩 텍스트 & 날짜 & 로고 인쇄
-      var footerY = topPad + 4 * (slotH + gapY) + 50;
+      var footerY = topPad + 4 * (slotH + gapY) - 10;
 
       // 구분 라인
       ctx.strokeStyle = subTextHex;
       ctx.lineWidth = 2;
-      ctx.globalAlpha = 0.3;
+      ctx.globalAlpha = 0.25;
       ctx.beginPath();
-      ctx.moveTo(padX, footerY - 25);
-      ctx.lineTo(W - padX, footerY - 25);
+      ctx.moveTo(padX + 20, footerY);
+      ctx.lineTo(W - padX - 20, footerY);
       ctx.stroke();
       ctx.globalAlpha = 1.0;
 
       // 모임 장소 텍스트
       ctx.fillStyle = textHex;
-      ctx.font = '900 48px -apple-system, BlinkMacSystemFont, "Pretendard Variable", sans-serif';
+      ctx.font = '900 46px -apple-system, BlinkMacSystemFont, "Pretendard Variable", sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText(life4CutState.locationName, W / 2, footerY + 45);
+      ctx.fillText(life4CutState.locationName, W / 2, footerY + 65);
 
-      // 날짜 & 시간
+      // 날짜 & 요일
       ctx.fillStyle = subTextHex;
-      ctx.font = '700 32px -apple-system, BlinkMacSystemFont, "Pretendard Variable", sans-serif';
+      ctx.font = '700 30px -apple-system, BlinkMacSystemFont, "Pretendard Variable", sans-serif';
       ctx.letterSpacing = '2px';
-      ctx.fillText(life4CutState.dateText, W / 2, footerY + 105);
+      ctx.fillText(life4CutState.dateText, W / 2, footerY + 120);
 
       // 반띵 로고 캡슐
       var capsuleW = 340;
-      var capsuleH = 68;
+      var capsuleH = 64;
       var capsuleX = (W - capsuleW) / 2;
       var capsuleY = footerY + 155;
 
       ctx.fillStyle = logoBgHex;
-      drawRoundedRect(ctx, capsuleX, capsuleY, capsuleW, capsuleH, 34);
+      drawRoundedRect(ctx, capsuleX, capsuleY, capsuleW, capsuleH, 32);
       ctx.fill();
 
       ctx.fillStyle = logoTextHex;
-      ctx.font = '900 32px -apple-system, BlinkMacSystemFont, "Pretendard Variable", sans-serif';
+      ctx.font = '900 28px -apple-system, BlinkMacSystemFont, "Pretendard Variable", sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('BAN-DDING 4-CUT', W / 2, capsuleY + 46);
+      ctx.fillText('BAN-DDING 4-CUT', W / 2, capsuleY + 42);
 
       resolve(canvas);
     }).catch(reject);
@@ -461,7 +601,7 @@ function drawRoundedRect(ctx, x, y, width, height, radius) {
   ctx.closePath();
 }
 
-// 13. 인생네컷 이미지 기기 다운로드
+// 15. 인생네컷 이미지 기기 다운로드
 window.downloadLife4CutImage = function() {
   if (window.showToast) showToast('고화질 인생네컷 이미지를 인쇄 중입니다...', 'loader');
 
@@ -484,7 +624,7 @@ window.downloadLife4CutImage = function() {
   });
 };
 
-// 14. 인스타그램 스토리 / SNS Web Share 연동
+// 16. 인스타그램 스토리 / SNS Web Share 연동
 window.shareLife4CutInstagram = function() {
   if (window.showToast) showToast('인스타그램 공유용 이미지를 준비하고 있습니다...', 'share-2');
 
@@ -503,10 +643,10 @@ window.shareLife4CutInstagram = function() {
         }).then(function() {
           if (window.showToast) showToast('인스타그램 공유가 완료되었습니다!', 'instagram');
         }).catch(function(err) {
-          // 사용자가 취소한 경우 조용히 무시
+          // 취소 시 조용히 무시
         });
       } else {
-        // 데스크탑 또는 Web Share 미지원 브라우저: 클립보드 복사 & 이미지 다운로드 자동 실행
+        // 데스크탑 또는 미지원 브라우저: 클립보드 복사 & 이미지 다운로드 자동 실행
         try {
           if (navigator.clipboard && navigator.clipboard.write) {
             navigator.clipboard.write([
@@ -519,7 +659,6 @@ window.shareLife4CutInstagram = function() {
           }
         } catch (e) {}
 
-        // 보조적으로 이미지 즉시 다운로드 제공
         window.downloadLife4CutImage();
         setTimeout(function() {
           if (window.showToast) {
@@ -534,7 +673,7 @@ window.shareLife4CutInstagram = function() {
   });
 };
 
-// 15. 방금 찍은 인생네컷을 현재 약속 장소의 지도 추억 폴라로이드로 바로 등록
+// 17. 방금 찍은 인생네컷을 현재 약속 장소의 지도 추억 폴라로이드로 바로 등록
 window.saveLife4CutToMapMemory = function() {
   if (window.showToast) showToast('지도 추억으로 변환하는 중입니다...', 'map-pin');
 

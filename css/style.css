@@ -965,23 +965,48 @@ body {
   background: #f1f5f9;
 }
 
-/* 5. 반띵 인생네컷 (Life 4-Cut Studio) 전용 프레임 스타일 */
+/* 5. 반띵 인생네컷 (Life 4-Cut Studio) 전용 프레임 & 필터 스타일 */
+#life4CutVideo {
+  transform: scaleX(-1);
+  transition: filter 0.25s ease;
+}
+
+.life4cut-slot img {
+  transition: filter 0.25s ease;
+}
+
+.filter-btn {
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+  user-select: none;
+}
+.filter-btn:hover {
+  background: #3f3f46;
+  color: #ffffff;
+}
+.filter-btn.active {
+  background: linear-gradient(135deg, #f43f5e, #ec4899) !important;
+  color: #ffffff !important;
+  border-color: #fb7185 !important;
+  box-shadow: 0 4px 12px rgba(244, 63, 94, 0.35);
+  font-weight: 800;
+}
+
 .life4cut-strip {
-  width: 190px;
-  min-height: 520px;
-  border-radius: 16px;
-  padding: 12px 10px;
+  width: 176px;
+  border-radius: 14px;
+  padding: 10px 8px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  box-shadow: 0 16px 36px -10px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.1);
+  gap: 7px;
+  box-shadow: 0 16px 36px -10px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.1);
   user-select: none;
 }
 
 .life4cut-slot {
   width: 100%;
   aspect-ratio: 4 / 3;
-  border-radius: 8px;
+  border-radius: 6px;
   overflow: hidden;
   position: relative;
   background: #27272a;
