@@ -1302,7 +1302,287 @@ function generatePrinterCanvas() {
   });
 }
 
+// 15-C. 오리지널 클래식 1:3 롱 스트립 캔버스 생성 (1200 x 3600 px)
+function generateSingleStripCanvas() {
+  return new Promise(function(resolve, reject) {
+    var canvas = document.createElement('canvas');
+    var W = 1200;
+    var H = 3600;
+    canvas.width = W;
+    canvas.height = H;
+    var ctx = canvas.getContext('2d');
 
+    var colors = getThemeColors(life4CutState.theme);
+
+    ctx.fillStyle = colors.bgHex;
+    ctx.fillRect(0, 0, W, H);
+
+    var padX = 80;
+    var topPad = 64;
+    var slotW = W - (padX * 2); // 1040
+    var slotH = 780; // 4:3 비율
+    var gapY = 38;
+
+    var imagePromises = [];
+    for (var i = 0; i < 4; i++) {
+      (function(idx) {
+        imagePromises.push(new Promise(function(res) {
+          var src = life4CutState.shots[idx];
+          if (!src) {
+            res({ idx: idx, img: null });
+            return;
+          }
+          var img = new Image();
+          img.crossOrigin = 'anonymous';
+          img.onload = function() { res({ idx: idx, img: img }); };
+          img.onerror = function() { res({ idx: idx, img: null }); };
+          img.src = src;
+        }));
+      })(i);
+    }
+
+    Promise.all(imagePromises).then(function(results) {
+      results.forEach(function(item) {
+        var slotY = topPad + item.idx * (slotH + gapY);
+
+        if (item.img) {
+          ctx.save();
+          drawRoundedRect(ctx, padX, slotY, slotW, slotH, 20);
+          ctx.clip();
+
+          var iw = item.img.width;
+          var ih = item.img.height;
+          var scale = Math.max(slotW / iw, slotH / ih);
+          var sw = iw * scale;
+          var sh = ih * scale;
+          var sx = padX + (slotW - sw) / 2;
+          var sy = slotY + (slotH - sh) / 2;
+
+          ctx.drawImage(item.img, sx, sy, sw, sh);
+          ctx.restore();
+
+          applyPixelFilterToContext(ctx, padX, slotY, slotW, slotH, life4CutState.filter);
+        } else {
+          ctx.fillStyle = (life4CutState.theme === 'white' || life4CutState.theme === 'cream') ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)';
+          drawRoundedRect(ctx, padX, slotY, slotW, slotH, 20);
+          ctx.fill();
+
+          ctx.fillStyle = colors.subTextHex;
+          ctx.font = '700 36px -apple-system, BlinkMacSystemFont, "Pretendard Variable", sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText((item.idx + 1) + ' CUT', padX + slotW / 2, slotY + slotH / 2 + 12);
+        }
+      });
+
+      var footerY = topPad + 4 * slotH + 3 * gapY + 32;
+
+      ctx.strokeStyle = colors.subTextHex;
+      ctx.lineWidth = 2;
+      ctx.globalAlpha = 0.25;
+      ctx.beginPath();
+      ctx.moveTo(padX + 20, footerY);
+      ctx.lineTo(W - padX - 20, footerY);
+      ctx.stroke();
+      ctx.globalAlpha = 1.0;
+
+      ctx.fillStyle = colors.textHex;
+      ctx.font = '900 42px -apple-system, BlinkMacSystemFont, "Pretendard Variable", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(life4CutState.locationName, W / 2, footerY + 55);
+
+      ctx.fillStyle = colors.subTextHex;
+      ctx.font = '700 26px -apple-system, BlinkMacSystemFont, "Pretendard Variable", sans-serif';
+      ctx.fillText(life4CutState.dateText, W / 2, footerY + 102);
+
+      var capsuleW = 320;
+      var capsuleH = 58;
+      var capsuleX = (W - capsuleW) / 2;
+      var capsuleY = footerY + 140;
+
+      ctx.fillStyle = colors.logoBgHex;
+      drawRoundedRect(ctx, capsuleX, capsuleY, capsuleW, capsuleH, 29);
+      ctx.fill();
+
+      ctx.fillStyle = colors.logoTextHex;
+      ctx.font = '900 26px -apple-system, BlinkMacSystemFont, "Pretendard Variable", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('BAN-DDING 4-CUT', W / 2, capsuleY + 39);
+
+      var qrSize = 64;
+      var qrX = W - padX - qrSize - 4;
+      var qrY = capsuleY - 3;
+      drawMiniQrCode(ctx, qrX, qrY, qrSize, colors.qrDarkHex, colors.qrLightHex);
+
+      resolve(canvas);
+    }).catch(reject);
+  });
+}
+
+// 현재 선택된 저장 포맷 ('app_story' | 'printer' | 'strip')
+var currentLife4CutFormat = 'app_story';
+var lastLife4CutBlob = null;
+var lastLife4CutDataUrl = '';
+
+// 15-D. 포맷별 캔버스 생성기 디스패처
+function generateLife4CutCanvas(format) {
+  var f = format || currentLife4CutFormat || 'app_story';
+  if (f === 'printer') {
+    return generatePrinterCanvas();
+  } else if (f === 'strip') {
+    return generateSingleStripCanvas();
+  } else {
+    return generateAppStoryCanvas();
+  }
+}
+
+// 16. 저장 포맷 변경 및 프리뷰 즉시 갱신
+window.setLife4CutSaveFormat = function(format) {
+  if (format && (format === 'app_story' || format === 'printer' || format === 'strip')) {
+    currentLife4CutFormat = format;
+  }
+
+  var btnApp = document.getElementById('saveFormatAppBtn');
+  var btnPrinter = document.getElementById('saveFormatPrinterBtn');
+  var btnStrip = document.getElementById('saveFormatStripBtn');
+  var formatInfo = document.getElementById('life4CutFormatInfo');
+
+  var activeClass = 'press py-1.5 px-1 rounded-xl bg-rose-500 text-white font-extrabold text-[10.5px] shadow-sm transition-all text-center';
+  var inactiveClass = 'press py-1.5 px-1 rounded-xl bg-zinc-800 text-zinc-400 font-bold text-[10.5px] border border-zinc-700 transition-all text-center';
+
+  if (btnApp && btnPrinter && btnStrip) {
+    btnApp.className = (currentLife4CutFormat === 'app_story') ? activeClass : inactiveClass;
+    btnPrinter.className = (currentLife4CutFormat === 'printer') ? activeClass : inactiveClass;
+    btnStrip.className = (currentLife4CutFormat === 'strip') ? activeClass : inactiveClass;
+  }
+
+  if (formatInfo) {
+    if (currentLife4CutFormat === 'app_story') {
+      formatInfo.innerHTML = '📱 스마트폰·인스타 최적화: <strong class="text-white">1080 × 1920 px (칸당 466 × 690 px)</strong>';
+    } else if (currentLife4CutFormat === 'printer') {
+      formatInfo.innerHTML = '🖨️ 인쇄/인화지 최적화 (2:3): <strong class="text-white">1080 × 1620 px (칸당 466 × 690 px)</strong>';
+    } else {
+      formatInfo.innerHTML = '🎞️ 오리지널 1:3 롱 스트립: <strong class="text-white">1200 × 3600 px (2×6인치)</strong>';
+    }
+  }
+
+  generateLife4CutCanvas(currentLife4CutFormat).then(function(canvas) {
+    canvas.toBlob(function(blob) {
+      if (!blob) return;
+      lastLife4CutBlob = blob;
+      lastLife4CutDataUrl = canvas.toDataURL('image/png');
+      var previewImg = document.getElementById('life4CutSavePreviewImg');
+      if (previewImg) previewImg.src = lastLife4CutDataUrl;
+    }, 'image/png');
+  });
+};
+
+// 16-B. 다운로드 및 갤러리 저장 실행
+window.downloadLife4CutImage = function(formatParam) {
+  if (formatParam && (formatParam === 'app_story' || formatParam === 'printer' || formatParam === 'strip')) {
+    currentLife4CutFormat = formatParam;
+  }
+  if (window.showToast) {
+    var msg = (currentLife4CutFormat === 'app_story')
+      ? '스마트폰 9:16 최적화(1080×1920) 이미지를 준비하고 있습니다...'
+      : (currentLife4CutFormat === 'printer' ? '인쇄용 2:3(1080×1620) 이미지를 준비하고 있습니다...' : '인생네컷 1:3(1200×3600) 이미지를 준비하고 있습니다...');
+    showToast(msg, 'loader');
+  }
+
+  generateLife4CutCanvas(currentLife4CutFormat).then(function(canvas) {
+    canvas.toBlob(function(blob) {
+      if (!blob) return;
+
+      lastLife4CutBlob = blob;
+      lastLife4CutDataUrl = canvas.toDataURL('image/png');
+
+      var prefix = 'bandding_4cut_story_1080x1920_';
+      if (currentLife4CutFormat === 'printer') prefix = 'bandding_4cut_print_1080x1620_';
+      else if (currentLife4CutFormat === 'strip') prefix = 'bandding_4cut_strip_1200x3600_';
+
+      var filename = prefix + Date.now() + '.png';
+      var file = new File([blob], filename, { type: 'image/png' });
+
+      // 모달에 고화질 프리뷰 및 포맷 상태 동기화
+      var previewImg = document.getElementById('life4CutSavePreviewImg');
+      if (previewImg) previewImg.src = lastLife4CutDataUrl;
+      window.setLife4CutSaveFormat(currentLife4CutFormat);
+
+      var isMobileDevice = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1);
+
+      // 모바일 스마트폰: Web Share API로 [사진 앱에 저장 / 갤러리 저장] 즉시 호출
+      if (isMobileDevice && navigator.canShare && navigator.canShare({ files: [file] })) {
+        navigator.share({
+          files: [file],
+          title: '반띵 인생네컷',
+          text: life4CutState.locationName + ' 인생네컷 (' + (currentLife4CutFormat === 'app_story' ? '1080×1920 규격' : (currentLife4CutFormat === 'printer' ? '1080×1620 규격' : '1:3 스트립')) + ')'
+        }).then(function() {
+          if (window.showToast) showToast('갤러리에 저장이 완료되었습니다!', 'download');
+        }).catch(function() {
+          // 공유 취소 시 무시
+        });
+      } else {
+        // 데스크톱 / PC 또는 미지원 브라우저: 다운로드 자동 트리거
+        var blobUrl = URL.createObjectURL(blob);
+        var link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        setTimeout(function() {
+          document.body.removeChild(link);
+          URL.revokeObjectURL(blobUrl);
+        }, 1200);
+
+        if (window.showToast) {
+          showToast('인생네컷 사진이 기기에 저장되었습니다!', 'download');
+        }
+      }
+
+      // 모달을 항상 띄워 프리뷰 확인 및 다른 포맷 변경/1초 꾹 누르기 가능하도록 지원
+      window.openLife4CutSaveModal();
+    }, 'image/png');
+  }).catch(function(err) {
+    console.error(err);
+    if (window.showToast) showToast('이미지 저장 중 오류가 발생했습니다', 'alert-circle');
+  });
+};
+
+// 갤러리 저장 모달 내 시스템 저장창 다시 띄우기
+window.triggerNativeGallerySave = function() {
+  if (!lastLife4CutBlob) {
+    window.downloadLife4CutImage(currentLife4CutFormat);
+    return;
+  }
+
+  var prefix = 'bandding_4cut_story_1080x1920_';
+  if (currentLife4CutFormat === 'printer') prefix = 'bandding_4cut_print_1080x1620_';
+  else if (currentLife4CutFormat === 'strip') prefix = 'bandding_4cut_strip_1200x3600_';
+
+  var filename = prefix + Date.now() + '.png';
+  var file = new File([lastLife4CutBlob], filename, { type: 'image/png' });
+
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    navigator.share({
+      files: [file],
+      title: '반띵 인생네컷',
+      text: life4CutState.locationName + ' 인생네컷'
+    }).then(function() {
+      if (window.showToast) showToast('갤러리에 저장이 완료되었습니다!', 'download');
+    }).catch(function() {});
+  } else {
+    var blobUrl = URL.createObjectURL(lastLife4CutBlob);
+    var link = document.createElement('a');
+    link.href = blobUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    setTimeout(function() {
+      document.body.removeChild(link);
+      URL.revokeObjectURL(blobUrl);
+    }, 1200);
+    if (window.showToast) showToast('갤러리 저장을 위한 다운로드가 완료되었습니다!', 'download');
+  }
+};
 
 window.openLife4CutSaveModal = function() {
   var modal = document.getElementById('life4CutSaveModal');
