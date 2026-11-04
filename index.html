@@ -1727,11 +1727,14 @@
             </div>
           </div>
 
-          <!-- 모바일 전용: 도구 카테고리 탭 (필터 / 문구) -->
+          <!-- 모바일 전용: 도구 카테고리 탭 (필터 / 프레임·배경 / 문구) -->
           <div class="sm:hidden w-full flex flex-col gap-1.5 pt-1">
             <div class="flex items-center gap-1 p-0.5 rounded-xl bg-zinc-900 border border-zinc-800">
               <button type="button" id="mobileToolTab_filter" onclick="window.setLife4CutMobileToolTab('filter')" class="press flex-1 py-1 px-1 rounded-lg bg-zinc-800 text-white font-extrabold text-[10.5px] border border-zinc-700 shadow-xs flex items-center justify-center gap-1 transition-all">
                 <span>✨ 뷰티 필터</span>
+              </button>
+              <button type="button" id="mobileToolTab_theme" onclick="window.setLife4CutMobileToolTab('theme')" class="press flex-1 py-1 px-1 rounded-lg bg-transparent text-zinc-500 font-bold text-[10.5px] flex items-center justify-center gap-1 transition-all">
+                <span>🎨 프레임·배경</span>
               </button>
               <button type="button" id="mobileToolTab_text" onclick="window.setLife4CutMobileToolTab('text')" class="press flex-1 py-1 px-1 rounded-lg bg-transparent text-zinc-500 font-bold text-[10.5px] flex items-center justify-center gap-1 transition-all">
                 <span>✏️ 문구</span>
@@ -1747,13 +1750,65 @@
               <button type="button" onclick="window.setLife4CutFilter('original')" data-filter="original" class="filter-btn shrink-0 py-1.5 px-3 rounded-xl bg-zinc-800 text-[11px] font-bold text-zinc-400 text-center border border-zinc-700">🌿 원본</button>
             </div>
 
-            <!-- 모바일 패널 2: 문구 입력 -->
+            <!-- 모바일 패널 2: 프레임 색상 & 감성 배경 (2개 가로 스크롤 행) -->
+            <div id="mobileToolPanel_theme" class="hidden flex flex-col gap-1.5 py-1">
+              <!-- 1행: 클래식 프레임 색상 5종 -->
+              <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+                <span class="text-[9.5px] font-black text-zinc-400 shrink-0 px-1">프레임:</span>
+                <button type="button" onclick="window.setLife4CutTheme('black')" data-theme="black" class="theme-btn active shrink-0 px-2.5 py-1 rounded-lg bg-zinc-900 border border-zinc-700 text-[10.5px] font-bold text-white flex items-center gap-1.5">
+                  <span class="w-2.5 h-2.5 rounded-full bg-zinc-950 border border-white/40"></span>
+                  <span>블랙</span>
+                </button>
+                <button type="button" onclick="window.setLife4CutTheme('white')" data-theme="white" class="theme-btn opacity-70 shrink-0 px-2.5 py-1 rounded-lg bg-zinc-800 border border-zinc-700 text-[10.5px] font-bold text-zinc-200 flex items-center gap-1.5">
+                  <span class="w-2.5 h-2.5 rounded-full bg-white border border-zinc-400"></span>
+                  <span>화이트</span>
+                </button>
+                <button type="button" onclick="window.setLife4CutTheme('blue')" data-theme="blue" class="theme-btn opacity-70 shrink-0 px-2.5 py-1 rounded-lg bg-zinc-800 border border-zinc-700 text-[10.5px] font-bold text-zinc-200 flex items-center gap-1.5">
+                  <span class="w-2.5 h-2.5 rounded-full bg-sky-500"></span>
+                  <span>블루</span>
+                </button>
+                <button type="button" onclick="window.setLife4CutTheme('cream')" data-theme="cream" class="theme-btn opacity-70 shrink-0 px-2.5 py-1 rounded-lg bg-zinc-800 border border-zinc-700 text-[10.5px] font-bold text-zinc-200 flex items-center gap-1.5">
+                  <span class="w-2.5 h-2.5 rounded-full bg-amber-100 border border-amber-300"></span>
+                  <span>버터</span>
+                </button>
+                <button type="button" onclick="window.setLife4CutTheme('pink')" data-theme="pink" class="theme-btn opacity-70 shrink-0 px-2.5 py-1 rounded-lg bg-zinc-800 border border-zinc-700 text-[10.5px] font-bold text-zinc-200 flex items-center gap-1.5">
+                  <span class="w-2.5 h-2.5 rounded-full bg-pink-300 border border-pink-400"></span>
+                  <span>핑크</span>
+                </button>
+              </div>
+              <!-- 2행: 감도 있는 스튜디오 배경 5종 -->
+              <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+                <span class="text-[9.5px] font-black text-rose-400 shrink-0 px-1">감성배경:</span>
+                <button type="button" onclick="window.setLife4CutTheme('haru_blue')" data-theme="haru_blue" class="theme-btn opacity-70 shrink-0 px-2.5 py-1 rounded-lg bg-zinc-800 border border-zinc-700 text-[10.5px] font-bold text-zinc-200 flex items-center gap-1.5">
+                  <span class="w-2.5 h-2.5 rounded-full bg-gradient-to-r from-sky-400 to-sky-600"></span>
+                  <span>하루필름</span>
+                </button>
+                <button type="button" onclick="window.setLife4CutTheme('y2k_lavender')" data-theme="y2k_lavender" class="theme-btn opacity-70 shrink-0 px-2.5 py-1 rounded-lg bg-zinc-800 border border-zinc-700 text-[10.5px] font-bold text-zinc-200 flex items-center gap-1.5">
+                  <span class="w-2.5 h-2.5 rounded-full bg-gradient-to-r from-purple-200 to-purple-400"></span>
+                  <span>라벤더</span>
+                </button>
+                <button type="button" onclick="window.setLife4CutTheme('sunset_glow')" data-theme="sunset_glow" class="theme-btn opacity-70 shrink-0 px-2.5 py-1 rounded-lg bg-zinc-800 border border-zinc-700 text-[10.5px] font-bold text-zinc-200 flex items-center gap-1.5">
+                  <span class="w-2.5 h-2.5 rounded-full bg-gradient-to-r from-orange-200 to-orange-400"></span>
+                  <span>선셋</span>
+                </button>
+                <button type="button" onclick="window.setLife4CutTheme('sage_green')" data-theme="sage_green" class="theme-btn opacity-70 shrink-0 px-2.5 py-1 rounded-lg bg-zinc-800 border border-zinc-700 text-[10.5px] font-bold text-zinc-200 flex items-center gap-1.5">
+                  <span class="w-2.5 h-2.5 rounded-full bg-gradient-to-r from-emerald-100 to-green-300"></span>
+                  <span>세이지</span>
+                </button>
+                <button type="button" onclick="window.setLife4CutTheme('charcoal')" data-theme="charcoal" class="theme-btn opacity-70 shrink-0 px-2.5 py-1 rounded-lg bg-zinc-800 border border-zinc-700 text-[10.5px] font-bold text-zinc-200 flex items-center gap-1.5">
+                  <span class="w-2.5 h-2.5 rounded-full bg-gradient-to-r from-zinc-600 to-zinc-900"></span>
+                  <span>차콜</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- 모바일 패널 3: 문구 입력 -->
             <div id="mobileToolPanel_text" class="hidden flex flex-col gap-1 py-1">
               <input type="text" id="life4CutPlaceInputMobile" oninput="window.updateLife4CutPlace(this.value)" placeholder="예: 온달집 강남역점" class="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-700 text-[12px] font-bold text-white focus:outline-none focus:border-rose-500" />
             </div>
           </div>
 
-          <!-- 데스크탑 전용: 컨트롤 버튼군 & 필터/문구 풀 목록 (hidden sm:flex) -->
+          <!-- 데스크탑 전용: 컨트롤 버튼군 & 필터/테마/문구 풀 목록 (hidden sm:flex) -->
           <div class="hidden sm:flex flex-col gap-3">
             <!-- 데스크탑 촬영 버튼 -->
             <div class="flex flex-col gap-1.5">
@@ -1788,6 +1843,77 @@
                 <button type="button" onclick="window.setLife4CutFilter('film')" data-filter="film" class="filter-btn py-1.5 px-1 rounded-lg bg-zinc-800 text-[10.5px] font-bold text-zinc-400 text-center border border-zinc-700">🎞️ 필름</button>
                 <button type="button" onclick="window.setLife4CutFilter('mono')" data-filter="mono" class="filter-btn py-1.5 px-1 rounded-lg bg-zinc-800 text-[10.5px] font-bold text-zinc-400 text-center border border-zinc-700">🖤 흑백</button>
                 <button type="button" onclick="window.setLife4CutFilter('original')" data-filter="original" class="filter-btn py-1.5 px-1 rounded-lg bg-zinc-800 text-[10.5px] font-bold text-zinc-400 text-center border border-zinc-700">🌿 원본</button>
+              </div>
+            </div>
+
+            <!-- 데스크탑 프레임 색상 & 감성 배경 2행 -->
+            <div class="pt-2 border-t border-zinc-800 flex flex-col gap-1.5">
+              <div class="flex items-center justify-between">
+                <label class="text-[11px] font-bold text-zinc-400 flex items-center gap-1">
+                  <i data-lucide="palette" class="w-3.5 h-3.5 text-indigo-400"></i>
+                  <span>프레임 색상 & 감성 배경</span>
+                </label>
+                <span id="life4CutThemeName" class="text-[10.5px] font-extrabold text-indigo-400">🖤 딥 블랙</span>
+              </div>
+              
+              <!-- 1행: 클래식 프레임 색상 5종 -->
+              <div class="flex flex-col gap-1">
+                <div class="flex items-center justify-between">
+                  <span class="text-[9.5px] font-bold text-zinc-400">클래식 프레임</span>
+                  <span class="text-[9px] text-zinc-500">솔리드 5컬러</span>
+                </div>
+                <div class="grid grid-cols-5 gap-1.5">
+                  <button type="button" onclick="window.setLife4CutTheme('black')" data-theme="black" class="theme-btn active py-1.5 px-1 rounded-lg bg-zinc-900 border border-zinc-700 text-[10.5px] font-bold text-white flex items-center justify-center gap-1">
+                    <span class="w-2.5 h-2.5 rounded-full bg-zinc-950 border border-white/40"></span>
+                    <span>블랙</span>
+                  </button>
+                  <button type="button" onclick="window.setLife4CutTheme('white')" data-theme="white" class="theme-btn opacity-70 py-1.5 px-1 rounded-lg bg-zinc-800 border border-zinc-700 text-[10.5px] font-bold text-zinc-200 flex items-center justify-center gap-1">
+                    <span class="w-2.5 h-2.5 rounded-full bg-white border border-zinc-400"></span>
+                    <span>화이트</span>
+                  </button>
+                  <button type="button" onclick="window.setLife4CutTheme('blue')" data-theme="blue" class="theme-btn opacity-70 py-1.5 px-1 rounded-lg bg-zinc-800 border border-zinc-700 text-[10.5px] font-bold text-zinc-200 flex items-center justify-center gap-1">
+                    <span class="w-2.5 h-2.5 rounded-full bg-sky-500"></span>
+                    <span>블루</span>
+                  </button>
+                  <button type="button" onclick="window.setLife4CutTheme('cream')" data-theme="cream" class="theme-btn opacity-70 py-1.5 px-1 rounded-lg bg-zinc-800 border border-zinc-700 text-[10.5px] font-bold text-zinc-200 flex items-center justify-center gap-1">
+                    <span class="w-2.5 h-2.5 rounded-full bg-amber-100 border border-amber-300"></span>
+                    <span>버터</span>
+                  </button>
+                  <button type="button" onclick="window.setLife4CutTheme('pink')" data-theme="pink" class="theme-btn opacity-70 py-1.5 px-1 rounded-lg bg-zinc-800 border border-zinc-700 text-[10.5px] font-bold text-zinc-200 flex items-center justify-center gap-1">
+                    <span class="w-2.5 h-2.5 rounded-full bg-pink-300 border border-pink-400"></span>
+                    <span>핑크</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- 2행: 감성 스튜디오 배경 5종 -->
+              <div class="flex flex-col gap-1 mt-0.5">
+                <div class="flex items-center justify-between">
+                  <span class="text-[9.5px] font-bold text-rose-400">감성 스튜디오 배경</span>
+                  <span class="text-[9px] text-zinc-500">무드 5컬러</span>
+                </div>
+                <div class="grid grid-cols-5 gap-1.5">
+                  <button type="button" onclick="window.setLife4CutTheme('haru_blue')" data-theme="haru_blue" class="theme-btn opacity-70 py-1.5 px-1 rounded-lg bg-zinc-800 border border-zinc-700 text-[10.5px] font-bold text-zinc-200 flex items-center justify-center gap-1">
+                    <span class="w-2.5 h-2.5 rounded-full bg-gradient-to-r from-sky-400 to-sky-600"></span>
+                    <span>하루필름</span>
+                  </button>
+                  <button type="button" onclick="window.setLife4CutTheme('y2k_lavender')" data-theme="y2k_lavender" class="theme-btn opacity-70 py-1.5 px-1 rounded-lg bg-zinc-800 border border-zinc-700 text-[10.5px] font-bold text-zinc-200 flex items-center justify-center gap-1">
+                    <span class="w-2.5 h-2.5 rounded-full bg-gradient-to-r from-purple-200 to-purple-400"></span>
+                    <span>라벤더</span>
+                  </button>
+                  <button type="button" onclick="window.setLife4CutTheme('sunset_glow')" data-theme="sunset_glow" class="theme-btn opacity-70 py-1.5 px-1 rounded-lg bg-zinc-800 border border-zinc-700 text-[10.5px] font-bold text-zinc-200 flex items-center justify-center gap-1">
+                    <span class="w-2.5 h-2.5 rounded-full bg-gradient-to-r from-orange-200 to-orange-400"></span>
+                    <span>선셋</span>
+                  </button>
+                  <button type="button" onclick="window.setLife4CutTheme('sage_green')" data-theme="sage_green" class="theme-btn opacity-70 py-1.5 px-1 rounded-lg bg-zinc-800 border border-zinc-700 text-[10.5px] font-bold text-zinc-200 flex items-center justify-center gap-1">
+                    <span class="w-2.5 h-2.5 rounded-full bg-gradient-to-r from-emerald-100 to-green-300"></span>
+                    <span>세이지</span>
+                  </button>
+                  <button type="button" onclick="window.setLife4CutTheme('charcoal')" data-theme="charcoal" class="theme-btn opacity-70 py-1.5 px-1 rounded-lg bg-zinc-800 border border-zinc-700 text-[10.5px] font-bold text-zinc-200 flex items-center justify-center gap-1">
+                    <span class="w-2.5 h-2.5 rounded-full bg-gradient-to-r from-zinc-600 to-zinc-900"></span>
+                    <span>차콜</span>
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -2094,6 +2220,6 @@
 <script src="js/chat.js?v=76"></script>
 <script src="js/ui.js?v=76"></script>
 <script src="js/memory.js?v=76"></script>
-<script src="js/life4cut.js?v=76"></script>
+<script src="js/life4cut.js?v=77"></script>
 </body>
 </html>

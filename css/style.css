@@ -1204,6 +1204,23 @@ body {
   color: #ffffff;
 }
 
+/* 9. ☕ 빈티지 차콜 */
+.theme-strip-charcoal {
+  background: linear-gradient(160deg, #3f3f46 0%, #18181b 100%);
+  color: #ffffff;
+}
+.theme-strip-charcoal .life4cut-slot {
+  background: rgba(63, 63, 70, 0.4);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.15);
+}
+.theme-strip-charcoal .strip-sub {
+  color: #d4d4d8;
+}
+.theme-strip-charcoal .strip-badge {
+  background: #ffffff;
+  color: #18181b;
+}
+
 /* ==========================================================================
    모바일 전용 UI & Safe Area 최적화 (iOS Dynamic Island, Notch, Home Bar)
    ========================================================================== */
