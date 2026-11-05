@@ -201,21 +201,92 @@ function renderOriginChips() {
   if (window.lucide) lucide.createIcons();
 }
 
+window.syncMyTransportUI = function() {
+  var myLoc = state.locations && state.locations[0];
+  var isCar = myLoc ? (myLoc.transport === 'car') : false;
+
+  var label = document.getElementById('planMyTransportLabel');
+  if (label) {
+    label.textContent = isCar ? '자차' : '대중교통';
+    label.className = 'text-[11.5px] font-bold ' + (isCar ? 'text-amber-700' : 'text-[#2563eb]');
+  }
+
+  var btnTransit = document.getElementById('planTransitBtn');
+  var btnCar = document.getElementById('planCarBtn');
+  var activeBtnClass = 'press px-3 py-1 rounded-lg text-[11px] font-black transition-all flex items-center gap-1 shadow-2xs ';
+  var inactiveBtnClass = 'press px-3 py-1 rounded-lg text-[11px] font-bold text-slate-500 hover:text-slate-800 transition-all flex items-center gap-1';
+
+  if (btnTransit) {
+    btnTransit.className = (!isCar) ? (activeBtnClass + 'bg-[#2563eb] text-white') : inactiveBtnClass;
+  }
+  if (btnCar) {
+    btnCar.className = isCar ? (activeBtnClass + 'bg-amber-500 text-white') : inactiveBtnClass;
+  }
+
+  var badgeBtn = document.getElementById('planMyTransportBadgeBtn');
+  var iconEl = document.getElementById('planMyTransportIcon');
+  var textEl = document.getElementById('planMyTransportText');
+  if (badgeBtn) {
+    badgeBtn.className = 'press px-2 py-1 rounded-lg text-[10.5px] font-black border flex items-center gap-1 transition-all ' +
+      (isCar ? 'bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100' : 'bg-sky-50 text-[#0284c7] border-sky-200 hover:bg-sky-100');
+  }
+  if (iconEl) {
+    iconEl.setAttribute('data-lucide', isCar ? 'car' : 'train-front');
+  }
+  if (textEl) {
+    textEl.textContent = isCar ? '자차' : '대중교통';
+  }
+  if (window.lucide) lucide.createIcons();
+};
+
+window.setMyTransport = function(mode) {
+  if (!state.locations || state.locations.length === 0) return;
+  state.locations[0].transport = mode;
+  if (!state.meetFilter) state.meetFilter = {};
+  state.meetFilter.transportPref = mode;
+
+  window.syncMyTransportUI();
+  renderOriginChips();
+
+  if (state.confirmedPlace) {
+    var destCoord = [parseFloat(state.confirmedPlace.y), parseFloat(state.confirmedPlace.x)];
+    updateKakaoMobilityRoutes(destCoord, state.confirmedPlace.place_name, false);
+    renderConfirmedNaviList();
+  } else if (state.currentHubCoord) {
+    updateKakaoMobilityRoutes(state.currentHubCoord, state.currentHubName || '중간 지점', true);
+  } else {
+    if (window.renderTossCardUI) window.renderTossCardUI();
+  }
+
+  showToast('내 이동 수단: ' + (mode === 'car' ? '자차' : '대중교통'), mode === 'car' ? 'car' : 'train-front');
+};
+
+window.toggleMyTransport = function() {
+  var cur = (state.locations && state.locations[0] && state.locations[0].transport === 'car') ? 'car' : 'transit';
+  window.setMyTransport(cur === 'car' ? 'transit' : 'car');
+};
+
 window.toggleParticipantTransport = function(locId) {
   var item = state.locations.find(function(l) { return l.id === locId; });
   if (!item) return;
 
   item.transport = (item.transport === 'car') ? 'transit' : 'car';
+  if (item.isMe) {
+    window.syncMyTransportUI();
+  }
   renderOriginChips();
 
   if (state.confirmedPlace) {
     var destCoord = [parseFloat(state.confirmedPlace.y), parseFloat(state.confirmedPlace.x)];
-    updateKakaoMobilityRoutes(destCoord, state.confirmedPlace.place_name);
+    updateKakaoMobilityRoutes(destCoord, state.confirmedPlace.place_name, false);
     renderConfirmedNaviList();
+  } else if (state.currentHubCoord) {
+    updateKakaoMobilityRoutes(state.currentHubCoord, state.currentHubName || '중간 지점', true);
   }
 
   var tLabel = (item.transport === 'car') ? '자차' : '대중교통';
-  showToast(item.name + ' 이동 수단: ' + tLabel, (item.transport === 'car') ? 'car' : 'train-front');
+  showToast(item.name + ' 이동 수단: ' + tLabel + '(으)로 변경', (item.transport === 'car') ? 'car' : 'train-front');
+  if (window.renderTossCardUI) window.renderTossCardUI();
   if (window.lucide) lucide.createIcons();
 };
 
@@ -386,7 +457,7 @@ window.addPredefinedLocation = function(name, lat, lng) {
     return;
   }
 
-  var defaultTrans = (state.meetFilter && state.meetFilter.transportPref === 'car') ? 'car' : 'transit';
+  var defaultTrans = window.modalSelectedTransport || ((state.meetFilter && state.meetFilter.transportPref === 'car') ? 'car' : 'transit');
   var newLoc = {
     id: 'loc_' + Date.now(),
     name: name,
@@ -402,6 +473,18 @@ window.addPredefinedLocation = function(name, lat, lng) {
   if (window.updateHeaderRouteCardUI) window.updateHeaderRouteCardUI();
   closeModal();
   showToast(name + ' 추가 완료! 중간 지점을 계산했습니다', 'map-pin-plus');
+};
+
+window.modalSelectedTransport = 'transit';
+window.setModalAddTransport = function(mode) {
+  window.modalSelectedTransport = mode;
+  var bT = document.getElementById('modalTransportTransitBtn');
+  var bC = document.getElementById('modalTransportCarBtn');
+  var activeClass = 'press px-2.5 py-0.5 rounded-md text-[10.5px] font-black transition-all flex items-center gap-1 shadow-2xs ';
+  var inactiveClass = 'press px-2.5 py-0.5 rounded-md text-[10.5px] font-bold text-slate-500 hover:text-slate-800 transition-all flex items-center gap-1';
+  if (bT) bT.className = (mode === 'transit') ? (activeClass + 'bg-[#2563eb] text-white') : inactiveClass;
+  if (bC) bC.className = (mode === 'car') ? (activeClass + 'bg-amber-500 text-white') : inactiveClass;
+  if (window.lucide) lucide.createIcons();
 };
 
 window.selectSearchResult = function(resultId) {
@@ -455,7 +538,7 @@ window.selectSearchResult = function(resultId) {
     return;
   }
 
-  var defaultTrans = (state.meetFilter && state.meetFilter.transportPref === 'car') ? 'car' : 'transit';
+  var defaultTrans = window.modalSelectedTransport || ((state.meetFilter && state.meetFilter.transportPref === 'car') ? 'car' : 'transit');
   var newLoc = {
     id: 'loc_' + Date.now(),
     name: item.shortName,
@@ -481,6 +564,8 @@ window.openEditMyLocationModal = function() {
   var titleEl = document.getElementById('modalTitle');
   var subTitleEl = document.getElementById('modalSubTitle');
   var gpsRetryBtn = document.getElementById('modalGpsRetryBtn');
+  var tSelector = document.getElementById('modalTransportSelector');
+  if (tSelector) tSelector.classList.add('hidden');
   if (titleEl) titleEl.textContent = '내 출발지 주소 변경';
   if (subTitleEl) subTitleEl.textContent = '현재 위치뿐만 아니라 집, 회사, 역 등 모임을 시작할 다른 주소를 검색해 지정하세요';
   if (gpsRetryBtn) gpsRetryBtn.classList.remove('hidden');
@@ -498,6 +583,9 @@ window.openAddModal = function() {
   var titleEl = document.getElementById('modalTitle');
   var subTitleEl = document.getElementById('modalSubTitle');
   var gpsRetryBtn = document.getElementById('modalGpsRetryBtn');
+  var tSelector = document.getElementById('modalTransportSelector');
+  if (tSelector) tSelector.classList.remove('hidden');
+  window.setModalAddTransport('transit');
   if (titleEl) titleEl.textContent = '출발지 주소 추가';
   if (subTitleEl) subTitleEl.textContent = '주소나 지하철역을 입력하면 중간 지점을 찾아줍니다';
   if (gpsRetryBtn) gpsRetryBtn.classList.add('hidden');
@@ -818,21 +906,18 @@ window.renderTossCardUI = function() {
   var friendsList = document.getElementById('tossFriendsList');
   var topBadge = document.getElementById('tossStatusBadge');
 
+  if (window.syncMyTransportUI) {
+    window.syncMyTransportUI();
+  }
+
   if (myAddrText && myLoc) {
     var addr = myLoc.addr || myLoc.name || state.myAddress || '내 위치 확인 중...';
     myAddrText.textContent = addr;
   }
 
-  // 1명일 때: 약속 준비 모드
-  if (count <= 1) {
-    if (planPhase) planPhase.classList.remove('hidden');
-    if (resultPhase) resultPhase.classList.add('hidden');
-    if (topBadge) {
-      topBadge.textContent = '약속 준비';
-      topBadge.className = 'text-[10.5px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-[#2563eb]';
-    }
-
-    if (friendsList) {
+  if (friendsList) {
+    var friends = state.locations.slice(1);
+    if (friends.length === 0) {
       friendsList.innerHTML = '<div onclick="window.openAddModal()" class="press cursor-pointer border border-dashed border-slate-300 hover:border-[#2563eb] bg-white/70 hover:bg-blue-50/40 rounded-xl p-2.5 flex items-center justify-between gap-2 transition-all group">' +
         '<div class="flex items-center gap-2 min-w-0">' +
           '<span class="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0"></span>' +
@@ -843,19 +928,63 @@ window.renderTossCardUI = function() {
           '<i data-lucide="plus" class="w-3.5 h-3.5"></i>' +
         '</div>' +
       '</div>';
+    } else {
+      var fHtml = friends.map(function(fr) {
+        var isFrCar = (fr.transport === 'car');
+        var frTransName = isFrCar ? '자차' : '대중교통';
+        var frTransIcon = isFrCar ? 'car' : 'train-front';
+        var frTransBtnClass = isFrCar ? 'bg-amber-50 text-amber-800 border-amber-200' : 'bg-sky-50 text-[#0284c7] border-sky-200';
+        return '<div class="flex items-center justify-between gap-2 py-1 px-2 rounded-xl bg-white border border-slate-200/70 shadow-2xs">' +
+          '<div class="flex items-center gap-2 min-w-0 flex-1">' +
+            '<span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>' +
+            '<span class="text-[10.5px] font-black px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 shrink-0">' + fr.name + '</span>' +
+            '<span class="text-[12px] font-bold text-slate-700 truncate">' + (fr.addr || fr.name) + '</span>' +
+          '</div>' +
+          '<div class="flex items-center gap-1.5 shrink-0">' +
+            '<button type="button" onclick="window.toggleParticipantTransport(\'' + fr.id + '\')" title="이동 수단 변경 (대중교통/자차)" class="press px-2 py-0.5 rounded-lg text-[10.5px] font-extrabold border flex items-center gap-1 ' + frTransBtnClass + '">' +
+              '<i data-lucide="' + frTransIcon + '" class="w-3 h-3"></i>' +
+              '<span>' + frTransName + '</span>' +
+            '</button>' +
+            '<button type="button" onclick="window.removeLocation(\'' + fr.id + '\')" class="press p-1 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-all">' +
+              '<i data-lucide="x" class="w-3.5 h-3.5"></i>' +
+            '</button>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+      fHtml += '<button type="button" onclick="window.openAddModal()" class="press w-full py-2 rounded-xl border border-dashed border-slate-300 hover:border-[#2563eb] text-slate-600 hover:text-[#2563eb] text-[11.5px] font-bold flex items-center justify-center gap-1 transition-all mt-1">' +
+        '<i data-lucide="plus" class="w-3.5 h-3.5"></i>' +
+        '<span>친구 더 추가하기</span>' +
+      '</button>';
+      friendsList.innerHTML = fHtml;
+    }
+  }
+
+  // 1명일 때: 약속 준비 모드
+  if (count <= 1) {
+    if (planPhase) planPhase.classList.remove('hidden');
+    if (resultPhase) resultPhase.classList.add('hidden');
+    if (topBadge) {
+      topBadge.textContent = '약속 준비';
+      topBadge.className = 'text-[10.5px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-[#2563eb]';
     }
   } else {
     // 2명 이상: 황금 밸런스 중간 장소 도출 완료 모드
     if (planPhase) planPhase.classList.add('hidden');
     if (resultPhase) resultPhase.classList.remove('hidden');
+
+    var currentHubTitle = state.currentHubName;
+    if (!currentHubTitle || currentHubTitle === '내 위치' || currentHubTitle === '내 위치 기준' || currentHubTitle.indexOf('내 위치') !== -1) {
+      currentHubTitle = '최적 중간 장소 분석 중...';
+    }
+
     if (topBadge) {
-      topBadge.textContent = count + '곳 모임 (' + (state.currentHubName || '중간 지점') + ')';
+      topBadge.textContent = count + '곳 모임 (' + currentHubTitle + ')';
       topBadge.className = 'text-[10.5px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700';
     }
 
     var hubNameEl = document.getElementById('tossHubName');
-    if (hubNameEl && state.currentHubName) {
-      hubNameEl.textContent = state.currentHubName;
+    if (hubNameEl) {
+      hubNameEl.textContent = currentHubTitle;
     }
 
     var diffEl = document.getElementById('travelTimeDiff');
@@ -868,31 +997,55 @@ window.renderTossCardUI = function() {
     // 참가자별 소요시간 게이지 바 렌더링
     var gaugeArea = document.getElementById('tossTimeGaugeArea');
     if (gaugeArea && state.locations) {
+      var targetCenter = state.confirmedPlace ? [parseFloat(state.confirmedPlace.y), parseFloat(state.confirmedPlace.x)] : (state.currentHubCoord || state.myLocation || DEFAULT_LOC);
       var maxDur = 1;
       state.locations.forEach(function(loc) {
-        var d = participantRouteDetails[loc.id] ? participantRouteDetails[loc.id].durationMin : 25;
+        var r = participantRouteDetails[loc.id];
+        var dist = calculateDistanceKm(loc.loc[0], loc.loc[1], targetCenter[0], targetCenter[1]);
+        var est = (loc.transport === 'car')
+          ? Math.max(5, Math.round(dist * 1.8 + 5))
+          : (dist < 3.0 ? Math.max(10, Math.round(dist * 3.5 + 8)) : Math.max(22, Math.round(dist * 3.2 + 15)));
+        var d = r ? r.durationMin : est;
         if (d > maxDur) maxDur = d;
       });
 
       gaugeArea.innerHTML = state.locations.map(function(loc, idx) {
         var isMe = idx === 0;
         var rDet = participantRouteDetails[loc.id];
-        var dur = rDet ? rDet.durationMin : (isMe ? 19 : 18);
-        var pct = Math.max(25, Math.min(100, Math.round((dur / maxDur) * 100)));
+        var distKmNum = calculateDistanceKm(loc.loc[0], loc.loc[1], targetCenter[0], targetCenter[1]);
+        var estFallback = (loc.transport === 'car')
+          ? Math.max(5, Math.round(distKmNum * 1.8 + 5))
+          : (distKmNum < 3.0 ? Math.max(10, Math.round(distKmNum * 3.5 + 8)) : Math.max(22, Math.round(distKmNum * 3.2 + 15)));
+        var dur = rDet ? rDet.durationMin : estFallback;
+        var distStr = rDet ? (rDet.distKm + 'km') : (distKmNum.toFixed(1) + 'km');
+        var pct = Math.max(20, Math.min(100, Math.round((dur / maxDur) * 100)));
         var barColor = isMe ? 'bg-[#2563eb]' : 'bg-emerald-500';
         var badgeColor = isMe ? 'bg-blue-100 text-[#2563eb]' : 'bg-emerald-100 text-emerald-700';
-        var transName = (loc.transport === 'car') ? '자차' : ((loc.transport === 'walk') ? '도보' : '대중교통');
+        var isCar = (loc.transport === 'car');
+        var transName = isCar ? '자차' : '대중교통';
+        var transIcon = isCar ? 'car' : 'train-front';
+        var transBtnColor = isCar
+          ? 'bg-amber-100/90 text-amber-900 border-amber-300 hover:bg-amber-200'
+          : 'bg-sky-100/90 text-sky-900 border-sky-300 hover:bg-sky-200';
 
-        return '<div class="flex flex-col gap-1">' +
-          '<div class="flex items-center justify-between text-[11.5px] font-bold">' +
-            '<div class="flex items-center gap-1.5 min-w-0">' +
-              '<span class="px-1.5 py-0.2 rounded text-[10px] font-extrabold ' + badgeColor + '">' + (isMe ? '나' : loc.name) + '</span>' +
-              '<span class="text-slate-600 truncate text-[11px]">' + (loc.addr || loc.name) + ' (' + transName + ')</span>' +
+        return '<div class="flex flex-col gap-1 py-1 px-1 rounded-xl hover:bg-blue-50/30 transition-colors">' +
+          '<div class="flex items-center justify-between text-[11.5px] font-bold gap-2">' +
+            '<div class="flex items-center gap-1.5 min-w-0 flex-1">' +
+              '<span class="px-1.5 py-0.5 rounded text-[10px] font-extrabold ' + badgeColor + ' shrink-0">' + (isMe ? '나' : loc.name) + '</span>' +
+              '<span class="text-slate-700 truncate text-[11.5px] max-w-[125px]" title="' + (loc.addr || loc.name) + '">' + (loc.addr || loc.name) + '</span>' +
+              '<!-- 원터치 교통수단 전환 버튼 -->' +
+              '<button type="button" onclick="window.toggleParticipantTransport(\'' + loc.id + '\')" title="터치하여 이동 수단 변경 (대중교통 ↔ 자차)" class="press px-2 py-0.5 rounded-lg text-[10px] font-black border flex items-center gap-1 shadow-2xs shrink-0 cursor-pointer transition-all ' + transBtnColor + '">' +
+                '<i data-lucide="' + transIcon + '" class="w-3 h-3"></i>' +
+                '<span>' + transName + '</span>' +
+              '</button>' +
             '</div>' +
-            '<span class="font-black text-slate-900 shrink-0 ml-2">' + dur + '분</span>' +
+            '<div class="flex items-baseline gap-1.5 shrink-0 ml-1">' +
+              '<span class="text-[10px] font-medium text-slate-400">' + distStr + '</span>' +
+              '<span class="text-[13px] font-black text-slate-900">' + dur + '분</span>' +
+            '</div>' +
           '</div>' +
-          '<div class="w-full h-2 rounded-full bg-slate-100 overflow-hidden">' +
-            '<div class="h-full rounded-full ' + barColor + ' transition-all duration-500" style="width: ' + pct + '%"></div>' +
+          '<div class="w-full h-2.5 rounded-full bg-slate-100 overflow-hidden shadow-inner">' +
+            '<div class="h-full rounded-full ' + barColor + ' transition-all duration-500 shadow-sm" style="width: ' + pct + '%"></div>' +
           '</div>' +
         '</div>';
       }).join('');
@@ -924,8 +1077,10 @@ window.setHeaderTransport = function(mode) {
 
   if (state.confirmedPlace) {
     var destCoord = [parseFloat(state.confirmedPlace.y), parseFloat(state.confirmedPlace.x)];
-    updateKakaoMobilityRoutes(destCoord, state.confirmedPlace.place_name);
+    updateKakaoMobilityRoutes(destCoord, state.confirmedPlace.place_name, false);
     renderConfirmedNaviList();
+  } else if (state.currentHubCoord) {
+    updateKakaoMobilityRoutes(state.currentHubCoord, state.currentHubName || '중간 지점', true);
   }
 
   window.updateHeaderRouteCardUI();

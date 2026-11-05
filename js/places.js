@@ -157,7 +157,16 @@ window.getPlaceBookingEligibility = function(place) {
 
 function fetchKakaoPlaces(centerCoord, distanceText) {
   state.currentHubCoord = centerCoord;
-  state.currentHubName = distanceText;
+  if (distanceText) {
+    var cleaned = distanceText.replace(/\s*기준$/, '').trim();
+    if (state.locations && state.locations.length > 1) {
+      if (cleaned && cleaned !== '내 위치' && cleaned !== '내 위치 확인 중...') {
+        state.currentHubName = cleaned;
+      }
+    } else {
+      state.currentHubName = cleaned || '내 위치';
+    }
+  }
 
   var listEl = document.getElementById('placeList');
   if (!listEl) return;

@@ -66,8 +66,9 @@ function recalcFairness(realDurations) {
       diffLabel.textContent = bInfo.text;
       diffLabel.className = 'text-[14px] font-black ' + bInfo.color;
     }
-    if (window.renderTossCardUI) window.renderTossCardUI();
   }
+  // 참가자 경로가 1개라도 비동기 완료되면 실시간 토스 게이지 카드 즉시 갱신
+  if (window.renderTossCardUI) window.renderTossCardUI();
 }
 
 function updateLocationsAndMidpoint() {
@@ -161,42 +162,72 @@ function updateLocationsAndMidpoint() {
     var rawMidLng = totalLng / count;
     var rawMidCoord = [rawMidLat, rawMidLng];
 
-    var swUrl = 'https://dapi.kakao.com/v2/local/search/category.json?category_group_code=SW8&x=' +
-      rawMidLng + '&y=' + rawMidLat + '&radius=7000&sort=distance&size=5';
-
-    fetch(swUrl, {
-      headers: { 'Authorization': 'KakaoAK ' + KAKAO_REST_KEY }
-    })
+    // 1단계: 지리적 중심점 기준 1,500m 이내(도보/인접 역세권) 지하철역 검색
+    // 2단계: 없으면 3,000m까지 검색, 그래도 없거나 너무 멀면 기하학적 정밀 중심점을 메인으로 사용
+    function fetchHubCandidates(radius) {
+      var swUrl = 'https://dapi.kakao.com/v2/local/search/category.json?category_group_code=SW8&x=' +
+        rawMidLng + '&y=' + rawMidLat + '&radius=' + radius + '&sort=distance&size=10';
+      return fetch(swUrl, {
+        headers: { 'Authorization': 'KakaoAK ' + KAKAO_REST_KEY }
+      })
       .then(function(res) {
         if (!res.ok) throw new Error('SW error');
         return res.json();
       })
-      .catch(function() { return { documents: [] }; })
+      .catch(function() { return { documents: [] }; });
+    }
+
+    fetchHubCandidates(1500)
+      .then(function(swData) {
+        var docs = (swData && swData.documents) ? swData.documents : [];
+        if (docs.length === 0) {
+          return fetchHubCandidates(3500);
+        }
+        return swData;
+      })
+      .then(function(swData) {
+        var docs = (swData && swData.documents) ? swData.documents : [];
+        if (docs.length === 0) {
+          return fetchHubCandidates(5000);
+        }
+        return swData;
+      })
       .then(function(swData) {
         var swDocs = (swData && swData.documents) ? swData.documents : [];
         var candidateHubs = [];
 
         if (swDocs.length > 0) {
-          candidateHubs = swDocs.map(function(s) {
-            return {
-              name: s.place_name.replace(' 2호선', '').replace(' 신분당선', '').replace(' 1호선', '').replace(' 9호선', ''),
-              lines: s.category_name ? s.category_name.split(' > ').pop() : '지하철역',
-              coord: [parseFloat(s.y), parseFloat(s.x)],
-              desc: '중심점 기준 ' + (parseInt(s.distance, 10) < 1000 ? (s.distance + 'm') : ((parseInt(s.distance, 10)/1000).toFixed(1) + 'km')) + ' 거리 역세권'
-            };
+          var seenNames = {};
+          swDocs.forEach(function(s) {
+            var cleanName = s.place_name.replace(/\s+\d+호선.*/, '').replace(/\s+(경의중앙선|수인분당선|신분당선|공항철도|서해선|우이신설선|신림선|김포골드라인).*/, '');
+            if (!seenNames[cleanName]) {
+              seenNames[cleanName] = true;
+              var sLat = parseFloat(s.y);
+              var sLng = parseFloat(s.x);
+              var cDistKm = calculateDistanceKm(rawMidLat, rawMidLng, sLat, sLng);
+              var cDistM = Math.round(cDistKm * 1000);
+
+              candidateHubs.push({
+                name: cleanName,
+                fullName: s.place_name,
+                lines: s.category_name ? s.category_name.split(' > ').pop() : '지하철역',
+                coord: [sLat, sLng],
+                centerDistKm: cDistKm,
+                desc: '지리적 중심점 기준 ' + (cDistM < 1000 ? (cDistM + 'm') : ((cDistM/1000).toFixed(1) + 'km')) + ' 거리 역세권'
+              });
+            }
           });
         }
 
-        if (candidateHubs.length === 0) {
-          candidateHubs = [
-            {
-              name: '정밀 중간 지점',
-              lines: '지리적 중심 좌표',
-              coord: rawMidCoord,
-              desc: '모든 출발지로부터의 지리적 중심 위치'
-            }
-          ];
-        }
+        // 항상 기하학적 정밀 중심점도 후보에 포함
+        candidateHubs.push({
+          name: '정밀 중간 지점',
+          fullName: '지리적 중심점',
+          lines: '지리적 중심 좌표',
+          coord: rawMidCoord,
+          centerDistKm: 0,
+          desc: '모든 출발지로부터의 지리적 중심 위치 (오차 없는 정중앙)'
+        });
 
         var bestHub = candidateHubs[0];
         var bestScore = Infinity;
@@ -205,7 +236,12 @@ function updateLocationsAndMidpoint() {
         candidateHubs.forEach(function(hub) {
           var times = locList.map(function(item) {
             var dist = calculateDistanceKm(item.loc[0], item.loc[1], hub.coord[0], hub.coord[1]);
-            var t = Math.max(5, Math.round(dist * 2.1 + 6));
+            var t = 10;
+            if (item.transport === 'car') {
+              t = Math.max(4, Math.round(dist * 1.8 + 4));
+            } else {
+              t = Math.max(5, Math.round(dist * 2.2 + 6));
+            }
             return { name: item.name, time: t, dist: dist };
           });
 
@@ -213,7 +249,14 @@ function updateLocationsAndMidpoint() {
           var maxTime = Math.max.apply(null, times.map(function(t) { return t.time; }));
           var timeDiff = maxTime - minTime;
           var avgTime = times.reduce(function(acc, cur) { return acc + cur.time; }, 0) / count;
-          var score = (timeDiff * 1.8) + (avgTime * 0.9);
+
+          // 중심점과의 거리(centerDistKm)를 최우선 가중치로 평가
+          var centerDistPenalty = (hub.centerDistKm || 0) * 4.0;
+          if (hub.name === '정밀 중간 지점' && candidateHubs.length > 1 && candidateHubs[0].centerDistKm < 1.0) {
+            centerDistPenalty += 2.5; // 1km 이내 역이 있으면 역 선호
+          }
+
+          var score = (centerDistPenalty * 2.5) + (timeDiff * 1.5) + (avgTime * 0.8);
 
           if (score < bestScore) {
             bestScore = score;
@@ -224,10 +267,22 @@ function updateLocationsAndMidpoint() {
 
         var finalHubCoord = bestHub.coord;
         var hubDisplayName = bestHub.name;
+        state.currentHubCoord = finalHubCoord;
+        state.currentHubName = hubDisplayName;
         latLngList.push(finalHubCoord);
 
-        document.getElementById('transitHubTitle').textContent = hubDisplayName + ' (' + bestHub.lines + ')';
-        document.getElementById('transitHubDesc').textContent = bestHub.desc;
+        var transitTitle = document.getElementById('transitHubTitle');
+        if (transitTitle) transitTitle.textContent = hubDisplayName + ' (' + bestHub.lines + ')';
+        var transitDesc = document.getElementById('transitHubDesc');
+        if (transitDesc) transitDesc.textContent = bestHub.desc;
+
+        var tossHubNameEl = document.getElementById('tossHubName');
+        if (tossHubNameEl) {
+          tossHubNameEl.textContent = hubDisplayName + (bestHub.lines && bestHub.lines !== '지리적 중심 좌표' ? ' (' + bestHub.lines + ')' : '');
+        }
+        var tossHubDescEl = document.getElementById('tossHubDesc');
+        if (tossHubDescEl) tossHubDescEl.textContent = bestHub.desc;
+
         if (window.updateWeatherAndCongestion) {
           window.updateWeatherAndCongestion(hubDisplayName, finalHubCoord);
         }
@@ -237,8 +292,10 @@ function updateLocationsAndMidpoint() {
         var initDiff = maxT - minT;
         var badgeInfo = getFairnessBadge(initDiff);
         var diffEl = document.getElementById('travelTimeDiff');
-        diffEl.textContent = badgeInfo.text;
-        diffEl.className = 'text-[14px] font-black ' + badgeInfo.color;
+        if (diffEl) {
+          diffEl.textContent = badgeInfo.text;
+          diffEl.className = 'text-[14px] font-black ' + badgeInfo.color;
+        }
 
         var timesHtml = bestTimes.map(function(bt, idx) {
           var locItem = locList[idx];
@@ -255,7 +312,8 @@ function updateLocationsAndMidpoint() {
             '</div>' +
           '</div>';
         }).join('');
-        document.getElementById('participantTimesList').innerHTML = timesHtml;
+        var pTimesListEl = document.getElementById('participantTimesList');
+        if (pTimesListEl) pTimesListEl.innerHTML = timesHtml;
 
         // 원거리 참가자 모빌리티 배려 혜택 계산 & 표출
         var longestT = -1;
@@ -283,10 +341,18 @@ function updateLocationsAndMidpoint() {
 
         fetchRealAddress(finalHubCoord[0], finalHubCoord[1], function(hubAddr) {
           var finalHubAddr = hubAddr || hubDisplayName;
-          document.getElementById('sheetMainTitle').textContent = hubDisplayName;
-          document.getElementById('sheetSubTitle').textContent = finalHubAddr;
+          var sMain = document.getElementById('sheetMainTitle');
+          if (sMain) sMain.textContent = hubDisplayName;
+          var sSub = document.getElementById('sheetSubTitle');
+          if (sSub) sSub.textContent = finalHubAddr;
           var locAddr = document.getElementById('locationAddress');
-          if (locAddr) locAddr.textContent = '최적 중간점: ' + hubDisplayName;
+          if (locAddr) locAddr.textContent = '최적 중간점: ' + hubDisplayName + ' (' + finalHubAddr + ')';
+          if (bestHub.name === '정밀 중간 지점' && hubAddr) {
+            hubDisplayName = hubAddr.split(' ').slice(0, 3).join(' ') + ' 중심';
+            state.currentHubName = hubDisplayName;
+            if (tossHubNameEl) tossHubNameEl.textContent = hubDisplayName;
+            if (sMain) sMain.textContent = hubDisplayName;
+          }
           if (state.hubMarker) {
             state.hubMarker.setIcon(createMarkerHtml(hubDisplayName, '허브', false, true, false));
           }
@@ -327,25 +393,29 @@ function updateLocationsAndMidpoint() {
           });
         }
 
-        if (state.confirmedPlace) {
-          var cpCoord = [parseFloat(state.confirmedPlace.y), parseFloat(state.confirmedPlace.x)];
-          updateKakaoMobilityRoutes(cpCoord, state.confirmedPlace.place_name);
-        } else {
-          clearRoutePolylines();
-        }
+        // 실시간 최적 경로 및 소요시간 계산 실행
+        var isConfirmed = !!state.confirmedPlace;
+        var targetDestCoord = isConfirmed ? [parseFloat(state.confirmedPlace.y), parseFloat(state.confirmedPlace.x)] : finalHubCoord;
+        var targetDestName = isConfirmed ? state.confirmedPlace.place_name : hubDisplayName;
+        updateKakaoMobilityRoutes(targetDestCoord, targetDestName, !isConfirmed);
 
         map.fitBounds(L.latLngBounds(latLngList), {
           paddingTopLeft: [70, 70],
           paddingBottomRight: [70, 180]
         });
 
-        document.getElementById('statusBadge').textContent = state.confirmedPlace ? '약속 장소 확정' : '중간 허브 탐색';
-        document.getElementById('participantCount').innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-[#0284c7]"></span>출발지: ' + count + '곳 (' + (state.confirmedPlace ? '동선 연결됨' : '허브 포인트') + ')';
-        document.getElementById('hubBadge').textContent = '스마트 중간점';
-        document.getElementById('summaryTime').textContent = count + '곳 중심';
-        document.getElementById('hubIcon').setAttribute('data-lucide', 'train-front');
+        var stBadge = document.getElementById('statusBadge');
+        if (stBadge) stBadge.textContent = state.confirmedPlace ? '약속 장소 확정' : '중간 허브 탐색';
+        var pCount = document.getElementById('participantCount');
+        if (pCount) pCount.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-[#0284c7]"></span>출발지: ' + count + '곳 (' + (state.confirmedPlace ? '동선 연결됨' : '허브 포인트') + ')';
+        var hBadge = document.getElementById('hubBadge');
+        if (hBadge) hBadge.textContent = '스마트 중간점';
+        var sTime = document.getElementById('summaryTime');
+        if (sTime) sTime.textContent = count + '곳 중심';
+        var hIcon = document.getElementById('hubIcon');
+        if (hIcon) hIcon.setAttribute('data-lucide', 'train-front');
 
-        fetchKakaoPlaces(finalHubCoord, hubDisplayName + ' 기준');
+        fetchKakaoPlaces(finalHubCoord, hubDisplayName);
       });
   }
 
@@ -355,13 +425,39 @@ function updateLocationsAndMidpoint() {
   if (window.lucide) lucide.createIcons();
 }
 
-function updateKakaoMobilityRoutes(destCoord, destName) {
+function updateKakaoMobilityRoutes(destCoord, destName, isTemporaryHub) {
   clearRoutePolylines();
 
   var colors = ['#0284c7', '#0ea5e9', '#38bdf8', '#0369a1', '#2563eb'];
   var realDurations = [];
   participantRouteDetails = {};
 
+  // 1단계: 즉각적인 초기 소요시간 및 거리 동기 설정 (카카오맵 현실 소요시간 기반 정밀 초기화)
+  state.locations.forEach(function(locItem, idx) {
+    var crowDist = calculateDistanceKm(locItem.loc[0], locItem.loc[1], destCoord[0], destCoord[1]);
+    var isCar = (locItem.transport === 'car');
+    var estKm = (crowDist * (isCar ? 1.25 : 1.4)).toFixed(1);
+    // 자차: 시내/고속도로 주행 25~35km/h, 신호대기 감안
+    // 대중교통: 도보/정류장 대기 12~16분 + 환승 감안 표정속도 18~20km/h (안산->광명 13km 시 약 55분 산출)
+    var estMin = isCar
+      ? Math.max(5, Math.round(crowDist * 1.8 + 5))
+      : (crowDist < 3.0 ? Math.max(10, Math.round(crowDist * 3.5 + 8)) : Math.max(22, Math.round(crowDist * 3.2 + 15)));
+    realDurations[idx] = estMin;
+    participantRouteDetails[locItem.id] = {
+      durationMin: estMin,
+      distKm: estKm,
+      etaStr: formatEtaTime(estMin),
+      transport: locItem.transport,
+      routeDesc: isCar ? '실시간 도로 주행 분석 중...' : '대중교통 경로 분석 중...',
+      transitSteps: [],
+      carSteps: [],
+      polyCoords: [locItem.loc, destCoord]
+    };
+  });
+  recalcFairness(realDurations);
+  if (window.renderTossCardUI) window.renderTossCardUI();
+
+  // 2단계: 실시간 카카오 내비 API 및 정밀 대중교통 노선망 비동기 분석 실행
   state.locations.forEach(function(locItem, idx) {
     var oLat = locItem.loc[0];
     var oLon = locItem.loc[1];
@@ -405,7 +501,7 @@ function updateKakaoMobilityRoutes(destCoord, destName) {
               }
             });
           }
-          renderCarRoutePolylines(polyCoords, color, idx, locItem, distKm, durationMin, realDurations, destCoord, rawGuides);
+          renderCarRoutePolylines(polyCoords, color, idx, locItem, distKm, durationMin, realDurations, destCoord, rawGuides, isTemporaryHub);
         })
         .catch(function() {
           var osrmUrl = 'https://router.project-osrm.org/route/v1/driving/' +
@@ -419,7 +515,7 @@ function updateKakaoMobilityRoutes(destCoord, destName) {
                 var distKm = (r0.distance / 1000).toFixed(1);
                 var durationMin = Math.max(3, Math.round(r0.duration / 60));
                 var polyCoords = r0.geometry.coordinates.map(function(c) { return [c[1], c[0]]; });
-                renderCarRoutePolylines(polyCoords, color, idx, locItem, distKm, durationMin, realDurations, destCoord, []);
+                renderCarRoutePolylines(polyCoords, color, idx, locItem, distKm, durationMin, realDurations, destCoord, [], isTemporaryHub);
               } else {
                 throw new Error('OSRM no route');
               }
@@ -430,16 +526,16 @@ function updateKakaoMobilityRoutes(destCoord, destName) {
               var midLat = (oLat + dLat) / 2 + (oLon - dLon) * 0.08;
               var midLon = (oLon + dLon) / 2 + (dLat - oLat) * 0.08;
               var polyCoords = [locItem.loc, [midLat, midLon], destCoord];
-              renderCarRoutePolylines(polyCoords, color, idx, locItem, estDist, estDur, realDurations, destCoord, []);
+              renderCarRoutePolylines(polyCoords, color, idx, locItem, estDist, estDur, realDurations, destCoord, [], isTemporaryHub);
             });
         });
     } else {
-      renderTransitDetailedRoute(locItem, destCoord, idx, color, crowDistKm, realDurations);
+      renderTransitDetailedRoute(locItem, destCoord, idx, color, crowDistKm, realDurations, isTemporaryHub);
     }
   });
 }
 
-function renderCarRoutePolylines(polyCoords, color, idx, locItem, distKm, durationMin, realDurations, destCoord, rawGuides) {
+function renderCarRoutePolylines(polyCoords, color, idx, locItem, distKm, durationMin, realDurations, destCoord, rawGuides, isTemporaryHub) {
   if (!polyCoords || polyCoords.length === 0) return;
 
   var firstPt = polyCoords[0];
@@ -470,7 +566,7 @@ function renderCarRoutePolylines(polyCoords, color, idx, locItem, distKm, durati
   state.routePolylines.push(coreLine);
 
   realDurations[idx] = durationMin;
-  var destName = state.confirmedPlace ? state.confirmedPlace.place_name : '약속 장소';
+  var destName = state.confirmedPlace ? state.confirmedPlace.place_name : (state.currentHubName || '중간 지점');
   var carSteps = extractCarSteps(rawGuides, polyCoords, destName, locItem.name);
   var transitSteps = generateDetailedTransitSteps(locItem, destCoord, destName);
 
@@ -487,10 +583,10 @@ function renderCarRoutePolylines(polyCoords, color, idx, locItem, distKm, durati
 
   updateParticipantRowUI(idx, locItem, distKm, durationMin, 'car', '실시간 도로 주행');
   recalcFairness(realDurations);
-  if (state.confirmedPlace) renderConfirmedNaviList();
+  if (state.confirmedPlace && !isTemporaryHub) renderConfirmedNaviList();
 }
 
-function renderTransitDetailedRoute(locItem, destCoord, idx, color, crowDistKm, realDurations) {
+function renderTransitDetailedRoute(locItem, destCoord, idx, color, crowDistKm, realDurations, isTemporaryHub) {
   var oLat = locItem.loc[0];
   var oLon = locItem.loc[1];
   var dLat = destCoord[0];
@@ -499,12 +595,16 @@ function renderTransitDetailedRoute(locItem, destCoord, idx, color, crowDistKm, 
   var startStationInfo = findNearestSubwayStation(oLat, oLon);
   var endStationInfo = findNearestSubwayStation(dLat, dLon);
 
-  var transitTimeMin = Math.max(7, Math.round(7 + (crowDistKm * 1.3 / 24) * 60));
+  // 정밀 대중교통 이동 시간 계산:
+  // 1) 도보 시간 (시속 4.2km/h 기준, 100m당 1.43분)
+  var walkToStartMin = startStationInfo ? Math.max(1, Math.round(startStationInfo.distKm * 14.3)) : 5;
+  var walkFromEndMin = endStationInfo ? Math.max(1, Math.round(endStationInfo.distKm * 14.3)) : 5;
+
   var transitDistKm = (crowDistKm * 1.25).toFixed(1);
-  realDurations[idx] = transitTimeMin;
+  var transitTimeMin = 15;
 
   var isSubwayUsable = startStationInfo && endStationInfo &&
-    (startStationInfo.distKm < 15.0) && (endStationInfo.distKm < 15.0) &&
+    (startStationInfo.distKm < 5.0) && (endStationInfo.distKm < 5.0) &&
     (startStationInfo.station.name !== endStationInfo.station.name);
 
   if (isSubwayUsable) {
@@ -532,6 +632,7 @@ function renderTransitDetailedRoute(locItem, destCoord, idx, color, crowDistKm, 
     var railColor = sLine.color;
 
     if (startStationInfo.lineKey === endStationInfo.lineKey) {
+      // 동일 노선
       var lStations = sLine.stations;
       var minIdx = Math.min(startStationInfo.index, endStationInfo.index);
       var maxIdx = Math.max(startStationInfo.index, endStationInfo.index);
@@ -545,10 +646,16 @@ function renderTransitDetailedRoute(locItem, destCoord, idx, color, crowDistKm, 
       }
       routeDesc = sLine.name + ' ' + sSt.name + ' 탑승 → ' + eSt.name + ' 하차';
 
+      var numStops = Math.max(1, subSeq.length - 1);
+      var subwayRideMin = Math.round(numStops * 2.3);
+      var waitMin = 4;
+      transitTimeMin = walkToStartMin + waitMin + subwayRideMin + walkFromEndMin;
+
       var pStart = createTransitStopMarker(stationStartLoc, sSt.name, sLine.name + ' 승차', sLine.color).addTo(map);
       var pEnd = createTransitStopMarker(stationEndLoc, eSt.name, sLine.name + ' 하차', sLine.color).addTo(map);
       state.transitMarkers.push(pStart, pEnd);
     } else {
+      // 환승 노선
       var transStation = null;
       for (var ti = 0; ti < TRANSFER_STATIONS.length; ti++) {
         var ts = TRANSFER_STATIONS[ti];
@@ -570,6 +677,17 @@ function renderTransitDetailedRoute(locItem, destCoord, idx, color, crowDistKm, 
 
       railCoords = [stationStartLoc, transStation.loc, stationEndLoc];
       routeDesc = sLine.name + ' ' + sSt.name + ' 승차 → ' + transStation.name + ' 환승 → ' + eLine.name + ' ' + eSt.name + ' 하차';
+
+      // 환승 노선 정밀 시간 계산 (안산역->금정역 8역 + 1호선 금정->광명 5역 등 실 수도권 환승 대기 반영)
+      var distStartToTrans = calculateDistanceKm(sSt.loc[0], sSt.loc[1], transStation.loc[0], transStation.loc[1]);
+      var distTransToEnd = calculateDistanceKm(transStation.loc[0], transStation.loc[1], eSt.loc[0], eSt.loc[1]);
+      var stopsLeg1 = Math.max(2, Math.round(distStartToTrans / 1.6));
+      var stopsLeg2 = Math.max(2, Math.round(distTransToEnd / 1.6));
+      var totalStops = stopsLeg1 + stopsLeg2;
+
+      var subwayRideMin2 = Math.round(totalStops * 2.5);
+      var waitAndTransferMin = 15; // 승차 대기 4분 + 환승 이동 및 열차 대기 11분
+      transitTimeMin = walkToStartMin + waitAndTransferMin + subwayRideMin2 + walkFromEndMin;
 
       var p1 = createTransitStopMarker(stationStartLoc, sSt.name, sLine.name + ' 승차', sLine.color).addTo(map);
       var pTrans = createTransitStopMarker(transStation.loc, transStation.name, '환승', '#6366f1').addTo(map);
@@ -618,9 +736,10 @@ function renderTransitDetailedRoute(locItem, destCoord, idx, color, crowDistKm, 
       state.routePolylines.push(walk2);
     }
 
-    var destName = state.confirmedPlace ? state.confirmedPlace.place_name : '약속 장소';
-    var transitSteps = generateDetailedTransitSteps(locItem, destCoord, destName);
-    var carStepsFallback = extractCarSteps([], [locItem.loc, destCoord], destName, locItem.name);
+    realDurations[idx] = transitTimeMin;
+    var destName2 = state.confirmedPlace ? state.confirmedPlace.place_name : (state.currentHubName || '중간 지점');
+    var transitSteps = generateDetailedTransitSteps(locItem, destCoord, destName2);
+    var carStepsFallback = extractCarSteps([], [locItem.loc, destCoord], destName2, locItem.name);
 
     participantRouteDetails[locItem.id] = {
       durationMin: transitTimeMin,
@@ -634,7 +753,23 @@ function renderTransitDetailedRoute(locItem, destCoord, idx, color, crowDistKm, 
     };
 
     updateParticipantRowUI(idx, locItem, transitDistKm, transitTimeMin, 'transit', routeDesc);
+    recalcFairness(realDurations);
+    if (state.confirmedPlace && !isTemporaryHub) renderConfirmedNaviList();
   } else {
+    // 버스 또는 도보 대중교통 이동 (카카오맵 현실 소요시간 정밀 반영)
+    var roadDistKm = crowDistKm * 1.45;
+    if (roadDistKm < 1.0) {
+      transitTimeMin = Math.max(5, Math.round(roadDistKm * 14.3));
+    } else if (roadDistKm < 4.0) {
+      transitTimeMin = Math.max(12, Math.round((roadDistKm / 18) * 60 + 8));
+    } else {
+      // 외곽/시외/환승 버스 연계 (배차간격 및 대기 16분 + 시내 표정속도 19km/h 반영)
+      transitTimeMin = Math.max(25, Math.round((roadDistKm / 19) * 60 + 16));
+    }
+    realDurations[idx] = transitTimeMin;
+
+    var bDesc = (roadDistKm < 1.0) ? ('도보 이동 (' + (Math.round(roadDistKm * 1000)) + 'm)') : ('시내버스 / 도로 이동 (' + transitDistKm + 'km)');
+
     var busOsrmUrl = 'https://router.project-osrm.org/route/v1/driving/' +
       oLon + ',' + oLat + ';' + dLon + ',' + dLat + '?overview=full&geometries=geojson';
 
@@ -681,7 +816,7 @@ function renderTransitDetailedRoute(locItem, destCoord, idx, color, crowDistKm, 
         var b2 = createTransitStopMarker(destCoord, '약속 장소', '하차', '#0284c7').addTo(map);
         state.transitMarkers.push(b1, b2);
 
-        var destName = state.confirmedPlace ? state.confirmedPlace.place_name : '약속 장소';
+        var destName = state.confirmedPlace ? state.confirmedPlace.place_name : (state.currentHubName || '중간 지점');
         var transitSteps = generateDetailedTransitSteps(locItem, destCoord, destName);
         var carStepsFallback = extractCarSteps([], poly, destName, locItem.name);
 
@@ -698,7 +833,7 @@ function renderTransitDetailedRoute(locItem, destCoord, idx, color, crowDistKm, 
 
         updateParticipantRowUI(idx, locItem, transitDistKm, transitTimeMin, 'transit', bDesc);
         recalcFairness(realDurations);
-        if (state.confirmedPlace) renderConfirmedNaviList();
+        if (state.confirmedPlace && !isTemporaryHub) renderConfirmedNaviList();
       })
       .catch(function() {
         var bLine = L.polyline([locItem.loc, destCoord], {
@@ -709,14 +844,25 @@ function renderTransitDetailedRoute(locItem, destCoord, idx, color, crowDistKm, 
         }).addTo(map);
         state.routePolylines.push(bLine);
 
+        participantRouteDetails[locItem.id] = {
+          durationMin: transitTimeMin,
+          distKm: transitDistKm,
+          etaStr: formatEtaTime(transitTimeMin),
+          transport: 'transit',
+          routeDesc: bDesc,
+          transitSteps: [],
+          carSteps: [],
+          polyCoords: [locItem.loc, destCoord]
+        };
+
         updateParticipantRowUI(idx, locItem, transitDistKm, transitTimeMin, 'transit', locItem.name + ' 이동');
         recalcFairness(realDurations);
-        if (state.confirmedPlace) renderConfirmedNaviList();
+        if (state.confirmedPlace && !isTemporaryHub) renderConfirmedNaviList();
       });
   }
 
   recalcFairness(realDurations);
-  if (state.confirmedPlace) renderConfirmedNaviList();
+  if (state.confirmedPlace && !isTemporaryHub) renderConfirmedNaviList();
 }
 
 function updateParticipantRowUI(idx, locItem, distKm, durationMin, transportType, routeDesc) {

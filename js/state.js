@@ -11,11 +11,17 @@ var initCoord = (cachedLoc && cachedLoc.coords) ? cachedLoc.coords : DEFAULT_LOC
 var initAddr = (cachedLoc && cachedLoc.addr) ? cachedLoc.addr : '실제 위치 확인 중...';
 var initShort = (cachedLoc && cachedLoc.shortName) ? cachedLoc.shortName : '내 위치';
 
+var defaultMyTrans = 'transit';
+try {
+  var savedT = localStorage.getItem('user_my_transport');
+  if (savedT === 'car' || savedT === 'transit') defaultMyTrans = savedT;
+} catch(e) {}
+
 var state = {
   myLocation: initCoord,
   myAddress: initAddr,
   locations: [
-    { id: 'loc_me', name: '내 위치', shortName: initShort, addr: initAddr, loc: initCoord, isMe: true, transport: 'car' }
+    { id: 'loc_me', name: '내 위치', shortName: initShort, addr: initAddr, loc: initCoord, isMe: true, transport: defaultMyTrans }
   ],
   markers: {},
   hubMarker: null,
